@@ -12,10 +12,15 @@ class TestNode {
 
 };
 
+int nodeCompare(const TestNode&, const TestNode&) {
+    return 1;  // TODO: actually compare test nodes
+}
 
-auto queue = PriorityQueue<TestNode>(100, );
+auto queue = PriorityQueue<TestNode>(100, nodeCompare);
 
-REQUIRE(queue.getCapacity() == 100);
 
-TEST_CASE("PriorityQueue test", "[PriorityQueue]") {}
+TEST_CASE("PriorityQueue test", "[PriorityQueue]") {
+    REQUIRE(queue.getCapacity() == 100); 
+}
+
 }
