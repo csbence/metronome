@@ -1,9 +1,9 @@
-#include <iostream>
 #include "easylogging++.h"
 #include "util/PriorityQueue.hpp"
 
-using namespace std;
+INITIALIZE_EASYLOGGINGPP
+
 int main() {
-  cout << "Hello, World!" << endl;
+  LOG(INFO) << "Hello, World!" << std::endl;
   return 0;
 }
