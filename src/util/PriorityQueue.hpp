@@ -5,20 +5,25 @@
 #include <functional>
 #include <vector>
 
-template <typename T> class PriorityQueue {
-public:
+template<typename T>
+class PriorityQueue {
+ public:
   PriorityQueue(unsigned int capacity,
-                std::function<int(const T &, const T &)> comparator)
-      : capacity(capacity), comparator(comparator), queue(capacity), size(0) {}
+                std::function<int(const T&, const T&)> comparator)
+      : capacity(capacity),
+        comparator(comparator),
+        queue(capacity),
+        size(0) { }
 
-  void push(const T &item) {
+  void push(const T& item) {
     if (size == capacity) {
       throw std::overflow_error(
-          "Priority queue reached its maximum capacity: " + capacity);
+          "Priority queue reached its maximum capacity: " +
+              std::to_string(capacity));
     }
 
     if (size == 0) {
-      queue[0] = item;
+      queue[0] = &item;
       item.index = 0;
     } else {
       siftUp(size, item);
@@ -27,7 +32,7 @@ public:
     ++size;
   }
 
-  T &pop() {
+  T& pop() {
     if (size == 0) {
       return nullptr;
     }
@@ -46,7 +51,7 @@ public:
     return result;
   }
 
-  const T &top() const {
+  const T& top() const {
     if (size == 0) {
       return nullptr;
     }
@@ -54,30 +59,35 @@ public:
     return queue[0];
   }
 
-  unsigned int getCapacity() const { return capacity; }
+  void clear() {
+    size = 0;
+  }
 
-private:
-  void siftUp(const unsigned int index, const T &item) {
+  unsigned int getCapacity() const { return capacity; }
+  unsigned int getSize() const { return size; }
+
+ private:
+  void siftUp(const unsigned int index, const T& item) {
     unsigned int currentIndex = index;
     while (currentIndex > 0) {
       const auto parentIndex = (currentIndex - 1) >> 1;
       const auto parentItem = queue[parentIndex];
 
-      if (comparator(item, parentItem) >= 0) {
+      if (comparator(item, *parentItem) >= 0) {
         break;
       }
 
       // Move parent down and update its index
       queue[currentIndex] = parentItem;
-      parentItem.index = currentIndex;
+      parentItem->index = currentIndex;
       currentIndex = parentIndex;
     }
 
-    queue[currentIndex] = item;
+    queue[currentIndex] = &item;
     item.index = currentIndex;
   }
 
-  void siftDown(const unsigned int index, const T &item) {
+  void siftDown(const unsigned int index, const T& item) {
     auto currentIndex = index;
     const unsigned int half = size >> 1;
 
@@ -105,8 +115,8 @@ private:
   }
 
   const unsigned int capacity;
-  std::function<int(const T &, const T &)> comparator;
-  std::vector<T> queue;
+  std::function<int(const T&, const T&)> comparator;
+  std::vector<const T *> queue;
   unsigned int size;
 };
 
