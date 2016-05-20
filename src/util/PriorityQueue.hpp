@@ -1,5 +1,5 @@
-#ifndef RITMUS_PRIORITY_QUEUE_HPP
-#define RITMUS_PRIORITY_QUEUE_HPP
+#ifndef METRONOME_PRIORITY_QUEUE_HPP
+#define METRONOME_PRIORITY_QUEUE_HPP
 
 #include <boost/assert.hpp>
 #include <functional>
@@ -32,26 +32,26 @@ class PriorityQueue {
     ++size;
   }
 
-  T& pop() {
+  T* pop() {
     if (size == 0) {
       return nullptr;
     }
 
     --size;
     auto result = queue[0];
-    auto x = queue[size];
+    auto& x = *queue[size];
     queue[size] = nullptr;
 
     if (size != 0) {
       siftDown(0, x);
     }
 
-    BOOST_ASSERT_MSG(result.index == 0,
+    BOOST_ASSERT_MSG(result->index == 0,
                      "Internal index of top item was not null");
-    return result;
+    return const_cast<T*>(result);
   }
 
-  const T& top() const {
+  const T* top() const {
     if (size == 0) {
       return nullptr;
     }
@@ -63,8 +63,18 @@ class PriorityQueue {
     size = 0;
   }
 
+  void update(T& item) {
+    auto index = item.index;
+    siftUp(item.index, item);
+
+    if (item.index == index) {
+      siftDown(item.index, item);
+    }
+  }
+
   unsigned int getCapacity() const { return capacity; }
   unsigned int getSize() const { return size; }
+  bool isEmpty() const { return size == 0; }
 
  private:
   void siftUp(const unsigned int index, const T& item) {
@@ -96,28 +106,28 @@ class PriorityQueue {
       auto childItem = queue[childIndex];
       auto rightIndex = childIndex + 1;
 
-      if (rightIndex < size && comparator(childItem, queue[rightIndex]) > 0) {
+      if (rightIndex < size && comparator(*childItem, *queue[rightIndex]) > 0) {
         childIndex = rightIndex;
         childItem = queue[rightIndex];
       }
 
-      if (comparator(item, childItem) <= 0) {
+      if (comparator(item, *childItem) <= 0) {
         break;
       }
 
       queue[currentIndex] = childItem;
-      childItem.index = currentIndex;
+      childItem->index = currentIndex;
       currentIndex = childIndex;
     }
 
-    queue[currentIndex] = item;
+    queue[currentIndex] = &item;
     item.index = currentIndex;
   }
 
   const unsigned int capacity;
   std::function<int(const T&, const T&)> comparator;
-  std::vector<const T *> queue;
+  std::vector<const T*> queue;
   unsigned int size;
 };
 
-#endif // RITMUS_PRIORITY_QUEUE_HPP
+#endif // METRONOME_PRIORITY_QUEUE_HPP
