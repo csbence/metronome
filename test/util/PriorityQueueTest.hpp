@@ -32,6 +32,7 @@ TEST_CASE("PriorityQueue add/clear test", "[PriorityQueue]") {
     REQUIRE(queue.isEmpty() == true);
 
     queue.push(node1);
+
     REQUIRE(queue.getSize() == 1);
     REQUIRE(node1.index == 0);
     REQUIRE(queue.top() == &node1);
@@ -39,6 +40,7 @@ TEST_CASE("PriorityQueue add/clear test", "[PriorityQueue]") {
     REQUIRE(queue.isEmpty() == false);
 
     queue.push(node2);
+
     REQUIRE(queue.getSize() == 2);
   }
 
@@ -74,6 +76,7 @@ TEST_CASE("PriorityQueue order test", "[PriorityQueue]") {
     queue.push(node0);
 
     REQUIRE(queue.getSize() == 3);
+
     REQUIRE(queue.pop() == &node0);
     REQUIRE(queue.pop() == &node1);
     REQUIRE(queue.pop() == &node2);
@@ -94,9 +97,10 @@ TEST_CASE("PriorityQueue order test", "[PriorityQueue]") {
     queue.push(node7);
     queue.push(node8);
 
+
     int value = -10;
     while (!queue.isEmpty()) {
-      REQUIRE(queue.top()->value <= value);
+      REQUIRE(queue.top()->value >= value);
       value = queue.pop()->value;
     }
   }
@@ -123,7 +127,7 @@ TEST_CASE("PriorityQueue order test", "[PriorityQueue]") {
 
     int value = -10;
     while (!queue.isEmpty()) {
-      REQUIRE(queue.top()->value <= value);
+      REQUIRE(queue.top()->value >= value);
       value = queue.pop()->value;
     }
   }

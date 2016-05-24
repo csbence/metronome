@@ -58,6 +58,18 @@ class PriorityQueue {
 
     return queue[0];
   }
+/*
+  void print(){
+    std::cout << "Queue: " << std::endl;
+    if(isEmpty()) {
+        return;
+    }
+    for(auto &i : queue){
+        std::cout << " " << i << " ";
+    }
+    std::cout << std::endl;
+  }
+*/
 
   void clear() {
     size = 0;
