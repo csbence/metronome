@@ -1,5 +1,3 @@
-#define CATCH_CONFIG_COLOUR_NONE
-
 #include "util/PriorityQueue.hpp"
 #include "catch.hpp"
 #include "easylogging++.h"
@@ -121,7 +119,7 @@ TEST_CASE("PriorityQueue order test", "[PriorityQueue]") {
     queue.push(node8);
 
     node4.value = -2;
-    REQUIRE(node4.index == 5);
+    REQUIRE(node4.index == 3);
     queue.update(node4);
     REQUIRE(node4.index == 0);
 

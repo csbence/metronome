@@ -10,10 +10,10 @@ class PriorityQueue {
  public:
   PriorityQueue(unsigned int capacity,
                 std::function<int(const T&, const T&)> comparator)
-      : capacity(capacity),
-        comparator(comparator),
-        queue(capacity),
-        size(0) { }
+      : capacity{capacity},
+        comparator{comparator},
+        queue{capacity},
+        size{0} { }
 
   void push(const T& item) {
     if (size == capacity) {
