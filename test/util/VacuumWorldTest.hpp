@@ -47,7 +47,7 @@ TEST_CASE("VacuumWorld getters", "[VacuumWorld]"){
 
     for(int i = 0; i < 10; i++){
         std::pair<int, int> _t = vacuumWorld.randomLocation();
-        std::cout << "R_LOC: " << _t.first << " " << _t.second << std::endl;
+        LOG(INFO) << "R_LOC: " << _t.first << " " << _t.second << std::endl;
         REQUIRE(vacuumWorld.isLegalLocation(_t));
     }
 
