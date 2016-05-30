@@ -4,7 +4,7 @@ Real time search library implemented in C++
 
 # features
 
-Search domains including VaccumWorld
+Search domains including VaccumWorld (and others)
 
 Algorithm set that makes use of real time search paradigms 
 
