@@ -7,42 +7,120 @@
 #include <functional>
 
 class VacuumWorld{
-    private:
-        int width = 0;
-        int height = 0;
-        std::vector<std::pair<int,int>> blockedCells;
-        std::vector<std::pair<int,int>> dirtyCells;
-        std::pair<int, int> startLocation;
-        std::pair<int ,int> goalLocation;
-        int initialAmountDirty = 1;
-    public:
-        std::pair<int ,int> randomLocation(){
-            int _first = rand() % width;
-            int _second = rand() % height;
 
-            std::pair<int, int> ret;
-            ret.first = _first;
-            ret.second = _second;
-            return ret;
+    public:
+        /***
+        *** State <- location of the agent as a pair
+        *** Action <- value representing the action taken {N,S,E,W,V} = {0,1,2,3,4}
+        *** Cost <- value for taking action from a state
+        ***/
+        class State{
+            private:
+                unsigned int _x;
+                unsigned int _y;
+                State(unsigned int x, unsigned int y) : _x(x), _y(y) {}
+            public:
+                State& operator=(State toCopy){
+                    std::cout << "THIS_X_Y: " << this->getX() << " " << this->getY()<< std::endl;
+                    std::cout << "COPY_X_Y: " << toCopy.getX() << " " << toCopy.getY() << std::endl;
+                    swap(*this,toCopy);
+                    std::cout << "THIS_X_Y: " << this->getX() << " " << this->getY()<< std::endl;
+                    std::cout << "COPY_X_Y: " << toCopy.getX() << " " << toCopy.getY() << std::endl;
+                    return *this;
+                }
+                friend void swap(State &first, State &second){
+                    using std::swap;
+                    swap(first._x, second._x);
+                    swap(first._y, second._y);
+                }
+                static const State newState(const unsigned int x, const unsigned int y){
+                    return State(x,y);
+                } 
+                const unsigned int getX() const{
+                    const unsigned int ret = _x;
+                    return ret;
+                }
+                const unsigned int getY() const{
+                    const unsigned int ret = _y;
+                    return ret;
+                }
+        };
+        class Action{
+            private:
+                unsigned int _value;
+
+            public:
+                constexpr char evaluate(){
+                    return 'X';
+                } 
+                constexpr unsigned int value(){ 
+                    return _value; 
+                }
+                void setValue(const unsigned int toSet) {
+                    _value = toSet;
+                }
+        }; 
+        typedef unsigned long Cost;
+
+ 
+    private:
+        /***
+        *** maxActions <- maximum number of actions
+        *** width/height <- internal size representation of world
+        *** blockedCells <- stores locations of the objects in world
+        *** dirtyCells <- stores locations of dirt in the world
+        *** startLocation <- where the agent begins
+        *** goalLocation <- where the agent needs to end up
+        *** initalAmountDirty <- how many cells are dirty
+        *** initialCost <- constant cost value
+        ***/
+	    const unsigned int maxActions = 5;
+        unsigned int width = 0; 
+        unsigned int height = 0; 
+        std::vector<State> blockedCells; 
+        std::vector<State> dirtyCells;
+        State startLocation = State::newState(0,0);
+        State goalLocation = State::newState(0,0);
+        unsigned int initialAmountDirty = 1;
+        const unsigned long initialCost = 1.0;
+    public:
+       /***
+        *** Given a state and action pair give the cost
+        *** for taking the action in the state
+        *** TODO: make it take a cost function instead of constant
+        ***/
+        const Cost getCost(State s, Action a){
+            return initialCost;
         }
-        std::pair<int, int> getGoal(){
-            return goalLocation;
+	    const Action randomAction(){
+            Action a;
+            a.setValue(rand() % maxActions);
+		    return a;
         }
-        bool isGoal(std::pair<int, int> location){
-            return location.first == goalLocation.first &&
-                   location.second == goalLocation.second;
+        const State randomLocation(){
+            unsigned int x = rand() % width;
+            unsigned int y = rand() % height;
+
+            return State::newState(x,y);
         }
-        bool inBlockedCells(std::pair<int,int> location){
+        const State getGoal(){
+            return State::newState(goalLocation.getX(),goalLocation.getY());
+        }
+        const bool isGoal(State location){
+            return location.getX() == goalLocation.getX() &&
+                   location.getY() == goalLocation.getY();
+        }
+        const bool inBlockedCells(State location){
             for (auto it : blockedCells){
-                if(it.first == location.first && it.second == location.second){
+                if(it.getX() == location.getX() && it.getY() == location.getY()){
                     return true;
                 }
             }
             return false;
         }
-        bool isLegalLocation(std::pair<int,int> location){
-            return location.first >= 0 && location.second >= 0 && location.first < width
-                    && location.second < height && !inBlockedCells(location);
+        const bool isLegalLocation(State location){
+            return  location.getX() < width
+                    && location.getY() < height && !inBlockedCells(location);
         }
         void setWidth(const int newWidth){
             width = newWidth;
@@ -50,40 +128,40 @@ class VacuumWorld{
         void setHeight(const int newHeight){
             height = newHeight;
         }
-        int getWidth(){
+        const int getWidth(){
             return width;
         }
-        int getHeight(){
+        const int getHeight(){
             return height;
         }
-        bool addBlockedCell(const std::pair<int,int> toAdd){
+        const bool addBlockedCell(State toAdd){
             if(isLegalLocation(toAdd)){
                 blockedCells.push_back(toAdd);
                 return true;
             }
             return false;
         }
-        bool addDirtyCell(const std::pair<int,int> toAdd){
+        const bool addDirtyCell(const State toAdd){
             if(isLegalLocation(toAdd)){
                 dirtyCells.push_back(toAdd);
                 return true;
             }
             return false;
         }
-        bool changeStartLocation(const std::pair<int,int> location){
+        const bool changeStartLocation(const State location){
             if(isLegalLocation(location)){
-                startLocation = location;
+                startLocation = State::newState(location.getX(),location.getY());
                 return true;
             }
             return false;
         }
-        std::vector<std::pair<int,int>>::size_type getNumberBlockedCells(){
+        const std::vector<State>::size_type getNumberBlockedCells(){
             return blockedCells.size();
         }
-        std::vector<std::pair<int,int>>::size_type getNumberDirtyCells(){
+        const std::vector<State>::size_type getNumberDirtyCells(){
             return dirtyCells.size();
         }
-        std::pair<int,int> getStartLocation(){
+        const State getStartLocation(){
             return startLocation;
         }
 };

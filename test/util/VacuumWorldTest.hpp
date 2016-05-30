@@ -12,6 +12,23 @@ TEST_CASE("VacuumWorld creation", "[VacuumWorld]"){
     
 }
 
+TEST_CASE("VacuumWorld::State = operator", "[VacuumWorld]"){
+
+    VacuumWorld::State s = VacuumWorld::State::newState(0,0);
+    VacuumWorld::State t = VacuumWorld::State::newState(9,9);
+
+    REQUIRE(s.getX() == 0);
+    REQUIRE(s.getY() == 0);
+    REQUIRE(t.getX() == 9);
+    REQUIRE(t.getY() == 9);
+
+    s = t;
+
+    REQUIRE(s.getX() == 9);
+    REQUIRE(s.getY() == 9);
+
+}
+
 TEST_CASE("VacuumWorld setting variables", "[VacuumWorld]"){
 
     VacuumWorld vacuumWorld;
@@ -21,20 +38,25 @@ TEST_CASE("VacuumWorld setting variables", "[VacuumWorld]"){
     REQUIRE(vacuumWorld.getWidth() == 10);
     REQUIRE(vacuumWorld.getHeight() == 13);
 
-    std::pair<int,int> pair1 = std::make_pair(3,5);
-    std::pair<int,int> pair2 = std::make_pair(1,3);
+    VacuumWorld::State pair1 = VacuumWorld::State::newState(3,5);
+    VacuumWorld::State pair2 = VacuumWorld::State::newState(1,3);
     REQUIRE(vacuumWorld.getNumberBlockedCells() == 0);
     REQUIRE(vacuumWorld.getNumberDirtyCells() == 0);
-    REQUIRE(vacuumWorld.getStartLocation().first == 0);
-    REQUIRE(vacuumWorld.getStartLocation().second == 0);
+    REQUIRE(vacuumWorld.getStartLocation().getX() == 0);
+    REQUIRE(vacuumWorld.getStartLocation().getY() == 0);
+
+    REQUIRE(pair1.getX() == 3);
+    REQUIRE(pair1.getY() == 5);
+    REQUIRE(pair2.getX() == 1);
+    REQUIRE(pair2.getY()  == 3);
 
     REQUIRE(vacuumWorld.changeStartLocation(pair1)); 
-    REQUIRE(vacuumWorld.getStartLocation().first == 3); 
-    REQUIRE(vacuumWorld.getStartLocation().second == 5);
+    REQUIRE(vacuumWorld.getStartLocation().getX() == 3); 
+    REQUIRE(vacuumWorld.getStartLocation().getY() ==  5);
 
     REQUIRE(vacuumWorld.changeStartLocation(pair2));
-    REQUIRE(vacuumWorld.getStartLocation().first == 1);
-    REQUIRE(vacuumWorld.getStartLocation().second == 3);
+    REQUIRE(vacuumWorld.getStartLocation().getX() == 1);
+    REQUIRE(vacuumWorld.getStartLocation().getY() == 3);
 
 }
 
@@ -46,9 +68,11 @@ TEST_CASE("VacuumWorld getters", "[VacuumWorld]"){
     vacuumWorld.setHeight(9);
 
     for(int i = 0; i < 10; i++){
-        std::pair<int, int> _t = vacuumWorld.randomLocation();
-        LOG(INFO) << "R_LOC: " << _t.first << " " << _t.second << std::endl;
+        VacuumWorld::State _t = vacuumWorld.randomLocation();
+
+        LOG(INFO) << "R_LOC: " << _t.getX() << " " << _t.getY() << std::endl;
         REQUIRE(vacuumWorld.isLegalLocation(_t));
     }
+
 
 }
