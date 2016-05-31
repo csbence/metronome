@@ -4,7 +4,7 @@
 
 TEST_CASE("VacuumWorld creation", "[VacuumWorld]"){
 
-    VacuumWorld vacuumWorld; 
+    VacuumWorld vacuumWorld{0,0,VacuumWorld::State(0,0),VacuumWorld::State(0,0)};
 
     REQUIRE(vacuumWorld.getWidth() == 0);
     REQUIRE(vacuumWorld.getHeight() == 0);
@@ -31,7 +31,7 @@ TEST_CASE("VacuumWorld::State = operator", "[VacuumWorld]"){
 
 TEST_CASE("VacuumWorld setting variables", "[VacuumWorld]"){
 
-    VacuumWorld vacuumWorld;
+    VacuumWorld vacuumWorld{9,9,VacuumWorld::State(2,3),VacuumWorld::State(4,4)};
 
     vacuumWorld.setWidth(10);
     vacuumWorld.setHeight(13);
@@ -42,27 +42,19 @@ TEST_CASE("VacuumWorld setting variables", "[VacuumWorld]"){
     VacuumWorld::State pair2 = VacuumWorld::State{1,3};
     REQUIRE(vacuumWorld.getNumberBlockedCells() == 0);
     REQUIRE(vacuumWorld.getNumberDirtyCells() == 0);
-    REQUIRE(vacuumWorld.getStartLocation().getX() == 0);
-    REQUIRE(vacuumWorld.getStartLocation().getY() == 0);
+    REQUIRE(vacuumWorld.getStartLocation().getX() == 2);
+    REQUIRE(vacuumWorld.getStartLocation().getY() == 3);
 
     REQUIRE(pair1.getX() == 3);
     REQUIRE(pair1.getY() == 5);
     REQUIRE(pair2.getX() == 1);
     REQUIRE(pair2.getY()  == 3);
 
-    REQUIRE(vacuumWorld.changeStartLocation(pair1)); 
-    REQUIRE(vacuumWorld.getStartLocation().getX() == 3); 
-    REQUIRE(vacuumWorld.getStartLocation().getY() ==  5);
-
-    REQUIRE(vacuumWorld.changeStartLocation(pair2));
-    REQUIRE(vacuumWorld.getStartLocation().getX() == 1);
-    REQUIRE(vacuumWorld.getStartLocation().getY() == 3);
-
 }
 
 TEST_CASE("VacuumWorld getters", "[VacuumWorld]"){
     
-    VacuumWorld vacuumWorld;
+    VacuumWorld vacuumWorld{13,9,VacuumWorld::State(3,3),VacuumWorld::State(3,5)};
 
     vacuumWorld.setWidth(13);
     vacuumWorld.setHeight(9);

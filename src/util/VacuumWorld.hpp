@@ -82,33 +82,39 @@ class VacuumWorld{
         unsigned int initialAmountDirty = 1;
         const unsigned long initialCost = 1.0;
     public:
+        VacuumWorld(unsigned int width, unsigned int height, State start, State goal) :
+                width(width),
+                height(height),
+                startLocation(start),
+                goalLocation(goal)
+                {}
        /***
         *** Given a state and action pair give the cost
         *** for taking the action in the state
         *** TODO: make it take a cost function instead of constant
         ***/
-        const Cost getCost(State s, Action a){
+       Cost getCost(State s, Action a) const{
             return initialCost;
         }
-	    const Action randomAction(){
+	    Action randomAction() const{
             Action a;
             a.setValue(rand() % maxActions);
 		    return a;
         }
-        const State randomLocation(){
+        State randomLocation() const{
             unsigned int x = rand() % width;
             unsigned int y = rand() % height;
 
             return State{x,y};
         }
-        const State getGoal(){
+        State getGoal() const{
             return State{goalLocation.getX(),goalLocation.getY()};
         }
-        const bool isGoal(State location){
+        bool isGoal(const State location) const{
             return location.getX() == goalLocation.getX() &&
                    location.getY() == goalLocation.getY();
         }
-        const bool inBlockedCells(State location){
+        bool inBlockedCells(const State location) const{
             for (auto it : blockedCells){
                 if(it.getX() == location.getX() && it.getY() == location.getY()){
                     return true;
@@ -116,50 +122,43 @@ class VacuumWorld{
             }
             return false;
         }
-        const bool isLegalLocation(State location){
+        bool isLegalLocation(State location) const{
             return  location.getX() < width
                     && location.getY() < height && !inBlockedCells(location);
         }
-        void setWidth(const int newWidth){
+        void setWidth(const int newWidth) {
             width = newWidth;
         }
         void setHeight(const int newHeight){
             height = newHeight;
         }
-        const int getWidth(){
+        int getWidth() const{
             return width;
         }
-        const int getHeight(){
+       int getHeight() const{
             return height;
         }
-        const bool addBlockedCell(State toAdd){
+        bool addBlockedCell(const State toAdd) {
             if(isLegalLocation(toAdd)){
                 blockedCells.push_back(toAdd);
                 return true;
             }
             return false;
         }
-        const bool addDirtyCell(const State toAdd){
+        bool addDirtyCell(const State toAdd) {
             if(isLegalLocation(toAdd)){
                 dirtyCells.push_back(toAdd);
                 return true;
             }
             return false;
         }
-        const bool changeStartLocation(const State location){
-            if(isLegalLocation(location)){
-                startLocation = State{location.getX(),location.getY()};
-                return true;
-            }
-            return false;
-        }
-        const std::vector<State>::size_type getNumberBlockedCells(){
+        std::vector<State>::size_type getNumberBlockedCells() const{
             return blockedCells.size();
         }
-        const std::vector<State>::size_type getNumberDirtyCells(){
+        std::vector<State>::size_type getNumberDirtyCells() const{
             return dirtyCells.size();
         }
-        const State getStartLocation(){
+        State getStartLocation() const{
             return startLocation;
         }
 };
