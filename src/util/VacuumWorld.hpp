@@ -18,13 +18,16 @@ class VacuumWorld{
             private:
                 unsigned int x;
                 unsigned int y;
+                bool dirty;
+                bool object;
                 void swap(State &first, State &second){
                     using std::swap;
                     swap(first.x, second.x);
                     swap(first.y, second.y);
                 }
             public:
-                State(unsigned int x, unsigned int y) : x(x), y(y) {}
+                State() : x(0), y(0), dirty(false), object(false) {}
+                State(unsigned int x, unsigned int y) : x(x), y(y), dirty(false), object(false) {}
                 State& operator=(State toCopy){
                     std::cout << "THIS_X_Y: " << this->getX() << " " << this->getY()<< std::endl;
                     std::cout << "COPY_X_Y: " << toCopy.getX() << " " << toCopy.getY() << std::endl;
@@ -32,6 +35,18 @@ class VacuumWorld{
                     std::cout << "THIS_X_Y: " << this->getX() << " " << this->getY()<< std::endl;
                     std::cout << "COPY_X_Y: " << toCopy.getX() << " " << toCopy.getY() << std::endl;
                     return *this;
+                }
+                void setDirty(){
+                    dirty = !dirty;
+                }
+                void setObject(){
+                    object = !object;
+                }
+                bool isDirty() const{
+                    return dirty;
+                }
+                bool isObject() const{
+                    return object;
                 }
                 unsigned int getX() const{
                     return x;
@@ -74,8 +89,8 @@ class VacuumWorld{
         */
 	    const unsigned int maxActions = 5;
         unsigned int width = 0; 
-        unsigned int height = 0; 
-        std::vector<State> blockedCells; 
+        unsigned int height = 0;
+        std::vector<State> blockedCells;
         std::vector<State> dirtyCells;
         State startLocation{0,0};
         State goalLocation{0,0};
@@ -87,7 +102,30 @@ class VacuumWorld{
                 height(height),
                 startLocation(start),
                 goalLocation(goal)
-                {}
+                { }
+        void print(std::ostream &out) {
+            char grid[height][width];
+            for(int i = 0; i < height; ++i) {
+                for( int j = 0; j < width; ++j) {
+                  grid[i][j] = '_';
+                }
+            }
+            for(auto it : blockedCells) {
+                grid[(it).getX()][(it).getY()] = '#';
+            }
+            for(auto it : dirtyCells) {
+                grid[(it).getX()][(it).getY()] = '$';
+            }
+            grid[startLocation.getX()][startLocation.getY()] = '@';
+            grid[goalLocation.getX()][goalLocation.getY()] = 'G';
+
+            for(int i = 0; i < height; ++i){
+                for(int j = 0; j < width; ++j) {
+                    out << grid[i][j];
+                }
+                out << std::endl;
+            }
+        }
        /***
         *** Given a state and action pair give the cost
         *** for taking the action in the state
@@ -115,12 +153,10 @@ class VacuumWorld{
                    location.getY() == goalLocation.getY();
         }
         bool inBlockedCells(const State location) const{
-            for (auto it : blockedCells){
-                if(it.getX() == location.getX() && it.getY() == location.getY()){
-                    return true;
-                }
-            }
-            return false;
+            return location.isObject();
+        }
+        bool inDirtyCells(const State location) const{
+            return location.isDirty();
         }
         bool isLegalLocation(State location) const{
             return  location.getX() < width
@@ -140,6 +176,7 @@ class VacuumWorld{
         }
         bool addBlockedCell(const State toAdd) {
             if(isLegalLocation(toAdd)){
+                toAdd.isObject();
                 blockedCells.push_back(toAdd);
                 return true;
             }
@@ -147,6 +184,7 @@ class VacuumWorld{
         }
         bool addDirtyCell(const State toAdd) {
             if(isLegalLocation(toAdd)){
+                toAdd.isDirty();
                 dirtyCells.push_back(toAdd);
                 return true;
             }

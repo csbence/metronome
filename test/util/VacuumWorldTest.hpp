@@ -35,6 +35,7 @@ TEST_CASE("VacuumWorld setting variables", "[VacuumWorld]"){
 
     vacuumWorld.setWidth(10);
     vacuumWorld.setHeight(13);
+
     REQUIRE(vacuumWorld.getWidth() == 10);
     REQUIRE(vacuumWorld.getHeight() == 13);
 
@@ -66,5 +67,19 @@ TEST_CASE("VacuumWorld getters", "[VacuumWorld]"){
         REQUIRE(vacuumWorld.isLegalLocation(_t));
     }
 
+
+}
+
+TEST_CASE("VacuumWorld printing", "[VacuumWorld]"){
+    VacuumWorld vacuumWorld{3,3,VacuumWorld::State{0,0},VacuumWorld::State{2,2}};
+
+
+    vacuumWorld.print(LOG(INFO));
+    vacuumWorld.addDirtyCell(VacuumWorld::State{1,1});
+    vacuumWorld.addDirtyCell(VacuumWorld::State{1,2});
+
+    vacuumWorld.print(LOG(INFO));
+    vacuumWorld.addBlockedCell(VacuumWorld::State{2,1});
+    vacuumWorld.print(LOG(INFO));
 
 }
