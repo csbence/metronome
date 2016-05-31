@@ -14,8 +14,8 @@ TEST_CASE("VacuumWorld creation", "[VacuumWorld]"){
 
 TEST_CASE("VacuumWorld::State = operator", "[VacuumWorld]"){
 
-    VacuumWorld::State s = VacuumWorld::State::newState(0,0);
-    VacuumWorld::State t = VacuumWorld::State::newState(9,9);
+    VacuumWorld::State s = VacuumWorld::State{0,0};
+    VacuumWorld::State t = VacuumWorld::State{9,9};
 
     REQUIRE(s.getX() == 0);
     REQUIRE(s.getY() == 0);
@@ -38,8 +38,8 @@ TEST_CASE("VacuumWorld setting variables", "[VacuumWorld]"){
     REQUIRE(vacuumWorld.getWidth() == 10);
     REQUIRE(vacuumWorld.getHeight() == 13);
 
-    VacuumWorld::State pair1 = VacuumWorld::State::newState(3,5);
-    VacuumWorld::State pair2 = VacuumWorld::State::newState(1,3);
+    VacuumWorld::State pair1 = VacuumWorld::State{3,5};
+    VacuumWorld::State pair2 = VacuumWorld::State{1,3};
     REQUIRE(vacuumWorld.getNumberBlockedCells() == 0);
     REQUIRE(vacuumWorld.getNumberDirtyCells() == 0);
     REQUIRE(vacuumWorld.getStartLocation().getX() == 0);

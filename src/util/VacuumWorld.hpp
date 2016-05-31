@@ -9,17 +9,22 @@
 class VacuumWorld{
 
     public:
-        /***
-        *** State <- location of the agent as a pair
-        *** Action <- value representing the action taken {N,S,E,W,V} = {0,1,2,3,4}
-        *** Cost <- value for taking action from a state
-        ***/
+        /*
+         State <- location of the agent as a pair
+         Action <- value representing the action taken {N,S,E,W,V} = {0,1,2,3,4}
+         Cost <- value for taking action from a state
+        */
         class State{
             private:
-                unsigned int _x;
-                unsigned int _y;
-                State(unsigned int x, unsigned int y) : _x(x), _y(y) {}
+                unsigned int x;
+                unsigned int y;
+                void swap(State &first, State &second){
+                    using std::swap;
+                    swap(first.x, second.x);
+                    swap(first.y, second.y);
+                }
             public:
+                State(unsigned int x, unsigned int y) : x(x), y(y) {}
                 State& operator=(State toCopy){
                     std::cout << "THIS_X_Y: " << this->getX() << " " << this->getY()<< std::endl;
                     std::cout << "COPY_X_Y: " << toCopy.getX() << " " << toCopy.getY() << std::endl;
@@ -28,59 +33,52 @@ class VacuumWorld{
                     std::cout << "COPY_X_Y: " << toCopy.getX() << " " << toCopy.getY() << std::endl;
                     return *this;
                 }
-                friend void swap(State &first, State &second){
-                    using std::swap;
-                    swap(first._x, second._x);
-                    swap(first._y, second._y);
+                unsigned int getX() const{
+                    return x;
                 }
-                static const State newState(const unsigned int x, const unsigned int y){
-                    return State(x,y);
-                } 
-                const unsigned int getX() const{
-                    const unsigned int ret = _x;
-                    return ret;
-                }
-                const unsigned int getY() const{
-                    const unsigned int ret = _y;
-                    return ret;
+                unsigned int getY() const{
+                    return y;
                 }
         };
         class Action{
             private:
-                unsigned int _value;
+                mutable unsigned int value;
+                mutable char rep;
 
             public:
-                constexpr char evaluate(){
-                    return 'X';
+                char getRepresentation() const{
+                    return rep;
                 } 
-                constexpr unsigned int value(){ 
-                    return _value; 
+                unsigned int getValue() const{
+                    return value;
                 }
-                void setValue(const unsigned int toSet) {
-                    _value = toSet;
+                void setValue(const unsigned int toSet) const{
+                    value = toSet;
+                }
+                void setRepresentation(const char toSet) const{
+                    rep = toSet;
                 }
         }; 
         typedef unsigned long Cost;
 
- 
     private:
-        /***
-        *** maxActions <- maximum number of actions
-        *** width/height <- internal size representation of world
-        *** blockedCells <- stores locations of the objects in world
-        *** dirtyCells <- stores locations of dirt in the world
-        *** startLocation <- where the agent begins
-        *** goalLocation <- where the agent needs to end up
-        *** initalAmountDirty <- how many cells are dirty
-        *** initialCost <- constant cost value
-        ***/
+        /*
+         maxActions <- maximum number of actions
+         width/height <- internal size representation of world
+         blockedCells <- stores locations of the objects in world
+         dirtyCells <- stores locations of dirt in the world
+         startLocation <- where the agent begins
+         goalLocation <- where the agent needs to end up
+         initalAmountDirty <- how many cells are dirty
+         initialCost <- constant cost value
+        */
 	    const unsigned int maxActions = 5;
         unsigned int width = 0; 
         unsigned int height = 0; 
         std::vector<State> blockedCells; 
         std::vector<State> dirtyCells;
-        State startLocation = State::newState(0,0);
-        State goalLocation = State::newState(0,0);
+        State startLocation{0,0};
+        State goalLocation{0,0};
         unsigned int initialAmountDirty = 1;
         const unsigned long initialCost = 1.0;
     public:
@@ -101,10 +99,10 @@ class VacuumWorld{
             unsigned int x = rand() % width;
             unsigned int y = rand() % height;
 
-            return State::newState(x,y);
+            return State{x,y};
         }
         const State getGoal(){
-            return State::newState(goalLocation.getX(),goalLocation.getY());
+            return State{goalLocation.getX(),goalLocation.getY()};
         }
         const bool isGoal(State location){
             return location.getX() == goalLocation.getX() &&
@@ -150,7 +148,7 @@ class VacuumWorld{
         }
         const bool changeStartLocation(const State location){
             if(isLegalLocation(location)){
-                startLocation = State::newState(location.getX(),location.getY());
+                startLocation = State{location.getX(),location.getY()};
                 return true;
             }
             return false;
