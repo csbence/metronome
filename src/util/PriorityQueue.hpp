@@ -5,21 +5,17 @@
 #include <functional>
 #include <vector>
 
-template<typename T>
-class PriorityQueue {
- public:
+template <typename T> class PriorityQueue {
+public:
   PriorityQueue(unsigned int capacity,
-                std::function<int(const T&, const T&)> comparator)
-      : capacity{capacity},
-        comparator{comparator},
-        queue{capacity},
-        size{0} { }
+                std::function<int(const T &, const T &)> comparator)
+      : capacity{capacity}, comparator{comparator}, queue{capacity}, size{0} {}
 
-  void push(const T& item) {
+  void push(const T &item) {
     if (size == capacity) {
       throw std::overflow_error(
           "Priority queue reached its maximum capacity: " +
-              std::to_string(capacity));
+          std::to_string(capacity));
     }
 
     if (size == 0) {
@@ -32,14 +28,14 @@ class PriorityQueue {
     ++size;
   }
 
-  T* pop() {
+  T *pop() {
     if (size == 0) {
       return nullptr;
     }
 
     --size;
     auto result = queue[0];
-    auto& x = *queue[size];
+    auto &x = *queue[size];
     queue[size] = nullptr;
 
     if (size != 0) {
@@ -48,34 +44,32 @@ class PriorityQueue {
 
     BOOST_ASSERT_MSG(result->index == 0,
                      "Internal index of top item was not null");
-    return const_cast<T*>(result);
+    return const_cast<T *>(result);
   }
 
-  const T* top() const {
+  const T *top() const {
     if (size == 0) {
       return nullptr;
     }
 
     return queue[0];
   }
-/*
-  void print(){
-    std::cout << "Queue: " << std::endl;
-    if(isEmpty()) {
-        return;
+  /*
+    void print(){
+      std::cout << "Queue: " << std::endl;
+      if(isEmpty()) {
+          return;
+      }
+      for(auto &i : queue){
+          std::cout << " " << i << " ";
+      }
+      std::cout << std::endl;
     }
-    for(auto &i : queue){
-        std::cout << " " << i << " ";
-    }
-    std::cout << std::endl;
-  }
-*/
+  */
 
-  void clear() {
-    size = 0;
-  }
+  void clear() { size = 0; }
 
-  void update(T& item) {
+  void update(T &item) {
     auto index = item.index;
     siftUp(item.index, item);
 
@@ -88,8 +82,8 @@ class PriorityQueue {
   unsigned int getSize() const { return size; }
   bool isEmpty() const { return size == 0; }
 
- private:
-  void siftUp(const unsigned int index, const T& item) {
+private:
+  void siftUp(const unsigned int index, const T &item) {
     unsigned int currentIndex = index;
     while (currentIndex > 0) {
       const auto parentIndex = (currentIndex - 1) >> 1;
@@ -109,7 +103,7 @@ class PriorityQueue {
     item.index = currentIndex;
   }
 
-  void siftDown(const unsigned int index, const T& item) {
+  void siftDown(const unsigned int index, const T &item) {
     auto currentIndex = index;
     const unsigned int half = size >> 1;
 
@@ -137,8 +131,8 @@ class PriorityQueue {
   }
 
   const unsigned int capacity;
-  std::function<int(const T&, const T&)> comparator;
-  std::vector<const T*> queue;
+  std::function<int(const T &, const T &)> comparator;
+  std::vector<const T *> queue;
   unsigned int size;
 };
 

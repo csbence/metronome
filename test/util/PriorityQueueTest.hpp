@@ -1,18 +1,20 @@
-#include "util/PriorityQueue.hpp"
 #include "catch.hpp"
 #include "easylogging++.h"
+#include "util/PriorityQueue.hpp"
 
 namespace {
 
 struct TestNode {
-  TestNode(int value) : value(value) { }
+  TestNode(int value) : value(value) {}
   mutable unsigned int index;
   int value;
 };
 
-int nodeCompare(const TestNode& lhs, const TestNode& rhs) {
-  if (lhs.value < rhs.value) return -1;
-  if (lhs.value > rhs.value) return 1;
+int nodeCompare(const TestNode &lhs, const TestNode &rhs) {
+  if (lhs.value < rhs.value)
+    return -1;
+  if (lhs.value > rhs.value)
+    return 1;
   return 0;
 }
 
@@ -94,7 +96,6 @@ TEST_CASE("PriorityQueue order test", "[PriorityQueue]") {
     queue.push(node6);
     queue.push(node7);
     queue.push(node8);
-
 
     int value = -10;
     while (!queue.isEmpty()) {

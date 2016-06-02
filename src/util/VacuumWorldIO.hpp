@@ -2,30 +2,30 @@
 #define VACUUM_WORLD_IO_HPP
 
 #include <boost/assert.hpp>
-#include <vector>
 #include <fstream>
 #include <functional>
+#include <vector>
 
-//template<typename T>
-class VacuumWorldIO{
-    public:
-        static VacuumWorld parseFromStream(const std::ifstream &inputFile){
-           
-            VacuumWorld vacuumWorld;
-            int rowCount = 0;
-            int colCount = 0;
+// template<typename T>
+class VacuumWorldIO {
+public:
+  static VacuumWorld parseFromStream(const std::ifstream &inputFile) {
 
-            try{
-                /* TODO: read the inputFile */
-                inputFile >> rowCount >> colCount;
+    VacuumWorld vacuumWorld;
+    int rowCount = 0;
+    int colCount = 0;
 
-            }
-            catch (std::exception &e){
-                std::cout << e.what << '\n';
-            }
-            return vacuumWorld;
-        }
-    private:
+    try {
+      /* TODO: read the inputFile */
+      inputFile >> rowCount >> colCount;
+
+    } catch (std::exception &e) {
+      std::cout << e.what << '\n';
+    }
+    return vacuumWorld;
+  }
+
+private:
 };
 
 #endif
