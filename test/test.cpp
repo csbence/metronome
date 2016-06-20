@@ -5,6 +5,7 @@
 #include <boost/multi_array.hpp>
 #include "easylogging++.h"
 #include "util/PriorityQueueTest.hpp"
+#include "algorithm/AStarTest.hpp"
 #include "util/VacuumWorldTest.hpp"
 
 INITIALIZE_EASYLOGGINGPP
