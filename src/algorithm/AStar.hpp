@@ -10,71 +10,75 @@
 
 namespace metronome {
 
-template<typename Domain>
+template <typename Domain>
 class AStar {
-  typedef typename Domain::State State;
-  typedef typename Domain::Action Action;
-  typedef typename Domain::Cost Cost;
+    typedef typename Domain::State State;
+    typedef typename Domain::Action Action;
+    typedef typename Domain::Cost Cost;
 
- public:
-  AStar(Domain domain)
-      : domain(domain),
-        openList(10000000, fValueComparator) { }
-
-  std::vector<Action> plan(State startState) {
-    const Node localStartNode =
-        Node(nullptr, std::move(startState), Action(), 0,
-             domain.heuristic(startState), true);
-    auto startNode = nodePool.construct(localStartNode);
-
-    metronome::Hasher<State> hasher;
-
-    hasher(localStartNode.state);
-
-    nodes[localStartNode.state] = startNode;
-  }
-
- private:
-  class Node {
-   public:
-    Node(Node* parent, State state, Action action, Cost g, Cost f, bool open)
-        : parent(parent),
-          state(state),
-          action(std::move(action)),
-          g(g),
-          f(f),
-          open(open) {
+public:
+    AStar(Domain domain)
+            : domain(domain), openList(10000000, fValueComparator) {
     }
 
-    unsigned long hash() { return state->hash(); }
+    std::vector<Action> plan(State startState) {
+        const Node localStartNode = Node(nullptr, std::move(startState),
+                Action(), 0, domain.heuristic(startState), true);
+        auto startNode = nodePool.construct(localStartNode);
 
-    bool operator==(const Node& node) const { return state == node.state; }
+        metronome::Hasher<State> hasher;
 
-    Node* parent;
-    State state;
-    Action action;
-    Cost g;
-    Cost f;
-    /** True if the node is in the open list. */
-    bool open;
-  };
+        hasher(localStartNode.state);
 
-  static int fValueComparator(const Node& lhs, const Node& rhs) {
-    if (lhs.f < rhs.f)
-      return -1;
-    if (lhs.f > rhs.f)
-      return 1;
-    if (lhs.f > rhs.f)
-      return -1;
-    if (lhs.f < rhs.f)
-      return 1;
-    return 0;
-  }
+        nodes[localStartNode.state] = startNode;
+    }
 
-  Domain domain;
-  PriorityQueue<Node> openList;
-  std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes;
-  boost::object_pool<Node> nodePool{100000000, 100000000};
+private:
+    class Node {
+    public:
+        Node(Node* parent, State state, Action action, Cost g, Cost f,
+                bool open)
+                : parent(parent),
+                  state(state),
+                  action(std::move(action)),
+                  g(g),
+                  f(f),
+                  open(open) {
+        }
+
+        unsigned long hash() {
+            return state->hash();
+        }
+
+        bool operator==(const Node& node) const {
+            return state == node.state;
+        }
+
+        Node* parent;
+        State state;
+        Action action;
+        Cost g;
+        Cost f;
+        /** True if the node is in the open list. */
+        bool open;
+    };
+
+    static int fValueComparator(const Node& lhs, const Node& rhs) {
+        if (lhs.f < rhs.f)
+            return -1;
+        if (lhs.f > rhs.f)
+            return 1;
+        if (lhs.f > rhs.f)
+            return -1;
+        if (lhs.f < rhs.f)
+            return 1;
+        return 0;
+    }
+
+    Domain domain;
+    PriorityQueue<Node> openList;
+    std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes;
+    boost::object_pool<Node> nodePool{100000000, 100000000};
 };
 }
 

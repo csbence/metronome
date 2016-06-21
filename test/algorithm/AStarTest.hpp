@@ -1,29 +1,29 @@
-#ifndef METRONOME_ASTARTEST_HPP
-#define METRONOME_ASTARTEST_HPP
-
 #include "algorithm/AStar.hpp"
 #include <catch.hpp>
 
 namespace {
 
 class TestDomain {
- public:
-  class State { };
-  class Action { };
-  typedef unsigned long Cost;
+public:
+    class State {
+    public:
+        std::size_t hash() const {
+            return 0;
+        }
+    };
 
-  Cost heuristic(State&) {
-    return 0;
-  }
+    class Action {};
+    typedef unsigned long Cost;
 
+    Cost heuristic(State&) {
+        return 0;
+    }
 };
 
 TEST_CASE("AStar test", "[AStar]") {
-  TestDomain testDomain;
-  metronome::AStar<TestDomain> aStar(testDomain);
+    TestDomain testDomain;
+    metronome::AStar<TestDomain> aStar(testDomain);
 
-  aStar.plan(TestDomain::State());
+    aStar.plan(TestDomain::State());
 }
-
 }
-#endif //METRONOME_ASTARTEST_HPP
