@@ -6,7 +6,7 @@
 #include "easylogging++.h"
 #include "util/PriorityQueueTest.hpp"
 #include "algorithm/AStarTest.hpp"
-#include "util/VacuumWorldTest.hpp"
+#include "domains/VacuumWorldTest.hpp"
 
 INITIALIZE_EASYLOGGINGPP
 

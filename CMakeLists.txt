@@ -6,15 +6,15 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 set(SOURCE_FILES
         src/main.cpp
         src/algorithm/AStar.hpp
-        src/util/VacuumWorld.hpp
-        src/util/VacuumWorldIO.hpp
+        src/domains/VacuumWorld.hpp
+        src/domains/VacuumWorldIO.hpp
         src/util/PriorityQueue.hpp
         src/util/Hasher.hpp)
 
 set(TEST_FILES
         test/test.cpp
         test/util/PriorityQueueTest.hpp
-        test/util/VacuumWorldTest.hpp
+        test/domains/VacuumWorldTest.hpp
         test/algorithm/AStarTest.hpp)
 
 add_executable(Metronome ${SOURCE_FILES})
