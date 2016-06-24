@@ -13,9 +13,9 @@ set(SOURCE_FILES
 
 set(TEST_FILES
         test/test.cpp
-        test/util/PriorityQueueTest.hpp
-        test/domains/VacuumWorldTest.hpp
-        test/algorithm/AStarTest.hpp)
+        test/util/PriorityQueueTest.cpp
+        test/domains/VacuumWorldTest.cpp
+        test/algorithm/AStarTest.cpp)
 
 add_executable(Metronome ${SOURCE_FILES})
 add_executable(MetronomeTest ${TEST_FILES})

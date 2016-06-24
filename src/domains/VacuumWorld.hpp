@@ -6,6 +6,12 @@
 #include <functional>
 #include <vector>
 
+/*
+ * NOTE: currently VWorld operates as GWorld 
+ * its assumed there is only one dirty cell
+ * just for simplicity and getting stuff working
+ */
+
 class VacuumWorld {
 public:
     /***
@@ -13,32 +19,57 @@ public:
     *** Action <- value representing the action taken {N,S,E,W,V} = {0,1,2,3,4}
     *** Cost <- value for taking action from a state
     ***/
+    class Action {
+    private:
+        unsigned int value;
+
+    public:
+        constexpr char evaluate() {
+            if(value == 0) {
+                return 'N';
+            }
+            else if(value == 1) {
+                return 'S';
+            }
+            else if(value == 2) {
+                return 'E';
+            }
+            else if(value == 3) {
+                return 'W';
+            }
+            else {
+                return 'V';
+            }
+        }
+        constexpr unsigned int getValue() {
+            return value;
+        }
+        void setValue(const unsigned int toSet) {
+            value = toSet;
+        }
+    };
+    typedef unsigned long Cost;
     class State {
     private:
         unsigned int x;
         unsigned int y;
         unsigned long cost;
-        State(unsigned int x, unsigned int y) : x(x), y(y) {
-        }
+        VacuumWorld::Action a;
 
-    public:
-        State& operator=(State toCopy) {
-            std::cout << "THIS_X_Y: " << this->getX() << " " << this->getY()
-                      << std::endl;
-            std::cout << "COPY_X_Y: " << toCopy.getX() << " " << toCopy.getY()
-                      << std::endl;
-            swap(*this, toCopy);
-            std::cout << "THIS_X_Y: " << this->getX() << " " << this->getY()
-                      << std::endl;
-            std::cout << "COPY_X_Y: " << toCopy.getX() << " " << toCopy.getY()
-                      << std::endl;
-            return *this;
-        }
         friend void swap(State& first, State& second) {
             using std::swap;
             swap(first.x, second.x);
             swap(first.y, second.y);
         }
+
+        State(unsigned int x, unsigned int y) : x(x), y(y), cost(1.0), a() { }
+
+    public:
+        State& operator=(State toCopy) {
+            swap(*this, toCopy);
+            return *this;
+        }
+
         static const State newState(
                 const unsigned int x, const unsigned int y) {
             return State(x, y);
@@ -58,22 +89,7 @@ public:
             return x == state.x && y == state.y;
         }
     };
-    class Action {
-    private:
-        unsigned int _value;
 
-    public:
-        constexpr char evaluate() {
-            return 'X';
-        }
-        constexpr unsigned int value() {
-            return _value;
-        }
-        void setValue(const unsigned int toSet) {
-            _value = toSet;
-        }
-    };
-    typedef unsigned long Cost;
 
 private:
     /***
@@ -97,11 +113,47 @@ private:
     const unsigned long initialCost = 1.0;
 
 public:
+
+    /***
+     * Calculate the transition state given
+     * a state and action pair
+     * TODO: make allow more than one dirty cell
+     */
+    const State transition(State s, Action a) {
+        if(a.evaluate() == 'N') {
+            State n = s.newState(s.getX(),s.getY()-1);
+            if(isLegalLocation(n)) {
+                return n;
+            }
+        }
+        else if(a.evaluate() == 'E') {
+            State n = s.newState(s.getX()+1,s.getY());
+            if(isLegalLocation(n)) {
+                return n;
+            }
+        }
+        else if(a.evaluate() == 'S') {
+            State n = s.newState(s.getX(),s.getY()+1);
+            if(isLegalLocation(n)) {
+                return n;
+            }
+        }
+        else if(a.evaluate() == 'W') {
+            State n = s.newState(s.getX()-1,s.getY());
+            if(isLegalLocation(n)) {
+                return n;
+            }
+        }
+        return s;
+    }
+
+
     /***
      *** Given a state and action pair give the cost
      *** for taking the action in the state
      *** TODO: make it take a cost function instead of constant
      ***/
+
     const Cost getCost(State s, Action a) {
         return initialCost;
     }

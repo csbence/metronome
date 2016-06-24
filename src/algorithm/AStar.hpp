@@ -36,6 +36,33 @@ public:
 
         nodes[localStartNode.state] = startNode;
 
+        openList.push(localStartNode);
+
+        while(!openList.isEmpty()) {
+
+            Node *q = openList.pop();
+
+            std::vector<State> successors = domain.successors(q);
+
+            for( State successor : successors) {
+
+                if(domain.isGoal(successor)) {
+                    openList.clear();
+                    return constructedPlan;
+                }
+
+                Node n = Node(q,successor,successor.action,q->g + successor.cost,
+                              n.g + domain.heuristic(successor),true);
+
+                auto node = nodePool.construct(n);
+
+
+
+            }
+
+
+        }
+
         return constructedPlan;
     }
 
