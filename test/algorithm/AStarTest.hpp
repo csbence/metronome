@@ -22,8 +22,8 @@ public:
 
 TEST_CASE("AStar test", "[AStar]") {
     TestDomain testDomain;
-    metronome::AStar<TestDomain> aStar(testDomain);
+//    metronome::AStar<TestDomain> aStar(testDomain);
 
-    aStar.plan(TestDomain::State());
+ //   aStar.plan(TestDomain::State());
 }
 }
