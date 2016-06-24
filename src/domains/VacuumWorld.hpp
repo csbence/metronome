@@ -193,5 +193,9 @@ public:
     const State getStartLocation() {
         return startLocation;
     }
+
+    Cost heuristic(State&) {
+        return 0;
+    }
 };
 #endif

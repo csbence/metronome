@@ -22,8 +22,12 @@ public:
     }
 
     std::vector<Action> plan(State startState) {
+
+        std::vector<Action> constructedPlan;
+
         const Node localStartNode = Node(nullptr, std::move(startState),
                 Action(), 0, domain.heuristic(startState), true);
+
         auto startNode = nodePool.construct(localStartNode);
 
         metronome::Hasher<State> hasher;
@@ -31,6 +35,8 @@ public:
         hasher(localStartNode.state);
 
         nodes[localStartNode.state] = startNode;
+
+        return constructedPlan;
     }
 
 private:
