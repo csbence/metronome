@@ -42,6 +42,8 @@ public:
 
             Node *q = openList.pop();
 
+            constructedPlan.push_back(q->action);
+
             std::vector<State> successors = domain.successors(q);
 
             for( State successor : successors) {
@@ -56,10 +58,12 @@ public:
 
                 auto node = nodePool.construct(n);
 
+                hasher(n.state);
 
+                nodes[n.state] = node;
+                openList.push(n);
 
             }
-
 
         }
 

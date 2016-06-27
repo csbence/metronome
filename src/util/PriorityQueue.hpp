@@ -88,6 +88,7 @@ class PriorityQueue {
   unsigned int getSize() const { return size; }
   bool isEmpty() const { return size == 0; }
 
+
  private:
   void siftUp(const unsigned int index, const T& item) {
     unsigned int currentIndex = index;
