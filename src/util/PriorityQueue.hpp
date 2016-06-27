@@ -15,7 +15,7 @@ class PriorityQueue {
         queue{capacity},
         size{0} { }
 
-  void push(const T& item) {
+  void push(const T &item) {
     if (size == capacity) {
       throw std::overflow_error(
           "Priority queue reached its maximum capacity: " +
@@ -24,7 +24,6 @@ class PriorityQueue {
 
     if (size == 0) {
       queue[0] = &item;
-      item.index = 0;
     } else {
       siftUp(size, item);
     }

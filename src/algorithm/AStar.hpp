@@ -44,7 +44,7 @@ public:
 
             constructedPlan.push_back(q->action);
 
-            std::vector<State> successors = domain.successors(q);
+            std::vector<State> successors = domain.successors(q->state);
 
             for( State successor : successors) {
 
@@ -53,8 +53,8 @@ public:
                     return constructedPlan;
                 }
 
-                Node n = Node(q,successor,successor.action,q->g + successor.cost,
-                              n.g + domain.heuristic(successor),true);
+                Node n = Node(q,successor,successor.getAction(),q->g + successor.getCost(),
+                              q->g + successor.getCost() + domain.heuristic(successor),true);
 
                 auto node = nodePool.construct(n);
 
@@ -91,6 +91,7 @@ private:
             return state == node.state;
         }
 
+        unsigned int index;
         Node* parent;
         State state;
         Action action;

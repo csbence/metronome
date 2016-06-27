@@ -7,18 +7,18 @@
 #include <vector>
 
 /*
- * NOTE: currently VWorld operates as GWorld 
+ * NOTE: currently VWorld operates as GWorld
  * its assumed there is only one dirty cell
  * just for simplicity and getting stuff working
  */
 
 class VacuumWorld {
 public:
-    /***
-    *** State <- location of the agent as a pair
-    *** Action <- value representing the action taken {N,S,E,W,V} = {0,1,2,3,4}
-    *** Cost <- value for taking action from a state
-    ***/
+    /*
+     * State <- location of the agent as a pair
+     * Action <- value representing the action taken {N,S,E,W,V} = {0,1,2,3,4}
+     * Cost <- value for taking action from a state
+     */
     class Action {
     private:
         unsigned int value;
@@ -54,7 +54,7 @@ public:
         unsigned int x;
         unsigned int y;
         unsigned long cost;
-        VacuumWorld::Action a;
+        VacuumWorld::Action action;
 
         friend void swap(State& first, State& second) {
             using std::swap;
@@ -62,9 +62,15 @@ public:
             swap(first.y, second.y);
         }
 
-        State(unsigned int x, unsigned int y) : x(x), y(y), cost(1.0), a() { }
+        State(unsigned int x, unsigned int y) : x(x), y(y), cost(1.0), action() { }
 
     public:
+        const unsigned int getCost() const {
+            return this->cost;
+        }
+        const VacuumWorld::Action getAction() const {
+            return this->action;
+        }
         State& operator=(State toCopy) {
             swap(*this, toCopy);
             return *this;
@@ -92,16 +98,16 @@ public:
 
 
 private:
-    /***
-    *** maxActions <- maximum number of actions
-    *** width/height <- internal size representation of world
-    *** blockedCells <- stores locations of the objects in world
-    *** dirtyCells <- stores locations of dirt in the world
-    *** startLocation <- where the agent begins
-    *** goalLocation <- where the agent needs to end up
-    *** initalAmountDirty <- how many cells are dirty
-    *** initialCost <- constant cost value
-    ***/
+    /*
+     * maxActions <- maximum number of actions
+     * width/height <- internal size representation of world
+     * blockedCells <- stores locations of the objects in world
+     * dirtyCells <- stores locations of dirt in the world
+     * startLocation <- where the agent begins
+     * goalLocation <- where the agent needs to end up
+     * initalAmountDirty <- how many cells are dirty
+     * initialCost <- constant cost value
+     */
     const unsigned int maxActions = 5;
     unsigned int width = 0;
     unsigned int height = 0;
@@ -114,7 +120,7 @@ private:
 
 public:
 
-    /***
+    /*
      * Calculate the transition state given
      * a state and action pair
      * TODO: make allow more than one dirty cell
@@ -147,12 +153,11 @@ public:
         return s;
     }
 
-
-    /***
-     *** Given a state and action pair give the cost
-     *** for taking the action in the state
-     *** TODO: make it take a cost function instead of constant
-     ***/
+    /*
+     * Given a state and action pair give the cost
+     * for taking the action in the state
+     * TODO: make it take a cost function instead of constant
+     */
 
     const Cost getCost(State s, Action a) {
         return initialCost;
@@ -248,6 +253,12 @@ public:
 
     Cost heuristic(State&) {
         return 0;
+    }
+
+    std::vector<State> successors(State q){
+        std::vector<State> ret;
+
+        return ret;
     }
 };
 #endif
