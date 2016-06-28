@@ -25,20 +25,20 @@ public:
         unsigned int value;
 
     public:
-        Action() : value(-1) {
+        Action() : value(0) {
         }
         Action(unsigned int v) : value(v) {
         }
         constexpr char evaluate() const {
-            if (value == 0) {
+            if (value == 1) {
                 return 'N';
-            } else if (value == 1) {
-                return 'S';
             } else if (value == 2) {
-                return 'E';
+                return 'S';
             } else if (value == 3) {
-                return 'W';
+                return 'E';
             } else if (value == 4) {
+                return 'W';
+            } else if (value == 5) {
                 return 'V';
             } else {
                 return '~';
@@ -74,7 +74,7 @@ public:
             return *this;
         }
 
-        static const State newState(unsigned int x, unsigned int y, unsigned int a = -1) {
+        static const State newState(unsigned int x, unsigned int y, unsigned int a = 0) {
             return State(x, y, a);
         }
         const unsigned int getX() const {
@@ -109,13 +109,13 @@ private:
     unsigned int height;
     std::vector<State> blockedCells;
     std::vector<State> dirtyCells;
-    State startLocation = State::newState(0, 0, -1);
-    State goalLocation = State::newState(width - 1, height - 1, -1);
+    State startLocation = State::newState(0, 0, 0);
+    State goalLocation = State::newState(width - 1, height - 1, 0);
     unsigned int initialAmountDirty = 1;
-    const unsigned long initialCost = 1.0;
+    const unsigned long initialCost = 1;
 
 public:
-    VacuumWorld(State start = State::newState(0, 0, -1), State goal = State::newState(4, 4, -1), unsigned int width = 5,
+    VacuumWorld(State start = State::newState(0, 0, 0), State goal = State::newState(4, 4, 0), unsigned int width = 5,
             unsigned int height = 5, std::vector<State> objectStates = std::vector<State>{})
             : width(width), height(height), blockedCells(objectStates), startLocation(start), goalLocation(goal) {
     }
@@ -180,8 +180,8 @@ public:
     }
 
     const bool inBlockedCells(const State& location) {
-        for (auto it : blockedCells) {
-            if (it.getX() == location.getX() && it.getY() == location.getY()) {
+        for (auto it = blockedCells.cbegin(); it != blockedCells.cend(); ++it) {
+            if (it->getX() == location.getX() && it->getY() == location.getY()) {
                 return true;
             }
         }
@@ -192,11 +192,11 @@ public:
         return location.getX() < width && location.getY() < height && !inBlockedCells(location);
     }
 
-    void setWidth(int newWidth) {
+    void setWidth(unsigned int newWidth) {
         width = newWidth;
     }
 
-    void setHeight(int newHeight) {
+    void setHeight(unsigned int newHeight) {
         height = newHeight;
     }
 
@@ -226,7 +226,7 @@ public:
 
     const bool changeStartLocation(const State& location) {
         if (isLegalLocation(location)) {
-            startLocation = State::newState(location.getX(), location.getY(), -1);
+            startLocation = State::newState(location.getX(), location.getY(), 0);
             return true;
         }
         return false;
@@ -245,14 +245,14 @@ public:
         return startLocation;
     }
 
-    Cost heuristic(State&) {
+    Cost heuristic(const State& state) {
         return 0;
     }
 
     std::vector<SuccessorBundle<VacuumWorld>> successors(State state) {
         std::vector<SuccessorBundle<VacuumWorld>> successors;
 
-        auto actions = {0, 1, 2, 3, 4};
+        unsigned int actions[] = {0, 1, 2, 3, 4};
 
         for (auto a : actions) {
             State newState = this->transition(state, Action(a));
