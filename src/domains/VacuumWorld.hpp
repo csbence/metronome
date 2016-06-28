@@ -59,7 +59,7 @@ public:
         //        unsigned long cost;
         //        VacuumWorld::Action action;
 
-        friend void swap(State first, State second) {
+        friend void swap(State& first, State& second) {
             using std::swap;
             swap(first.x, second.x);
             swap(first.y, second.y);
