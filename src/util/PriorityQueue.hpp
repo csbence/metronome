@@ -4,6 +4,8 @@
 #include <boost/assert.hpp>
 #include <functional>
 #include <vector>
+#include <string>
+
 
 template <typename T>
 class PriorityQueue {
