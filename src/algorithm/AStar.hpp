@@ -26,7 +26,7 @@ public:
         std::vector<Action> constructedPlan;
 
         const Node localStartNode = Node(nullptr, std::move(startState),
-                Action(), 0, domain.heuristic(startState), true);
+                Action(-1), 0, domain.heuristic(startState), true);
 
         auto startNode = nodePool.construct(localStartNode);
 
@@ -91,7 +91,7 @@ private:
             return state == node.state;
         }
 
-        unsigned int index;
+        mutable unsigned int index;
         Node* parent;
         State state;
         Action action;

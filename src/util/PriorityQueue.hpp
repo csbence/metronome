@@ -24,6 +24,7 @@ class PriorityQueue {
 
     if (size == 0) {
       queue[0] = &item;
+      item.index = 0;
     } else {
       siftUp(size, item);
     }

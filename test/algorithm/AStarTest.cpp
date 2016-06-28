@@ -10,6 +10,6 @@ TEST_CASE("AStar test", "[AStar]") {
     VacuumWorld testDomain;
     metronome::AStar<VacuumWorld> aStar(testDomain);
 
-    aStar.plan(VacuumWorld::State::newState(0,0));
+    aStar.plan(testDomain.getStartLocation());
 }
 }
