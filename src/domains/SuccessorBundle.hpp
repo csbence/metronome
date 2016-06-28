@@ -3,9 +3,9 @@
 template <typename Domain>
 class SuccessorBundle {
 public:
-    typedef Domain::State State;
-    typedef Domain::Action Action;
-    typedef Domain::Cost Cost;
+    typedef typename Domain::State State;
+    typedef typename Domain::Action Action;
+    typedef typename Domain::Cost Cost;
 
     SuccessorBundle(State state, Action action, Cost actionCost)
             : state(state), action(action), actionCost(actionCost) {

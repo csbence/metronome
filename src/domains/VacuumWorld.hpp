@@ -25,6 +25,8 @@ public:
         unsigned int value;
 
     public:
+        Action() : value(-1) {
+        }
         Action(unsigned int v) : value(v) {
         }
         constexpr char evaluate() const {
@@ -247,14 +249,14 @@ public:
         return 0;
     }
 
-    std::vector<SuccessorBundle> successors(State state) {
-        std::vector<SuccessorBundle> successors;
+    std::vector<SuccessorBundle<VacuumWorld>> successors(State state) {
+        std::vector<SuccessorBundle<VacuumWorld>> successors;
 
         auto actions = {0, 1, 2, 3, 4};
 
         for (auto a : actions) {
             State newState = this->transition(state, Action(a));
-            successors.push_back(SuccessorBundle{newState, a, this->initialCost});
+            successors.push_back(SuccessorBundle<VacuumWorld>{newState, a, this->initialCost});
         }
 
         return successors;
