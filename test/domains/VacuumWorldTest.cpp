@@ -1,14 +1,14 @@
-#include "domains/VacuumWorld.hpp"
 #include "catch.hpp"
 #include "easylogging++.h"
+#include "domains/VacuumWorld.hpp"
 
 namespace {
 
 TEST_CASE("VacuumWorld creation", "[VacuumWorld]") {
     VacuumWorld vacuumWorld;
 
-    REQUIRE(vacuumWorld.getWidth() == 5);
-    REQUIRE(vacuumWorld.getHeight() == 5);
+    REQUIRE(vacuumWorld.getWidth() == 0);
+    REQUIRE(vacuumWorld.getHeight() == 0);
 }
 
 TEST_CASE("VacuumWorld::State = operator", "[VacuumWorld]") {
@@ -37,7 +37,7 @@ TEST_CASE("VacuumWorld setting variables", "[VacuumWorld]") {
     VacuumWorld::State pair1 = VacuumWorld::State::newState(3, 5);
     VacuumWorld::State pair2 = VacuumWorld::State::newState(1, 3);
     REQUIRE(vacuumWorld.getNumberBlockedCells() == 0);
-    REQUIRE(vacuumWorld.getNumberDirtyCells() == 1);
+    REQUIRE(vacuumWorld.getNumberDirtyCells() == 0);
     REQUIRE(vacuumWorld.getStartLocation().getX() == 0);
     REQUIRE(vacuumWorld.getStartLocation().getY() == 0);
 
@@ -61,9 +61,9 @@ TEST_CASE("VacuumWorld getters", "[VacuumWorld]") {
     vacuumWorld.setWidth(13);
     vacuumWorld.setHeight(9);
 
-    for (int i = 0; i < 10; i++) {
-        std::pair<unsigned int, unsigned int> q = vacuumWorld.randomLocation();
-        VacuumWorld::State _t = VacuumWorld::State::newState(q.first, q.second);
+  for (int i = 0; i < 10; i++) {
+    std::pair<unsigned int,unsigned int> q = vacuumWorld.randomLocation();
+    VacuumWorld::State _t = VacuumWorld::State::newState(q.first,q.second);
 
         LOG(INFO) << "R_LOC: " << _t.getX() << " " << _t.getY() << std::endl;
         REQUIRE(vacuumWorld.isLegalLocation(_t));

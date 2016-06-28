@@ -17,67 +17,84 @@ class AStar {
     typedef typename Domain::Cost Cost;
 
 public:
-    AStar(Domain domain)
-            : domain(domain), openList(10000000, fValueComparator) {
+    AStar(Domain domain) : domain(domain), openList(10000000, fValueComparator) {
     }
 
     std::vector<Action> plan(State startState) {
         std::vector<Action> constructedPlan;
 
-        const Node localStartNode = Node(nullptr, std::move(startState),
-                Action(-1), 0, domain.heuristic(startState), true);
-
+        const Node localStartNode =
+                Node(nullptr, std::move(startState), Action(), 0, domain.heuristic(startState), true);
         auto startNode = nodePool.construct(localStartNode);
-
-        metronome::Hasher<State> hasher;
-
-        hasher(localStartNode.state);
 
         nodes[localStartNode.state] = startNode;
 
         openList.push(localStartNode);
 
+        //        while (!openList.isEmpty()) {
+        //            Node* q = openList.pop();
+        //
+        //            constructedPlan.push_back(q->action);
+        //
+        //            std::vector<State> successors = domain.successors(q->state);
+        //
+        //            for (State successor : successors) {
+        //                if (domain.isGoal(successor)) {
+        //                    openList.clear();
+        //                    return constructedPlan;
+        //                }
+        //
+        //                Node n = Node(q, successor, successor.getAction(), q->g + successor.getCost(),
+        //                        q->g + successor.getCost() + domain.heuristic(successor), true);
+        //
+        //                auto node = nodePool.construct(n);
+        //
+        //                hasher(n.state);
+        //
+        //                nodes[n.state] = node;
+        //                openList.push(n);
+        //            }
+        //        }
+        //
+        //        return constructedPlan;
+
         while (!openList.isEmpty()) {
-            Node* q = openList.pop();
+            // TODO increment expanded counter
+            Node* currentNode = openList.pop();
 
-            constructedPlan.push_back(q->action);
+            if (!currentNode->open) {
+                continue; // This node was disabled
+            }
 
-            std::vector<State> successors = domain.successors(q->state);
+            if (domain.isGoal(currentNode->state)) {
+                // Goal is reached TODO extract plan
+            }
 
-            for (State successor : successors) {
-                if (domain.isGoal(successor)) {
-                    openList.clear();
-                    return constructedPlan;
+            for (auto successor : domain.getSuccessors(currentNode->state)) {
+                if (successor.state == currentNode->state) {
+                    continue; // Skip parent TODO this might be unnecessary
                 }
 
-                Node n = Node(q, successor, successor.getAction(),
-                        q->g + successor.getCost(), q->g + successor.getCost() +
-                                domain.heuristic(successor),
-                        true);
+                // TODO increment generated node count
 
-                auto node = nodePool.construct(n);
+                auto& existingSuccessorNode = nodes[successor.state];
+                auto newCost = successor.actionCost + currentNode->g;
 
-                hasher(n.state);
-
-                nodes[n.state] = node;
-                openList.push(n);
+                if (existingSuccessorNode == nullptr) {
+                    const Node successorNode(currentNode, successor.state);
+                    existingSuccessorNode =
+                }
             }
         }
 
-        return constructedPlan;
+        return std::vector<Action>();
     }
 
 private:
     class Node {
     public:
-        Node(Node* parent, State state, Action action, Cost g, Cost f,
-                bool open)
-                : parent(parent),
-                  state(state),
-                  action(std::move(action)),
-                  g(g),
-                  f(f),
-                  open(open) {
+        Node(Node* parent, State state, Action action, Cost g, Cost f, bool open)
+                : parent(parent), state(state), action(std::move(action)), g(g), f(f), open(open) {
         }
 
         unsigned long hash() {
