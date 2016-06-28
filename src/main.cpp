@@ -3,6 +3,6 @@
 INITIALIZE_EASYLOGGINGPP
 
 int main() {
-  LOG(INFO) << "Hello, World!" << std::endl;
-  return 0;
+    LOG(INFO) << "Hello, World!" << std::endl;
+    return 0;
 }
