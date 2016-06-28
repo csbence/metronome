@@ -24,24 +24,20 @@ public:
         unsigned int value;
 
     public:
-        Action(unsigned int v) : value(v) { }
+        Action(unsigned int v) : value(v) {
+        }
         constexpr char evaluate() const {
-            if(value == 0) {
+            if (value == 0) {
                 return 'N';
-            }
-            else if(value == 1) {
+            } else if (value == 1) {
                 return 'S';
-            }
-            else if(value == 2) {
+            } else if (value == 2) {
                 return 'E';
-            }
-            else if(value == 3) {
+            } else if (value == 3) {
                 return 'W';
-            }
-            else if (value == 4){
+            } else if (value == 4) {
                 return 'V';
-            }
-            else {
+            } else {
                 return '~';
             }
         }
@@ -66,7 +62,8 @@ public:
             swap(first.y, second.y);
         }
 
-        State(unsigned int x, unsigned int y, unsigned int a) : x(x), y(y), cost(1.0), action(a) { }
+        State(unsigned int x, unsigned int y, unsigned int a) : x(x), y(y), cost(1.0), action(a) {
+        }
 
     public:
         const unsigned int getCost() const {
@@ -80,8 +77,7 @@ public:
             return *this;
         }
 
-        static const State newState(
-                unsigned int x, unsigned int y, unsigned int a = -1) {
+        static const State newState(unsigned int x, unsigned int y, unsigned int a = -1) {
             return State(x, y, a);
         }
         const unsigned int getX() const {
@@ -100,7 +96,6 @@ public:
         }
     };
 
-
 private:
     /*
      * maxActions <- maximum number of actions
@@ -118,50 +113,40 @@ private:
     std::vector<State> blockedCells;
     std::vector<State> dirtyCells;
     State startLocation = State::newState(0, 0, -1);
-    State goalLocation = State::newState(width-1, height-1, -1);
+    State goalLocation = State::newState(width - 1, height - 1, -1);
     unsigned int initialAmountDirty = 1;
     const unsigned long initialCost = 1.0;
 
 public:
-
-    VacuumWorld(State start = State::newState(0,0,-1), State goal = State::newState(4,4,-1),
-                unsigned int width = 5, unsigned int height = 5,
-                std::vector<State> objectStates = std::vector<State>{}) :
-            width(width),
-            height(height),
-            blockedCells(objectStates),
-            startLocation(start),
-            goalLocation(goal)
-    {}
-
+    VacuumWorld(State start = State::newState(0, 0, -1), State goal = State::newState(4, 4, -1), unsigned int width = 5,
+            unsigned int height = 5, std::vector<State> objectStates = std::vector<State>{})
+            : width(width), height(height), blockedCells(objectStates), startLocation(start), goalLocation(goal) {
+    }
 
     /*
      * Calculate the transition state given
      * a state and action pair
      * TODO: make allow more than one dirty cell
      */
-    const State transition(const State &s, const Action &a) {
-        if(a.evaluate() == 'N') {
-            State n = s.newState(s.getX(),s.getY()-1,0);
-            if(isLegalLocation(n)) {
+    const State transition(const State& s, const Action& a) {
+        if (a.evaluate() == 'N') {
+            State n = s.newState(s.getX(), s.getY() - 1, 0);
+            if (isLegalLocation(n)) {
                 return n;
             }
-        }
-        else if(a.evaluate() == 'E') {
-            State n = s.newState(s.getX()+1,s.getY(),1);
-            if(isLegalLocation(n)) {
+        } else if (a.evaluate() == 'E') {
+            State n = s.newState(s.getX() + 1, s.getY(), 1);
+            if (isLegalLocation(n)) {
                 return n;
             }
-        }
-        else if(a.evaluate() == 'S') {
-            State n = s.newState(s.getX(),s.getY()+1,2);
-            if(isLegalLocation(n)) {
+        } else if (a.evaluate() == 'S') {
+            State n = s.newState(s.getX(), s.getY() + 1, 2);
+            if (isLegalLocation(n)) {
                 return n;
             }
-        }
-        else if(a.evaluate() == 'W') {
-            State n = s.newState(s.getX()-1,s.getY(),3);
-            if(isLegalLocation(n)) {
+        } else if (a.evaluate() == 'W') {
+            State n = s.newState(s.getX() - 1, s.getY(), 3);
+            if (isLegalLocation(n)) {
                 return n;
             }
         }
@@ -182,11 +167,11 @@ public:
         return Action(rand() & maxActions);
     }
 
-    std::pair<unsigned int,unsigned int> randomLocation() {
+    std::pair<unsigned int, unsigned int> randomLocation() {
         unsigned int x = rand() % width;
         unsigned int y = rand() % height;
 
-        return std::pair<unsigned int, unsigned int>{x,y};
+        return std::pair<unsigned int, unsigned int>{x, y};
     }
 
     const State getGoal() {
@@ -194,8 +179,7 @@ public:
     }
 
     const bool isGoal(const State& location) {
-        return location.getX() == goalLocation.getX() &&
-                location.getY() == goalLocation.getY();
+        return location.getX() == goalLocation.getX() && location.getY() == goalLocation.getY();
     }
 
     const bool inBlockedCells(const State& location) {
@@ -208,8 +192,7 @@ public:
     }
 
     const bool isLegalLocation(const State& location) {
-        return location.getX() < width && location.getY() < height &&
-                !inBlockedCells(location);
+        return location.getX() < width && location.getY() < height && !inBlockedCells(location);
     }
 
     void setWidth(int newWidth) {
@@ -246,7 +229,7 @@ public:
 
     const bool changeStartLocation(const State& location) {
         if (isLegalLocation(location)) {
-            startLocation = State::newState(location.getX(), location.getY(),-1);
+            startLocation = State::newState(location.getX(), location.getY(), -1);
             return true;
         }
         return false;
@@ -257,7 +240,7 @@ public:
     }
 
     const std::vector<State>::size_type getNumberDirtyCells() {
-       // return dirtyCells.size();
+        // return dirtyCells.size();
         return initialAmountDirty;
     }
 
@@ -272,10 +255,10 @@ public:
     std::vector<State> successors(State q) {
         std::vector<State> ret;
 
-        auto actions = {0,1,2,3,4};
+        auto actions = {0, 1, 2, 3, 4};
 
         for (auto a : actions) {
-            this->transition(q,Action(a));
+            this->transition(q, Action(a));
         }
 
         return ret;

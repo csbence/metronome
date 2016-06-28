@@ -1,6 +1,6 @@
+#include "domains/VacuumWorld.hpp"
 #include "catch.hpp"
 #include "easylogging++.h"
-#include "domains/VacuumWorld.hpp"
 
 namespace {
 
@@ -61,9 +61,9 @@ TEST_CASE("VacuumWorld getters", "[VacuumWorld]") {
     vacuumWorld.setWidth(13);
     vacuumWorld.setHeight(9);
 
-  for (int i = 0; i < 10; i++) {
-    std::pair<unsigned int,unsigned int> q = vacuumWorld.randomLocation();
-    VacuumWorld::State _t = VacuumWorld::State::newState(q.first,q.second);
+    for (int i = 0; i < 10; i++) {
+        std::pair<unsigned int, unsigned int> q = vacuumWorld.randomLocation();
+        VacuumWorld::State _t = VacuumWorld::State::newState(q.first, q.second);
 
         LOG(INFO) << "R_LOC: " << _t.getX() << " " << _t.getY() << std::endl;
         REQUIRE(vacuumWorld.isLegalLocation(_t));

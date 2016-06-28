@@ -6,16 +6,14 @@
 
 namespace {
 
-    TEST_CASE("AStar test", "[AStar]") {
+TEST_CASE("AStar test", "[AStar]") {
+    VacuumWorld testDomain;
+    metronome::AStar<VacuumWorld> aStar(testDomain);
 
-        VacuumWorld testDomain;
-        metronome::AStar<VacuumWorld> aStar(testDomain);
-
-        std::vector<VacuumWorld::Action> ret = aStar.plan(testDomain.getStartLocation());
-        LOG(INFO) << "Solution: " << std::endl;
-        for (auto i : ret) {
-            LOG(INFO) << i.evaluate() << std::endl;
-        }
-
+    std::vector<VacuumWorld::Action> ret = aStar.plan(testDomain.getStartLocation());
+    LOG(INFO) << "Solution: " << std::endl;
+    for (auto i : ret) {
+        LOG(INFO) << i.evaluate() << std::endl;
     }
+}
 }
