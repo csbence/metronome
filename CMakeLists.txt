@@ -9,7 +9,10 @@ set(SOURCE_FILES
         src/domains/VacuumWorld.hpp
         src/domains/VacuumWorldIO.hpp
         src/util/PriorityQueue.hpp
-        src/util/Hasher.hpp src/domains/TestDomain.hpp src/domains/SuccessorBundle.hpp)
+        src/util/Hasher.hpp
+        src/domains/TestDomain.hpp
+        src/domains/SuccessorBundle.hpp)
+
 
 set(TEST_FILES
         test/test.cpp

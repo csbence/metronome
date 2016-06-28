@@ -1,5 +1,5 @@
-#include "domains/VacuumWorld.hpp"
 #include "catch.hpp"
+#include "domains/VacuumWorld.hpp"
 #include "easylogging++.h"
 
 namespace {

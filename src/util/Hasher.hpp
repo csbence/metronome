@@ -5,10 +5,12 @@
 
 namespace metronome {
 
-template<typename T>
+template <typename T>
 class Hasher {
- public:
-  std::size_t operator()(const T& value) const { return value.hash(); }
+public:
+    std::size_t operator()(const T& value) const {
+        return value.hash();
+    }
 };
 }
 

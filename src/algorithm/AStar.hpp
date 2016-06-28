@@ -24,39 +24,12 @@ public:
         std::vector<Action> constructedPlan;
 
         const Node localStartNode =
-                Node(nullptr, std::move(startState), Action(), 0, domain.heuristic(startState), true);
+                Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true);
         auto startNode = nodePool.construct(localStartNode);
 
         nodes[localStartNode.state] = startNode;
 
         openList.push(localStartNode);
-
-        //        while (!openList.isEmpty()) {
-        //            Node* q = openList.pop();
-        //
-        //            constructedPlan.push_back(q->action);
-        //
-        //            std::vector<State> successors = domain.successors(q->state);
-        //
-        //            for (State successor : successors) {
-        //                if (domain.isGoal(successor)) {
-        //                    openList.clear();
-        //                    return constructedPlan;
-        //                }
-        //
-        //                Node n = Node(q, successor, successor.getAction(), q->g + successor.getCost(),
-        //                        q->g + successor.getCost() + domain.heuristic(successor), true);
-        //
-        //                auto node = nodePool.construct(n);
-        //
-        //                hasher(n.state);
-        //
-        //                nodes[n.state] = node;
-        //                openList.push(n);
-        //            }
-        //        }
-        //
-        //        return constructedPlan;
 
         while (!openList.isEmpty()) {
             // TODO increment expanded counter
@@ -70,19 +43,28 @@ public:
                 // Goal is reached TODO extract plan
             }
 
-            for (auto successor : domain.getSuccessors(currentNode->state)) {
+            for (auto successor : domain.successors(currentNode->state)) {
                 if (successor.state == currentNode->state) {
                     continue; // Skip parent TODO this might be unnecessary
                 }
 
                 // TODO increment generated node count
 
-                auto& existingSuccessorNode = nodes[successor.state];
+                auto& successorNode = nodes[successor.state];
                 auto newCost = successor.actionCost + currentNode->g;
 
-                if (existingSuccessorNode == nullptr) {
-                    const Node successorNode(currentNode, successor.state);
-                    existingSuccessorNode =
+                if (successorNode == nullptr) {
+                    // New state discovered
+                    const Node tempSuccessorNode(currentNode, successor.state, successor.action, newCost,
+                            newCost + domain.heuristic(successor.state), true);
+
+                    successorNode = nodePool.construct(tempSuccessorNode);
+                } else if (successorNode->open && successorNode->g > newCost) {
+                    // Better path found to an existing state
+                    successorNode->g = newCost;
+                    openList.update(*successorNode);
+                } else {
+                    // The new path is not better than the existing
                 }
             }
         }

@@ -1,7 +1,6 @@
 #ifndef VACUUM_WORLD_HPP
 #define VACUUM_WORLD_HPP
 
-#include "SuccessorBundle.hpp"
 #include <boost/assert.hpp>
 #include <cstdlib>
 #include <functional>
@@ -54,8 +53,8 @@ public:
     private:
         unsigned int x;
         unsigned int y;
-        //        unsigned long cost;
-        //        VacuumWorld::Action action;
+        unsigned long cost;
+        VacuumWorld::Action action;
 
         friend void swap(State first, State second) {
             using std::swap;
@@ -63,10 +62,16 @@ public:
             swap(first.y, second.y);
         }
 
-        State(unsigned int x, unsigned int y, unsigned int a) : x(x), y(y) {
+        State(unsigned int x, unsigned int y, unsigned int a) : x(x), y(y), cost(1.0), action(a) {
         }
 
     public:
+        const unsigned int getCost() const {
+            return this->cost;
+        }
+        const VacuumWorld::Action getAction() const {
+            return this->action;
+        }
         State& operator=(State toCopy) {
             swap(*this, toCopy);
             return *this;
@@ -247,17 +252,16 @@ public:
         return 0;
     }
 
-    std::vector<SuccessorBundle> successors(State state) {
-        std::vector<SuccessorBundle> successors;
+    std::vector<State> successors(State q) {
+        std::vector<State> ret;
 
         auto actions = {0, 1, 2, 3, 4};
 
         for (auto a : actions) {
-            State newState = this->transition(state, Action(a));
-            successors.push_back(SuccessorBundle{newState, a, this->initialCost});
+            this->transition(q, Action(a));
         }
 
-        return successors;
+        return ret;
     }
 };
 #endif
