@@ -22,7 +22,6 @@ public:
     }
 
     std::vector<Action> plan(State startState) {
-
         std::vector<Action> constructedPlan;
 
         const Node localStartNode = Node(nullptr, std::move(startState),
@@ -38,23 +37,23 @@ public:
 
         openList.push(localStartNode);
 
-        while(!openList.isEmpty()) {
-
-            Node *q = openList.pop();
+        while (!openList.isEmpty()) {
+            Node* q = openList.pop();
 
             constructedPlan.push_back(q->action);
 
             std::vector<State> successors = domain.successors(q->state);
 
-            for( State successor : successors) {
-
-                if(domain.isGoal(successor)) {
+            for (State successor : successors) {
+                if (domain.isGoal(successor)) {
                     openList.clear();
                     return constructedPlan;
                 }
 
-                Node n = Node(q,successor,successor.getAction(),q->g + successor.getCost(),
-                              q->g + successor.getCost() + domain.heuristic(successor),true);
+                Node n = Node(q, successor, successor.getAction(),
+                        q->g + successor.getCost(), q->g + successor.getCost() +
+                                domain.heuristic(successor),
+                        true);
 
                 auto node = nodePool.construct(n);
 
@@ -62,9 +61,7 @@ public:
 
                 nodes[n.state] = node;
                 openList.push(n);
-
             }
-
         }
 
         return constructedPlan;

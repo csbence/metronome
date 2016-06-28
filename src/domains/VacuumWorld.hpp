@@ -60,7 +60,7 @@ public:
         unsigned long cost;
         VacuumWorld::Action action;
 
-        void swap(State first, State second) {
+        friend void swap(State first, State second) {
             using std::swap;
             swap(first.x, second.x);
             swap(first.y, second.y);
@@ -257,7 +257,8 @@ public:
     }
 
     const std::vector<State>::size_type getNumberDirtyCells() {
-        return dirtyCells.size();
+       // return dirtyCells.size();
+        return initialAmountDirty;
     }
 
     const State getStartLocation() {
