@@ -171,10 +171,6 @@ public:
         return std::pair<unsigned int, unsigned int>{x, y};
     }
 
-    const State getGoal() {
-        return goalLocation;
-    }
-
     const bool isGoal(const State& location) {
         return location.getX() == goalLocation.getX() && location.getY() == goalLocation.getY();
     }
@@ -245,6 +241,10 @@ public:
         return startLocation;
     }
 
+    bool isStart(State state) {
+        return state.getX() == startLocation.getX() && state.getY() == startLocation.getY();
+    }
+
     Cost heuristic(const State& state) {
         return 0;
     }
@@ -252,7 +252,7 @@ public:
     std::vector<SuccessorBundle<VacuumWorld>> successors(State state) {
         std::vector<SuccessorBundle<VacuumWorld>> successors;
 
-        unsigned int actions[] = {0, 1, 2, 3, 4};
+        unsigned int actions[] = {1, 2, 3, 4, 5};
 
         for (auto a : actions) {
             State newState = this->transition(state, Action(a));

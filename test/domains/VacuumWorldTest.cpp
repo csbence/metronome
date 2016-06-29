@@ -7,8 +7,8 @@ namespace {
 TEST_CASE("VacuumWorld creation", "[VacuumWorld]") {
     VacuumWorld vacuumWorld;
 
-    REQUIRE(vacuumWorld.getWidth() == 0);
-    REQUIRE(vacuumWorld.getHeight() == 0);
+    REQUIRE(vacuumWorld.getWidth() == 5);
+    REQUIRE(vacuumWorld.getHeight() == 5);
 }
 
 TEST_CASE("VacuumWorld::State = operator", "[VacuumWorld]") {
@@ -37,7 +37,7 @@ TEST_CASE("VacuumWorld setting variables", "[VacuumWorld]") {
     VacuumWorld::State pair1 = VacuumWorld::State::newState(3, 5);
     VacuumWorld::State pair2 = VacuumWorld::State::newState(1, 3);
     REQUIRE(vacuumWorld.getNumberBlockedCells() == 0);
-    REQUIRE(vacuumWorld.getNumberDirtyCells() == 0);
+    REQUIRE(vacuumWorld.getNumberDirtyCells() == 1);
     REQUIRE(vacuumWorld.getStartLocation().getX() == 0);
     REQUIRE(vacuumWorld.getStartLocation().getY() == 0);
 

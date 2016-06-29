@@ -41,6 +41,11 @@ public:
 
             if (domain.isGoal(currentNode->state)) {
                 // Goal is reached TODO extract plan
+                while(!domain.isStart(currentNode->state)) {
+                    constructedPlan.push_back(currentNode->action);
+                    currentNode = currentNode->parent;
+                }
+                return constructedPlan;
             }
 
             for (auto successor : domain.successors(currentNode->state)) {
@@ -59,6 +64,7 @@ public:
                             newCost + domain.heuristic(successor.state), true);
 
                     successorNode = nodePool.construct(tempSuccessorNode);
+                    openList.push(tempSuccessorNode);
                 } else if (successorNode->open && successorNode->g > newCost) {
                     // Better path found to an existing state
                     successorNode->g = newCost;
@@ -68,6 +74,8 @@ public:
                 }
             }
         }
+
+
 
         return std::vector<Action>();
     }
