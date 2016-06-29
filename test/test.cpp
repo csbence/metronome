@@ -4,9 +4,9 @@
 #include "../dependencies/catch.hpp"
 #include "easylogging++.h"
 #include <boost/multi_array.hpp>
-//#include "util/PriorityQueueTest.cpp"
-//#include "domains/VacuumWorldTest.cpp"
-//#include "algorithm/AStarTest.cpp"
+#include "util/PriorityQueueTest.hpp"
+#include "domains/VacuumWorldTest.hpp"
+#include "algorithm/AStarTest.hpp"
 
 INITIALIZE_EASYLOGGINGPP
 

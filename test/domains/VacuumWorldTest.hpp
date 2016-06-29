@@ -65,7 +65,7 @@ TEST_CASE("VacuumWorld getters", "[VacuumWorld]") {
         std::pair<unsigned int, unsigned int> q = vacuumWorld.randomLocation();
         VacuumWorld::State _t = VacuumWorld::State::newState(q.first, q.second);
 
-        LOG(INFO) << "R_LOC: " << _t.getX() << " " << _t.getY() << std::endl;
+//        LOG(INFO) << "R_LOC: " << _t.getX() << " " << _t.getY() << std::endl;
         REQUIRE(vacuumWorld.isLegalLocation(_t));
     }
 }
