@@ -108,9 +108,9 @@ private:
             return -1;
         if (lhs.f > rhs.f)
             return 1;
-        if (lhs.f > rhs.f)
+        if (lhs.g > rhs.g)
             return -1;
-        if (lhs.f < rhs.f)
+        if (lhs.g < rhs.g)
             return 1;
         return 0;
     }
