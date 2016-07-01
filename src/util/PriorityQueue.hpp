@@ -3,9 +3,8 @@
 
 #include <boost/assert.hpp>
 #include <functional>
-#include <vector>
 #include <string>
-
+#include <vector>
 
 template <typename T>
 class PriorityQueue {
@@ -80,13 +79,26 @@ public:
         }
     }
 
+    void reorder(std::function<int(const T&, const T&)> comparator) {
+        this->comparator = comparator;
+        for (unsigned int i = 0; i < size; i++) {
+            siftDown(i, queue[i]);
+        }
+    }
+
     unsigned int getCapacity() const {
         return capacity;
     }
+
     unsigned int getSize() const {
         return size;
     }
+
     bool isEmpty() const {
+        return size == 0;
+    }
+
+    bool isNotEmpty() const {
         return size == 0;
     }
 
