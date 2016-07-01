@@ -41,7 +41,7 @@ public:
 
             if (domain.isGoal(currentNode->state)) {
                 // Goal is reached TODO extract plan
-                while(!domain.isStart(currentNode->state)) {
+                while (!domain.isStart(currentNode->state)) {
                     constructedPlan.push_back(currentNode->action);
                     currentNode = currentNode->parent;
                 }
@@ -63,8 +63,8 @@ public:
                     const Node tempSuccessorNode(currentNode, successor.state, successor.action, newCost,
                             newCost + domain.heuristic(successor.state), true);
 
-                    successorNode = nodePool.construct(tempSuccessorNode);
-                    openList.push(tempSuccessorNode);
+                    successorNode = nodePool.construct(std::move(tempSuccessorNode));
+                    openList.push(*successorNode);
                 } else if (successorNode->open && successorNode->g > newCost) {
                     // Better path found to an existing state
                     successorNode->g = newCost;
@@ -75,8 +75,6 @@ public:
             }
         }
 
-
-
         return std::vector<Action>();
     }
 
@@ -84,7 +82,7 @@ private:
     class Node {
     public:
         Node(Node* parent, State state, Action action, Cost g, Cost f, bool open)
-                : parent(parent), state(state), action(std::move(action)), g(g), f(f), open(open) {
+                : parent{parent}, state{state}, action{std::move(action)}, g{g}, f{f}, open{open} {
         }
 
         unsigned long hash() {

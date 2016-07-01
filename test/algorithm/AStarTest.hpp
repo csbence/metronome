@@ -27,16 +27,20 @@ public:
     Cost heuristic(State&) {
         return 0;
     }
+
+    bool isGoal() {
+        return false;
+    }
 };
 
-TEST_CASE("AStar test", "[AStar]") {
-    TestDomain testDomain;
-    metronome::AStar<TestDomain> aStar(testDomain);
-
-    TestDomain::State state;
-
-    aStar.plan(state);
-}
+//TEST_CASE("AStar test", "[AStar]") {
+//    TestDomain testDomain;
+//    metronome::AStar<TestDomain> aStar(testDomain);
+//
+//    TestDomain::State state;
+//
+//    aStar.plan(state);
+//}
 
 TEST_CASE("AStar - VacuumWorld test", "[VacuumWorld]") {
     VacuumWorld testDomain;
