@@ -6,6 +6,7 @@
 #include <util/Hasher.hpp>
 #include <util/PriorityQueue.hpp>
 #include <vector>
+#include <experiment/termination/TimeTerminationChecker.hpp>
 #define BOOST_POOL_NO_MT
 
 namespace metronome {
@@ -19,8 +20,7 @@ class LssLrtaStar {
     LssLrtaStar(Domain domain) : domain{domain} {
     }
 
-    std::vector<Action> selectAction(const State& startState) { // TODO add termination checker
-
+    std::vector<Action> selectAction(const State& startState, TimeTerminationChecker terminationChecker) {
         if (domain.isGoal(startState)) {
             // Goal is already reached
             return std::vector<Action>();
@@ -28,10 +28,10 @@ class LssLrtaStar {
 
         // Learning phase
         if (openList.isNotEmpty()) {
-            learn(); // TODO add termination checker
+            learn(terminationChecker); // TODO add termination checker
         }
 
-        explore(startState); // TODO add termination checker
+        explore(startState, terminationChecker); // TODO add termination checker
 
         // TODO return best node and extract plan
     }
@@ -90,13 +90,13 @@ private:
         const Cost actionCost;
     };
 
-    void learn() {
+    void learn(TimeTerminationChecker terminationChecker) {
         ++iterationCounter;
 
         // Reorder the open list based on the heuristic values
         openList.reorder(hValueComparator);
 
-        while (/* check termination && */ openList.isNotEmpty()) {
+        while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
             auto currentNode = popOpenList();
             currentNode->iteration = iterationCounter;
 
@@ -129,7 +129,7 @@ private:
         }
     }
 
-    Node* explore(const State& startState) {
+    Node* explore(const State& startState, TimeTerminationChecker terminationChecker) {
         ++iterationCounter;
         clearOpenList();
         openList.reorder(fValueComparator);
@@ -143,7 +143,7 @@ private:
         nodes[startNode->state] = startNode;
         addToOpenList(*startNode);
 
-        while (/* check termination && */ !domain.isGoal(currentNode->state)) {
+        while (!terminationChecker.reachedTermination() &&!domain.isGoal(currentNode->state)) {
             currentNode = popOpenList();
             expandNode(currentNode);
         }
@@ -243,7 +243,7 @@ private:
 
     Domain domain;
     PriorityQueue<Node> openList{10000000, fValueComparator};
-    std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes;
+    std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
     boost::object_pool<Node> nodePool{100000000, 100000000};
     unsigned int iterationCounter{0};
 };
