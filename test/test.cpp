@@ -7,6 +7,7 @@
 #include "util/PriorityQueueTest.hpp"
 #include "domains/VacuumWorldTest.hpp"
 #include "algorithm/AStarTest.hpp"
+#include "algorithm/LssLrtaStarTest.hpp"
 
 INITIALIZE_EASYLOGGINGPP
 
