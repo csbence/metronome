@@ -2,9 +2,11 @@
 #define VACUUM_WORLD_HPP
 
 #include "SuccessorBundle.hpp"
+#include <bits/unordered_map.h>
 #include <boost/assert.hpp>
 #include <cstdlib>
 #include <functional>
+#include <util/Hasher.hpp>
 #include <vector>
 
 /*
@@ -44,12 +46,12 @@ public:
                 return '~';
             }
         }
-        constexpr unsigned int getValue() {
+        /*constexpr unsigned int getValue() {
             return value;
         }
         void setValue(const unsigned int toSet) {
             value = toSet;
-        }
+        }*/
     };
     typedef unsigned long Cost;
     class State {
@@ -103,6 +105,7 @@ private:
      * goalLocation <- where the agent needs to end up
      * initalAmountDirty <- how many cells are dirty
      * initialCost <- constant cost value
+     * obstacles <- stores references to obstacles
      */
     const unsigned int maxActions = 5;
     unsigned int width;
@@ -113,6 +116,31 @@ private:
     State goalLocation = State::newState(width - 1, height - 1, 0);
     unsigned int initialAmountDirty = 1;
     const unsigned long initialCost = 1;
+    // std::unordered_map<State, State*, typename metronome::Hasher<State>> nodes{};
+
+    /*
+      * Given a state and action pair give the cost
+      * for taking the action in the state
+      * TODO: make it take a cost function instead of constant
+
+
+    const Cost getCost(const State& s, const Action& a) {
+        return initialCost;
+    }
+
+    const Action randomAction() {
+        return Action(rand() & maxActions);
+    }
+
+     TODO: make allow more than one dirty cell
+    const bool addDirtyCell(const State& toAdd) {
+        if (isLegalLocation(toAdd)) {
+            dirtyCells.push_back(toAdd);
+            return true;
+        }
+        return false;
+    }
+     */
 
 public:
     VacuumWorld(State start = State::newState(0, 0, 0), State goal = State::newState(4, 4, 0), unsigned int width = 5,
@@ -148,20 +176,6 @@ public:
             }
         }
         return s;
-    }
-
-    /*
-     * Given a state and action pair give the cost
-     * for taking the action in the state
-     * TODO: make it take a cost function instead of constant
-     */
-
-    const Cost getCost(const State& s, const Action& a) {
-        return initialCost;
-    }
-
-    const Action randomAction() {
-        return Action(rand() & maxActions);
     }
 
     std::pair<unsigned int, unsigned int> randomLocation() {
@@ -212,22 +226,6 @@ public:
         return false;
     }
 
-    const bool addDirtyCell(const State& toAdd) {
-        if (isLegalLocation(toAdd)) {
-            dirtyCells.push_back(toAdd);
-            return true;
-        }
-        return false;
-    }
-
-    const bool changeStartLocation(const State& location) {
-        if (isLegalLocation(location)) {
-            startLocation = State::newState(location.getX(), location.getY(), 0);
-            return true;
-        }
-        return false;
-    }
-
     const std::vector<State>::size_type getNumberBlockedCells() {
         return blockedCells.size();
     }
@@ -246,7 +244,14 @@ public:
     }
 
     Cost heuristic(const State& state) {
-        return 0;
+        Cost manhattenDistance = 0;
+
+        Cost horizontalDistance = this->goalLocation.getX() - state.getX();
+        Cost verticalDistance = this->goalLocation.getY() - state.getY();
+
+        manhattenDistance = horizontalDistance + verticalDistance;
+
+        return manhattenDistance;
     }
 
     std::vector<SuccessorBundle<VacuumWorld>> successors(State state) {

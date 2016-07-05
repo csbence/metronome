@@ -11,7 +11,7 @@
 // template<typename T>
 class VacuumWorldIO {
 public:
-  static VacuumWorld parseFromStream(const std::ifstream &inputFile) {
+  static VacuumWorld parseFromStream(std::ifstream &inputFile) {
 
     VacuumWorld vacuumWorld;
     int rowCount = 0;

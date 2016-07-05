@@ -1,12 +1,12 @@
 #ifndef METRONOME_LSSLRTASTAR_HPP
 #define METRONOME_LSSLRTASTAR_HPP
 #include <boost/pool/object_pool.hpp>
+#include <experiment/termination/TimeTerminationChecker.hpp>
 #include <fcntl.h>
 #include <unordered_map>
 #include <util/Hasher.hpp>
 #include <util/PriorityQueue.hpp>
 #include <vector>
-#include <experiment/termination/TimeTerminationChecker.hpp>
 #define BOOST_POOL_NO_MT
 
 namespace metronome {
@@ -143,7 +143,7 @@ private:
         nodes[startNode->state] = startNode;
         addToOpenList(*startNode);
 
-        while (!terminationChecker.reachedTermination() &&!domain.isGoal(currentNode->state)) {
+        while (!terminationChecker.reachedTermination() && !domain.isGoal(currentNode->state)) {
             currentNode = popOpenList();
             expandNode(currentNode);
         }

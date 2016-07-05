@@ -40,7 +40,7 @@ public:
             }
 
             if (domain.isGoal(currentNode->state)) {
-                // Goal is reached TODO extract plan
+                // Goal is reached
                 while (!domain.isStart(currentNode->state)) {
                     constructedPlan.push_back(currentNode->action);
                     currentNode = currentNode->parent;
