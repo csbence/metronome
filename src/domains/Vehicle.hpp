@@ -19,7 +19,7 @@ public:
               obstaclesLocations(objectStates),
               start(start),
               goal(goal),
-              safeCells(safeStates) {
+              bunkerCells(safeStates) {
     }
     const bool addDyanmicObject(const State& toAdd) {
         return this->addBlockedCell(toAdd);
@@ -54,7 +54,7 @@ private:
     unsigned int height;
     unsigned int width;
     std::vector<State> obstaclesLocations;
-    std::vector<State> safeCells;
+    std::vector<State> bunkerCells;
 };
 
 #endif // METRONOME_VEHICLE_HPP
