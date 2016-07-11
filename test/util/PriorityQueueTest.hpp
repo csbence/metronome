@@ -1,6 +1,6 @@
-#include "util/PriorityQueue.hpp"
 #include "catch.hpp"
 #include "easylogging++.h"
+#include "util/PriorityQueue.hpp"
 
 namespace {
 
@@ -138,5 +138,23 @@ TEST_CASE("PriorityQueue order test", "[PriorityQueue]") {
     }
 
     REQUIRE(queue.getCapacity() == 100);
+}
+
+TEST_CASE("PriorityQueue forEach test", "[PriorityQueue]") {
+    auto queue = PriorityQueue<TestNode>(100, nodeCompare);
+
+    auto node1 = TestNode(1);
+    auto node2 = TestNode(2);
+    auto node0 = TestNode(0);
+
+    queue.push(node0);
+    queue.push(node1);
+    queue.push(node2);
+
+    queue.forEach([](TestNode* node) { node->value = -1; });
+
+    REQUIRE(node0.value == -1);
+    REQUIRE(node1.value == -1);
+    REQUIRE(node2.value == -1);
 }
 }

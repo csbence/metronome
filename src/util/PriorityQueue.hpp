@@ -13,7 +13,7 @@ public:
             : capacity{capacity}, comparator{comparator}, queue{capacity}, size{0} {
     }
 
-    void push(const T& item) {
+    void push(T& item) {
         if (size == capacity) {
             throw std::overflow_error("Priority queue reached its maximum capacity: " + std::to_string(capacity));
         }
@@ -86,7 +86,7 @@ public:
         }
     }
 
-    void forEach(std::function<void(T&)> action) {
+    void forEach(std::function<void(T*)> action) {
         for (unsigned int i = 0; i < size; i++) {
             action(queue[i]);
         }
@@ -109,7 +109,7 @@ public:
     }
 
 private:
-    void siftUp(const unsigned int index, const T& item) {
+    void siftUp(const unsigned int index, T& item) {
         unsigned int currentIndex = index;
         while (currentIndex > 0) {
             const auto parentIndex = (currentIndex - 1) >> 1;
@@ -129,7 +129,7 @@ private:
         item.index = currentIndex;
     }
 
-    void siftDown(const unsigned int index, const T& item) {
+    void siftDown(const unsigned int index, T& item) {
         auto currentIndex = index;
         const unsigned int half = size >> 1;
 
@@ -158,7 +158,7 @@ private:
 
     const unsigned int capacity;
     std::function<int(const T&, const T&)> comparator;
-    std::vector<const T*> queue;
+    std::vector<T*> queue;
     unsigned int size;
 };
 

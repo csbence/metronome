@@ -23,8 +23,7 @@ public:
     std::vector<Action> plan(State startState) {
         std::vector<Action> constructedPlan;
 
-        const Node localStartNode =
-                Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true);
+        Node localStartNode = Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true);
         auto startNode = nodePool.construct(localStartNode);
 
         nodes[localStartNode.state] = startNode;
