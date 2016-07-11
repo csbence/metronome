@@ -1,5 +1,6 @@
 #ifndef METRONOME_LSSLRTASTAR_HPP
 #define METRONOME_LSSLRTASTAR_HPP
+#include "Planner.hpp"
 #include <boost/pool/object_pool.hpp>
 #include <experiment/termination/TimeTerminationChecker.hpp>
 #include <fcntl.h>
@@ -12,7 +13,7 @@
 namespace metronome {
 
 template <typename Domain>
-class LssLrtaStar {
+class LssLrtaStar : Planner {
     typedef typename Domain::State State;
     typedef typename Domain::Action Action;
     typedef typename Domain::Cost Cost;
@@ -28,11 +29,12 @@ class LssLrtaStar {
 
         // Learning phase
         if (openList.isNotEmpty()) {
-            learn(terminationChecker); // TODO add termination checker
+            learn(terminationChecker);
         }
 
-        explore(startState, terminationChecker); // TODO add termination checker
+        auto bestNode = explore(startState, terminationChecker);
 
+        return extractPath(bestNode);
         // TODO return best node and extract plan
     }
 
@@ -137,6 +139,7 @@ private:
         const Node localStartNode =
                 Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true);
 
+        ++generatedNodeCount;
         auto startNode = nodePool.construct(localStartNode);
         Node* currentNode = startNode;
 
@@ -152,7 +155,7 @@ private:
     }
 
     void expandNode(Node* sourceNode) {
-        // TODO increase node count
+        ++expandedNodeCount;
 
         auto currentGValue = sourceNode->g;
         for (auto successor : domain.successors(sourceNode->state)) {
@@ -161,7 +164,7 @@ private:
             Node*& successorNode = nodes[successorState];
 
             if (successorNode == nullptr) {
-                // TODO increment generated node count
+                ++generatedNodeCount;
 
                 const Node tempSuccessorNode(
                         sourceNode, successor.state, successor.action, successor.actionCost, domain.COST_MAX, true);
@@ -203,7 +206,8 @@ private:
     }
 
     void clearOpenList() {
-        // TODO clear open and set the open value of the cleared nodes to false
+        openList.forEach([](Node& node) { node.open = false; });
+        openList.clear();
     }
 
     Node* popOpenList() {
@@ -216,6 +220,22 @@ private:
     void addToOpenList(Node& node) {
         node.open = true;
         openList.push(node);
+    }
+
+    std::vector<Action> extractPath(const Node* targetNode, const Node* sourceNode) const {
+        if (targetNode == sourceNode) {
+            return std::vector<Action>();
+        }
+
+        std::vector<Action> actions{1000};
+        auto currentNode = targetNode;
+
+        while (currentNode != sourceNode) {
+            actions.push_back(currentNode->action);
+            currentNode = currentNode->parent;
+        }
+
+        return actions;
     }
 
     static int fValueComparator(const Node& lhs, const Node& rhs) {

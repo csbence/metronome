@@ -86,6 +86,12 @@ public:
         }
     }
 
+    void forEach(std::function<void(T&)> action) {
+        for (unsigned int i = 0; i < size; i++) {
+            action(queue[i]);
+        }
+    }
+
     unsigned int getCapacity() const {
         return capacity;
     }

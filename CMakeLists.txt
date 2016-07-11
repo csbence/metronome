@@ -12,7 +12,7 @@ set(SOURCE_FILES
         src/util/PriorityQueue.hpp
         src/util/Hasher.hpp
         src/domains/TestDomain.hpp
-        src/domains/SuccessorBundle.hpp src/experiment/termination/TimeTerminationChecker.hpp src/domains/Vehicle.hpp)
+        src/domains/SuccessorBundle.hpp src/experiment/termination/TimeTerminationChecker.hpp src/domains/Vehicle.hpp src/algorithm/Planner.hpp)
 
 
 set(TEST_FILES
