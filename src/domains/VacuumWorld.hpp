@@ -2,7 +2,7 @@
 #define VACUUM_WORLD_HPP
 
 #include "SuccessorBundle.hpp"
-#include <bits/unordered_map.h>
+//#include <bits/unordered_map.h>
 #include <boost/assert.hpp>
 #include <cstdlib>
 #include <functional>
