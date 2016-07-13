@@ -12,7 +12,14 @@ set(SOURCE_FILES
         src/util/PriorityQueue.hpp
         src/util/Hasher.hpp
         src/domains/TestDomain.hpp
-        src/domains/SuccessorBundle.hpp src/experiment/termination/TimeTerminationChecker.hpp src/domains/Vehicle.hpp src/algorithm/Planner.hpp)
+        src/domains/SuccessorBundle.hpp
+        src/experiment/termination/TimeTerminationChecker.hpp
+        src/domains/Vehicle.hpp src/algorithm/Planner.hpp
+        src/experiment/PlanManager.hpp
+        src/experiment/OfflinePlanManager.hpp
+        src/experiment/Configuration.hpp
+        src/experiment/Result.hpp
+        src/experiment/ConfigurationExecutor.hpp)
 
 
 set(TEST_FILES
@@ -20,7 +27,8 @@ set(TEST_FILES
         test/util/PriorityQueueTest.hpp
         test/domains/VacuumWorldTest.hpp
         test/algorithm/AStarTest.hpp
-        test/algorithm/LssLrtaStarTest.hpp)
+        test/algorithm/LssLrtaStarTest.hpp
+        test/util/TimeMeasurement.hpp)
 
 add_executable(Metronome ${SOURCE_FILES})
 add_executable(MetronomeTest ${TEST_FILES})
