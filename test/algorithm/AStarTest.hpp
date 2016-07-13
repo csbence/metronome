@@ -1,6 +1,7 @@
 #include "algorithm/AStar.hpp"
 #include <catch.hpp>
 #include <domains/GridWorld.hpp>
+#include <domains/Vehicle.hpp>
 #include <easylogging++.h>
 
 namespace {
@@ -33,7 +34,7 @@ public:
     }
 };
 
-//TEST_CASE("AStar test", "[AStar]") {
+// TEST_CASE("AStar test", "[AStar]") {
 //    TestDomain testDomain;
 //    metronome::AStar<TestDomain> aStar(testDomain);
 //
@@ -45,6 +46,17 @@ public:
 TEST_CASE("AStar - GridWorld test", "[GridWorld]") {
     GridWorld testDomain;
     metronome::AStar<GridWorld> aStar(testDomain);
+
+    std::vector<GridWorld::Action> ret = aStar.plan(testDomain.getStartLocation());
+    LOG(INFO) << "Solution: " << std::endl;
+    for (auto i : ret) {
+        LOG(INFO) << i.evaluate() << std::endl;
+    }
+}
+
+TEST_CASE("AStar - Vehicle test", "[Vehicle]") {
+    Vehicle testDomain;
+    metronome::AStar<Vehicle> aStar(testDomain);
 
     std::vector<GridWorld::Action> ret = aStar.plan(testDomain.getStartLocation());
     LOG(INFO) << "Solution: " << std::endl;

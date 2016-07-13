@@ -239,7 +239,7 @@ public:
         return startLocation;
     }
 
-    bool isStart(State state) {
+    const bool isStart(const State& state) {
         return state.getX() == startLocation.getX() && state.getY() == startLocation.getY();
     }
 
