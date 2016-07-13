@@ -2,14 +2,14 @@
 #define METRONOME_VEHICLE_HPP
 
 #include "SuccessorBundle.hpp"
-#include "VacuumWorld.hpp"
+#include "GridWorld.hpp"
 #include <boost/assert.hpp>
 #include <cstdlib>
 #include <ctime>
 #include <functional>
 #include <vector>
 
-class Vehicle : VacuumWorld {
+class Vehicle : GridWorld {
 public:
     Vehicle(State start = State::newState(0, 0, 0), State goal = State::newState(4, 4, 0), unsigned int width = 5,
             unsigned int height = 5, std::vector<State> objectStates = std::vector<State>{},
@@ -27,7 +27,7 @@ public:
 
     const State transition(const State& state, const Action& action) {
         moveObstacles();
-        return this->VacuumWorld::transition(state, action);
+        return this->GridWorld::transition(state, action);
     }
 
 private:

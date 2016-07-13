@@ -7,8 +7,7 @@ set(SOURCE_FILES
         src/main.cpp
         src/algorithm/AStar.hpp
         src/algorithm/LssLrtaStar.hpp
-        src/domains/VacuumWorld.hpp
-        src/domains/VacuumWorldIO.hpp
+        src/domains/GridWorld.hpp
         src/util/PriorityQueue.hpp
         src/util/Hasher.hpp
         src/domains/TestDomain.hpp
