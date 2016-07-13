@@ -1,6 +1,6 @@
 #include "algorithm/AStar.hpp"
 #include <catch.hpp>
-#include <domains/VacuumWorld.hpp>
+#include <domains/GridWorld.hpp>
 #include <easylogging++.h>
 
 namespace {
@@ -42,11 +42,11 @@ public:
 //    aStar.plan(state);
 //}
 
-TEST_CASE("AStar - VacuumWorld test", "[VacuumWorld]") {
-    VacuumWorld testDomain;
-    metronome::AStar<VacuumWorld> aStar(testDomain);
+TEST_CASE("AStar - GridWorld test", "[GridWorld]") {
+    GridWorld testDomain;
+    metronome::AStar<GridWorld> aStar(testDomain);
 
-    std::vector<VacuumWorld::Action> ret = aStar.plan(testDomain.getStartLocation());
+    std::vector<GridWorld::Action> ret = aStar.plan(testDomain.getStartLocation());
     LOG(INFO) << "Solution: " << std::endl;
     for (auto i : ret) {
         LOG(INFO) << i.evaluate() << std::endl;

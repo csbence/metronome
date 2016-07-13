@@ -15,7 +15,7 @@
  * just for simplicity and getting stuff working
  */
 
-class VacuumWorld {
+class GridWorld {
 public:
     /*
      * State <- location of the agent as a pair
@@ -59,7 +59,7 @@ public:
         unsigned int x;
         unsigned int y;
         //        unsigned long cost;
-        //        VacuumWorld::Action action;
+        //        GridWorld::Action action;
 
         friend void swap(State& first, State& second) {
             using std::swap;
@@ -143,7 +143,7 @@ private:
      */
 
 public:
-    VacuumWorld(State start = State::newState(0, 0, 0), State goal = State::newState(4, 4, 0), unsigned int width = 5,
+    GridWorld(State start = State::newState(0, 0, 0), State goal = State::newState(4, 4, 0), unsigned int width = 5,
             unsigned int height = 5, std::vector<State> objectStates = std::vector<State>{})
             : width(width), height(height), blockedCells(objectStates), startLocation(start), goalLocation(goal) {
     }
@@ -254,14 +254,14 @@ public:
         return manhattenDistance;
     }
 
-    std::vector<SuccessorBundle<VacuumWorld>> successors(State state) {
-        std::vector<SuccessorBundle<VacuumWorld>> successors;
+    std::vector<SuccessorBundle<GridWorld>> successors(State state) {
+        std::vector<SuccessorBundle<GridWorld>> successors;
 
         unsigned int actions[] = {1, 2, 3, 4, 5};
 
         for (auto a : actions) {
             State newState = this->transition(state, Action(a));
-            successors.push_back(SuccessorBundle<VacuumWorld>{newState, a, this->initialCost});
+            successors.push_back(SuccessorBundle<GridWorld>{newState, a, this->initialCost});
         }
 
         return successors;
