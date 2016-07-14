@@ -112,8 +112,8 @@ private:
     unsigned int height;
     std::vector<State> blockedCells;
     std::vector<State> dirtyCells;
-    State startLocation;
-    State goalLocation;
+    State startLocation = State::newState(0, 0, 0);
+    State goalLocation = State::newState(4, 4, 0);
     unsigned int initialAmountDirty = 1;
     const unsigned long initialCost = 1;
     // std::unordered_map<State, State*, typename metronome::Hasher<State>> nodes{};
@@ -144,7 +144,11 @@ private:
 
 public:
     GridWorld(Configuration config, std::fstream input) {
-        GridWorld{};
+        this->startLocation = State::newState(0, 0, 0);
+        this->goalLocation = State::newState(4, 4, 0);
+        this->width = 5;
+        this->height = 5;
+        this->blockedCells = std::vector<State>{};
     }
     GridWorld(State start = State::newState(0, 0, 0), State goal = State::newState(4, 4, 0), unsigned int width = 5,
             unsigned int height = 5, std::vector<State> objectStates = std::vector<State>{})

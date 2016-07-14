@@ -10,6 +10,7 @@
 #include <functional>
 #include <vector>
 
+namespace metronome{
 class Vehicle : GridWorld {
 public:
     typedef GridWorld::State State;
@@ -108,5 +109,5 @@ private:
     Cost initialCost = 1;
     Cost deadCost = 1000000;
 };
-
+}
 #endif // METRONOME_VEHICLE_HPP
