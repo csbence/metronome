@@ -8,7 +8,7 @@ template <typename Domain, typename Planner>
 class RealTimePlanManager : PlanManager<Domain, Planner> {
 public:
     Result plan(const Configuration& configuration, const Domain& domain, Planner planner) {
-        auto executionTime = measureNanoTime([&configuration, &planner] {
+        auto executionTime = measureNanoTime([&] {
 
             // TODO start state
 //            planner.plan(configuration);
