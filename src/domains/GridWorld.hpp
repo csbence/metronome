@@ -2,11 +2,11 @@
 #define VACUUM_WORLD_HPP
 
 #include "SuccessorBundle.hpp"
-//#include <bits/unordered_map.h>
 #include <boost/assert.hpp>
 #include <cstdlib>
 #include <functional>
 #include <util/Hasher.hpp>
+#include <experiment/Configuration.hpp>
 #include <vector>
 
 /*
@@ -143,6 +143,9 @@ private:
      */
 
 public:
+    GridWorld(Configuration config, std::fstream input) {
+      GridWorld{};
+    }
     GridWorld(State start = State::newState(0, 0, 0), State goal = State::newState(4, 4, 0), unsigned int width = 5,
             unsigned int height = 5, std::vector<State> objectStates = std::vector<State>{})
             : width(width), height(height), blockedCells(objectStates), startLocation(start), goalLocation(goal) {
@@ -185,11 +188,11 @@ public:
         return std::pair<unsigned int, unsigned int>{x, y};
     }
 
-    const bool isGoal(const State& location) {
+    const bool isGoal(const State& location) const {
         return location.getX() == goalLocation.getX() && location.getY() == goalLocation.getY();
     }
 
-    const bool inBlockedCells(const State& location) {
+    const bool inBlockedCells(const State& location) const {
         for (auto it = blockedCells.cbegin(); it != blockedCells.cend(); ++it) {
             if (it->getX() == location.getX() && it->getY() == location.getY()) {
                 return true;
@@ -198,7 +201,7 @@ public:
         return false;
     }
 
-    const bool isLegalLocation(const State& location) {
+    const bool isLegalLocation(const State& location) const {
         return location.getX() < width && location.getY() < height && !inBlockedCells(location);
     }
 
@@ -235,15 +238,15 @@ public:
         return initialAmountDirty;
     }
 
-    const State getStartLocation() {
+    const State getStartState() const {
         return startLocation;
     }
 
-    const bool isStart(const State& state) {
+    const bool isStart(const State& state) const {
         return state.getX() == startLocation.getX() && state.getY() == startLocation.getY();
     }
 
-    Cost heuristic(const State& state) {
+    Cost heuristic(const State& state) const{
         Cost manhattenDistance = 0;
 
         Cost horizontalDistance = this->goalLocation.getX() - state.getX();
@@ -254,7 +257,7 @@ public:
         return manhattenDistance;
     }
 
-    std::vector<SuccessorBundle<GridWorld>> successors(State state) {
+    std::vector<SuccessorBundle<GridWorld>> successors(State state) const {
         std::vector<SuccessorBundle<GridWorld>> successors;
 
         unsigned int actions[] = {1, 2, 3, 4, 5};

@@ -38,8 +38,8 @@ TEST_CASE("GridWorld setting variables", "[GridWorld]") {
     GridWorld::State pair2 = GridWorld::State::newState(1, 3);
     REQUIRE(vacuumWorld.getNumberBlockedCells() == 0);
     REQUIRE(vacuumWorld.getNumberDirtyCells() == 1);
-    REQUIRE(vacuumWorld.getStartLocation().getX() == 0);
-    REQUIRE(vacuumWorld.getStartLocation().getY() == 0);
+    REQUIRE(vacuumWorld.getStartState().getX() == 0);
+    REQUIRE(vacuumWorld.getStartState().getY() == 0);
 
     REQUIRE(pair1.getX() == 3);
     REQUIRE(pair1.getY() == 5);
