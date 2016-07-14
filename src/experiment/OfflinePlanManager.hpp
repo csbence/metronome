@@ -10,8 +10,7 @@ public:
     Result plan(const Configuration& configuration, const Domain& domain, Planner planner) {
         auto executionTime = measureNanoTime([&configuration, &planner] {
 
-            // TODO start state
-            planner.plan(configuration);
+            planner.plan(domain.getStartState());
 
         });
 

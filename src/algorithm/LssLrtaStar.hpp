@@ -20,6 +20,7 @@ class LssLrtaStar : Planner {
 
     LssLrtaStar(const Domain& domain, const Configuration&) : domain{domain} {
     }
+    LssLrtaStar(LssLrtaStar&&) = default;
 
     std::vector<Action> selectAction(const State& startState, TimeTerminationChecker terminationChecker) {
         if (domain.isGoal(startState)) {
@@ -261,7 +262,7 @@ private:
         return 0;
     }
 
-    const Domain& domain;
+    const Domain &domain;
     PriorityQueue<Node> openList{10000000, fValueComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
     boost::object_pool<Node> nodePool{100000000, 100000000};

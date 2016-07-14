@@ -11,7 +11,7 @@ public:
         auto executionTime = measureNanoTime([&configuration, &planner] {
 
             // TODO start state
-            planner.plan(configuration);
+//            planner.plan(configuration);
 
         });
 
