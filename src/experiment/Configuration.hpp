@@ -5,6 +5,8 @@ namespace metronome {
 class Configuration {
 public:
     Configuration() : document{} {};
+    Configuration(const Configuration&) = default;
+    Configuration(Configuration&&) = default;
 
     Configuration(rapidjson::Document document) : document{std::move(document)} {
     }

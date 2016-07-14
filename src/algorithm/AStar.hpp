@@ -19,7 +19,7 @@ class AStar {
 public:
     AStar(const Domain& domain, const Configuration&) : domain(domain), openList(10000000, fValueComparator) {
     }
-    AStar(const AStar&) = default;
+//    AStar(const AStar&) = default;
     AStar(AStar&&) = default;
 
     std::vector<Action> plan(State startState) {

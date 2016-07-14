@@ -91,7 +91,7 @@ private:
         Planner planner{domain, configuration};
 
         OfflinePlanManager<Domain, Planner> offlinePlanManager;
-        const Result result = offlinePlanManager.plan(configuration, domain, std::move(planner));
+        const Result result = offlinePlanManager.plan(configuration, domain, planner);
     }
 
     template <typename Domain, typename Planner>
@@ -99,7 +99,7 @@ private:
         Planner planner{domain, configuration};
 
         RealTimePlanManager<Domain, Planner> offlinePlanManager;
-        const Result result = offlinePlanManager.plan(configuration, domain, std::move(planner));
+        const Result result = offlinePlanManager.plan(configuration, domain, planner);
     }
 };
 }
