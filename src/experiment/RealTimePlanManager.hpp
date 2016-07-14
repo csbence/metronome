@@ -1,13 +1,14 @@
 #ifndef METRONOME_REALTIMEPLANMANAGER_HPP
 #define METRONOME_REALTIMEPLANMANAGER_HPP
 
-#include "../../test/util/TimeMeasurement.hpp"
+#include "util/TimeMeasurement.hpp"
 #include "PlanManager.hpp"
 namespace metronome {
 template <typename Domain, typename Planner>
-class RealTimePlanManager : PlanManager {
-    static Result plan(const Configuration& configuration, const Domain& domain, Planner planner) {
-        auto executionTime = measureNanoTime([] {
+class RealTimePlanManager : PlanManager<Domain, Planner> {
+public:
+    Result plan(const Configuration& configuration, const Domain& domain, Planner planner) {
+        auto executionTime = measureNanoTime([&configuration, &planner] {
 
             // TODO start state
             planner.plan(configuration);

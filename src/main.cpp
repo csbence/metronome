@@ -2,7 +2,7 @@
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
-#include "../test/util/TimeMeasurement.hpp"
+#include "util/TimeMeasurement.hpp"
 #include <experiment/ConfigurationExecutor.hpp>
 
 INITIALIZE_EASYLOGGINGPP
@@ -41,8 +41,7 @@ int main() {
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
     document.Accept(writer);
 
-    ConfigurationExecutor configurationExecutor;
-    configurationExecutor.executeConfiguration(Configuration());
+    ConfigurationExecutor::executeConfiguration(Configuration());
 
     LOG(INFO) << "Json test: " << buffer.GetString() << std::endl;
 

@@ -2,10 +2,12 @@
 #define METRONOME_CONFIGURATIONEXECUTOR_HPP
 
 #include "Configuration.hpp"
-#include "Result.hpp"
 #include "OfflinePlanManager.hpp"
+#include "RealTimePlanManager.hpp"
+#include "Result.hpp"
 #include <algorithm/AStar.hpp>
 #include <algorithm/LssLrtaStar.hpp>
+#include <domains/GridWorld.hpp>
 #include <easylogging++.h>
 #include <rapidjson/document.h>
 #include <string>
@@ -26,26 +28,13 @@ static const std::string ALGORITHM_LSS_LRTA_STAR{"lssLrtaStar"};
 
 class ConfigurationExecutor {
 public:
-    Result executeConfiguration(Configuration configuration) {
+    static Result executeConfiguration(Configuration configuration) {
         // todo validate configuration
 
-        std::basic_istream domainInputStream{};
-
-        if (configuration.HasMember(RAW_DOMAIN.c_str())) {
-            // todo handle raw domain files
-            std::string rawDomain{configuration[RAW_DOMAIN.c_str()].GetString()};
-        } else if (configuration.HasMember(DOMAIN_PATH.c_str())) {
-            std::string domainPath{configuration[DOMAIN_PATH.c_str()].GetString()};
-            domainInputStream = std::ifstream{domainPath};
-        } else {
-            LOG(ERROR) << "Domain not found. Raw domain or domain path must be provided." << std::endl;
-            // todo return result with error
-        }
-
-        std::string domainName{configuration[DOMAIN_NAME.c_str()].GetString()};
+        std::string domainName{configuration.getString(DOMAIN_NAME)};
 
         if (domainName == DOMAIN_GRID_WORLD) {
-            executeDomain<GridWorld>(configuration, std::move(domainInputStream));
+            executeDomain<GridWorld>(configuration);
         } else {
             LOG(ERROR) << "Unknown domain name: " << domainName << std::endl;
             // todo return result with error
@@ -53,41 +42,64 @@ public:
     }
 
 private:
-    template<typename Domain>
-    Result executeDomain(const Configuration& configuration, std::basic_istream domainInputStream) {
-        Domain domain{configuration, domainInputStream};
+    template <typename Domain>
+    static Result executeDomain(const Configuration& configuration) {
+        Domain domain{getDomain<Domain>(configuration)};
 
-        if (!configuration.HasMember(ALGORITHM_NAME.c_str())) {
+        if (!configuration.hasMember(ALGORITHM_NAME)) {
             LOG(ERROR) << "Algorithm name not found." << std::endl;
             // todo return result with error
         }
 
-        std::string algorithName{configuration[ALGORITHM_NAME.c_str()].GetString()};
+        std::string algorithmName{configuration.getString(ALGORITHM_NAME)};
 
-        if (algorithName == ALGORITHM_A_STAR) {
-            executeOfflineAlgorithm<Domain, AStar>(configuration, domain);
-        } else if (algorithName == ALGORITHM_LSS_LRTA_STAR) {
-            executeRealTimeAlgorithm<Domain, LssLrtaStar>(configuration, domain);
+        if (algorithmName == ALGORITHM_A_STAR) {
+            executeOfflinePlanner<Domain, AStar<Domain>>(configuration, domain);
+        } else if (algorithmName == ALGORITHM_LSS_LRTA_STAR) {
+            executeRealTimePlanner<Domain, LssLrtaStar<Domain>>(configuration, domain);
         } else {
-            LOG(ERROR) << "Unknown algorithm name: " << algorithName << std::endl;
+            LOG(ERROR) << "Unknown algorithm name: " << algorithmName << std::endl;
             // todo return result with error
         }
     }
 
-    template<typename Domain, typename Algorithm>
-    void executeOfflineAlgorithm(const Configuration& configuration, const Domain& domain) {
-        Algorithm algorithm{configuration};
+    template <typename Domain>
+    static Domain getDomain(const Configuration& configuration) {
+        //        std::basic_istream<char> domainInputStream{};
 
-        OfflinePlanManager<Domain, Algorithm> offlinePlanManager;
-        const Result result = offlinePlanManager.plan(configuration, domain, std::move(algorithm));
+        if (configuration.hasMember(RAW_DOMAIN)) {
+            // todo handle raw domain files
+            std::string rawDomain{configuration.getString(RAW_DOMAIN)};
+        } else if (configuration.hasMember(DOMAIN_PATH)) {
+            std::string domainPath{configuration.getString(DOMAIN_PATH)};
+            std::fstream fileInputStream;
+
+            fileInputStream.open(domainPath, std::fstream::in);
+            Domain domain{configuration, fileInputStream};
+            fileInputStream.close();
+
+            return domain;
+
+        } else {
+            LOG(ERROR) << "Domain not found. Raw domain or domain path must be provided." << std::endl;
+            // todo return result with error
+        }
     }
 
-    template<typename Domain, typename Algorithm>
-    void executeRealTimeAlgorithm(const Configuration& configuration, const Domain& domain) {
-        Algorithm algorithm{configuration};
+    template <typename Domain, typename Planner>
+    static void executeOfflinePlanner(const Configuration& configuration, const Domain& domain) {
+        Planner planner{configuration};
 
-        RealTimePlanManager <Domain, Algorithm> offlinePlanManager;
-        const Result result = offlinePlanManager.plan(configuration, domain, std::move(algorithm));
+        OfflinePlanManager<Domain, Planner> offlinePlanManager;
+        const Result result = offlinePlanManager.plan(configuration, domain, std::move(planner));
+    }
+
+    template <typename Domain, typename Planner>
+    static void executeRealTimePlanner(const Configuration& configuration, const Domain& domain) {
+//        Planner planner{configuration};
+//
+//        RealTimePlanManager<Domain, Planner> offlinePlanManager;
+//        const Result result = offlinePlanManager.plan(configuration, domain, std::move(planner));
     }
 };
 }
