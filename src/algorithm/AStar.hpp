@@ -17,7 +17,7 @@ class AStar {
     typedef typename Domain::Cost Cost;
 
 public:
-    AStar(Domain domain) : domain(domain), openList(10000000, fValueComparator) {
+    AStar(const Domain& domain, const Configuration&) : domain(domain), openList(10000000, fValueComparator) {
     }
 
     std::vector<Action> plan(State startState) {
@@ -114,7 +114,7 @@ private:
         return 0;
     }
 
-    Domain domain;
+    const Domain& domain;
     PriorityQueue<Node> openList;
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes;
     boost::object_pool<Node> nodePool{100000000, 100000000};

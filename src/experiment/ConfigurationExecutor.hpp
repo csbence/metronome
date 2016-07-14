@@ -88,7 +88,7 @@ private:
 
     template <typename Domain, typename Planner>
     static void executeOfflinePlanner(const Configuration& configuration, const Domain& domain) {
-        Planner planner{configuration};
+        Planner planner{domain, configuration};
 
         OfflinePlanManager<Domain, Planner> offlinePlanManager;
         const Result result = offlinePlanManager.plan(configuration, domain, std::move(planner));
@@ -96,10 +96,10 @@ private:
 
     template <typename Domain, typename Planner>
     static void executeRealTimePlanner(const Configuration& configuration, const Domain& domain) {
-//        Planner planner{configuration};
-//
-//        RealTimePlanManager<Domain, Planner> offlinePlanManager;
-//        const Result result = offlinePlanManager.plan(configuration, domain, std::move(planner));
+        Planner planner{domain, configuration};
+
+        RealTimePlanManager<Domain, Planner> offlinePlanManager;
+        const Result result = offlinePlanManager.plan(configuration, domain, std::move(planner));
     }
 };
 }
