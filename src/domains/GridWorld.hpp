@@ -112,8 +112,8 @@ private:
     unsigned int height;
     std::vector<State> blockedCells;
     std::vector<State> dirtyCells;
-    State startLocation = State::newState(0, 0, 0);
-    State goalLocation = State::newState(width - 1, height - 1, 0);
+    State startLocation;
+    State goalLocation;
     unsigned int initialAmountDirty = 1;
     const unsigned long initialCost = 1;
     // std::unordered_map<State, State*, typename metronome::Hasher<State>> nodes{};
