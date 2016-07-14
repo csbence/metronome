@@ -38,7 +38,7 @@ public:
     }
 
     const State getStartLocation() {
-        return GridWorld::getStartLocation();
+        return GridWorld::getStartState();
     }
 
     Cost heuristic(const State& state) {

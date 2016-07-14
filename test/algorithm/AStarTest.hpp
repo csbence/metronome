@@ -49,7 +49,7 @@ TEST_CASE("AStar - GridWorld test", "[GridWorld]") {
     Configuration config;
     metronome::AStar<GridWorld> aStar(testDomain, config);
 
-    std::vector<GridWorld::Action> ret = aStar.plan(testDomain.getStartLocation());
+    std::vector<GridWorld::Action> ret = aStar.plan(testDomain.getStartState());
     LOG(INFO) << "Solution: " << std::endl;
     for (auto i : ret) {
         LOG(INFO) << i.evaluate() << std::endl;
