@@ -5,15 +5,15 @@
 namespace {
 
 TEST_CASE("GridWorld creation", "[GridWorld]") {
-    GridWorld vacuumWorld;
+    metronome::GridWorld vacuumWorld;
 
     REQUIRE(vacuumWorld.getWidth() == 5);
     REQUIRE(vacuumWorld.getHeight() == 5);
 }
 
 TEST_CASE("GridWorld::State = operator", "[GridWorld]") {
-    GridWorld::State s = GridWorld::State::newState(0, 0);
-    GridWorld::State t = GridWorld::State::newState(9, 9);
+    metronome::GridWorld::State s = metronome::GridWorld::State::newState(0, 0);
+    metronome::GridWorld::State t = metronome::GridWorld::State::newState(9, 9);
 
     REQUIRE(s.getX() == 0);
     REQUIRE(s.getY() == 0);
@@ -27,15 +27,15 @@ TEST_CASE("GridWorld::State = operator", "[GridWorld]") {
 }
 
 TEST_CASE("GridWorld setting variables", "[GridWorld]") {
-    GridWorld vacuumWorld;
+    metronome::GridWorld vacuumWorld;
 
     vacuumWorld.setWidth(10);
     vacuumWorld.setHeight(13);
     REQUIRE(vacuumWorld.getWidth() == 10);
     REQUIRE(vacuumWorld.getHeight() == 13);
 
-    GridWorld::State pair1 = GridWorld::State::newState(3, 5);
-    GridWorld::State pair2 = GridWorld::State::newState(1, 3);
+    metronome::GridWorld::State pair1 = metronome::GridWorld::State::newState(3, 5);
+    metronome::GridWorld::State pair2 = metronome::GridWorld::State::newState(1, 3);
     REQUIRE(vacuumWorld.getNumberBlockedCells() == 0);
     REQUIRE(vacuumWorld.getNumberDirtyCells() == 1);
     REQUIRE(vacuumWorld.getStartState().getX() == 0);
@@ -56,14 +56,14 @@ TEST_CASE("GridWorld setting variables", "[GridWorld]") {
 }
 
 TEST_CASE("GridWorld getters", "[GridWorld]") {
-    GridWorld vacuumWorld;
+    metronome::GridWorld vacuumWorld;
 
     vacuumWorld.setWidth(13);
     vacuumWorld.setHeight(9);
 
     for (int i = 0; i < 10; i++) {
         std::pair<unsigned int, unsigned int> q = vacuumWorld.randomLocation();
-        GridWorld::State _t = GridWorld::State::newState(q.first, q.second);
+        metronome::GridWorld::State _t = metronome::GridWorld::State::newState(q.first, q.second);
 
 //        LOG(INFO) << "R_LOC: " << _t.getX() << " " << _t.getY() << std::endl;
         REQUIRE(vacuumWorld.isLegalLocation(_t));
