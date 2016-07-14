@@ -4,9 +4,9 @@
 #include "SuccessorBundle.hpp"
 #include <boost/assert.hpp>
 #include <cstdlib>
+#include <experiment/Configuration.hpp>
 #include <functional>
 #include <util/Hasher.hpp>
-#include <experiment/Configuration.hpp>
 #include <vector>
 
 /*
@@ -14,7 +14,7 @@
  * its assumed there is only one dirty cell
  * just for simplicity and getting stuff working
  */
-
+namespace metronome {
 class GridWorld {
 public:
     /*
@@ -144,7 +144,7 @@ private:
 
 public:
     GridWorld(Configuration config, std::fstream input) {
-      GridWorld{};
+        GridWorld{};
     }
     GridWorld(State start = State::newState(0, 0, 0), State goal = State::newState(4, 4, 0), unsigned int width = 5,
             unsigned int height = 5, std::vector<State> objectStates = std::vector<State>{})
@@ -156,7 +156,7 @@ public:
      * a state and action pair
      * TODO: make allow more than one dirty cell
      */
-    const State transition(const State& s, const Action& a) {
+    const State transition(const State& s, const Action& a) const {
         if (a.evaluate() == 'N') {
             State n = s.newState(s.getX(), s.getY() - 1, 0);
             if (isLegalLocation(n)) {
@@ -246,7 +246,7 @@ public:
         return state.getX() == startLocation.getX() && state.getY() == startLocation.getY();
     }
 
-    Cost heuristic(const State& state) const{
+    Cost heuristic(const State& state) const {
         Cost manhattenDistance = 0;
 
         Cost horizontalDistance = this->goalLocation.getX() - state.getX();
@@ -270,4 +270,5 @@ public:
         return successors;
     }
 };
+}
 #endif

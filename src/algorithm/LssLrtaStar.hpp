@@ -20,6 +20,7 @@ class LssLrtaStar : Planner {
 
     LssLrtaStar(const Domain& domain, const Configuration&) : domain{domain} {
     }
+    LssLrtaStar(const LssLrtaStar&) = default;
     LssLrtaStar(LssLrtaStar&&) = default;
 
     std::vector<Action> selectAction(const State& startState, TimeTerminationChecker terminationChecker) {
