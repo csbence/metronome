@@ -1,6 +1,7 @@
 #ifndef METRONOME_CONFIGURATION_HPP
 #define METRONOME_CONFIGURATION_HPP
 
+#include "rapidjson/document.h"
 namespace metronome {
 class Configuration {
 public:
