@@ -16,7 +16,7 @@ public:
     typedef GridWorld::State State;
     typedef GridWorld::Action Action;
     typedef GridWorld::Cost Cost;
-    Vehicle(State start = State::newState(0, 0, 0), State goal = State::newState(4, 4, 0), unsigned int width = 5,
+/*    Vehicle(State start = State::newState(0, 0, 0), State goal = State::newState(4, 4, 0), unsigned int width = 5,
             unsigned int height = 5, std::vector<State> objectStates = std::vector<State>{},
             std::unordered_map<State, State*, typename metronome::Hasher<State>> safeStates =
                     std::unordered_map<State, State*, typename metronome::Hasher<State>>{},
@@ -28,6 +28,9 @@ public:
               goal(goal),
               bunkerCells(safeStates),
               obstacleVelocity(velocities) {
+    }
+*/
+    Vehicle(const Configuration& config, std::fstream input) : GridWorld(config, input) {
     }
     const bool addDyanmicObject(const State& toAdd) {
         return this->addBlockedCell(toAdd);

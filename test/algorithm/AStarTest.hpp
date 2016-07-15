@@ -45,7 +45,7 @@ public:
 //}
 
 TEST_CASE("AStar - GridWorld test", "[GridWorld]") {
-    metronome::GridWorld testDomain;
+/*    metronome::GridWorld testDomain;
     metronome::Configuration config;
     metronome::AStar<metronome::GridWorld> aStar(testDomain, config);
 
@@ -54,6 +54,7 @@ TEST_CASE("AStar - GridWorld test", "[GridWorld]") {
     for (auto i : ret) {
         LOG(INFO) << i.toString() << std::endl;
     }
+*/
 }
 
 /*TEST_CASE("AStar - Vehicle test", "[Vehicle]") {

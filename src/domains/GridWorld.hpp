@@ -8,6 +8,7 @@
 #include <functional>
 #include <util/Hasher.hpp>
 #include <vector>
+#include <unordered_set>
 
 /*
  * NOTE: currently VWorld operates as GWorld
@@ -76,6 +77,9 @@ public:
         }
 
     public:
+        State() {
+            newState(0,0,0);
+        }
         State& operator=(State toCopy) {
             swap(*this, toCopy);
             return *this;
@@ -115,7 +119,7 @@ private:
     const unsigned int maxActions = 5;
     unsigned int width;
     unsigned int height;
-    std::vector<State> blockedCells;
+    std::unordered_set<State, typename metronome::Hasher<State>>  blockedCells;
     std::vector<State> dirtyCells;
     State startLocation = State::newState(0, 0, 0);
     State goalLocation = State::newState(4, 4, 0);
@@ -149,7 +153,7 @@ private:
 
 public:
     GridWorld(const Configuration& config, std::istream& input) {
-        this->blockedCells = std::vector<State>{};
+        this->blockedCells = std::unordered_set<State, typename metronome::Hasher<State>>{};
         int currentHeight = 0;
         int currentWidth = 0;
         std::string line;
@@ -167,7 +171,7 @@ public:
                     this->goalLocation = State::newState(currentWidth, currentHeight, 0);
                 } else if (*it == '#') { // store the objects
                     State object = State::newState(currentWidth, currentHeight, 0);
-                    this->blockedCells.push_back(object);
+                    this->blockedCells.insert(object);
                 } else {
                     // its an open cell nothing needs to be done
                 }
@@ -181,13 +185,14 @@ public:
         // this->width = 5;
         // this->height = 5;
     }
-    GridWorld(State start = State::newState(0, 0, 0),
+    /*GridWorld(State start = State::newState(0, 0, 0),
             State goal = State::newState(4, 4, 0),
             unsigned int width = 5,
             unsigned int height = 5,
             std::vector<State> objectStates = std::vector<State>{})
             : width(width), height(height), blockedCells(objectStates), startLocation(start), goalLocation(goal) {
     }
+    */
 
     /*
      * Calculate the transition state given
@@ -231,10 +236,9 @@ public:
     }
 
     const bool inBlockedCells(const State& location) const {
-        for (auto it = blockedCells.cbegin(); it != blockedCells.cend(); ++it) {
-            if (it->getX() == location.getX() && it->getY() == location.getY()) {
-                return true;
-            }
+        auto search = blockedCells.find(location);
+        if(search != blockedCells.end()) {
+            return true;
         }
         return false;
     }
@@ -261,7 +265,7 @@ public:
 
     const bool addBlockedCell(const State& toAdd) {
         if (isLegalLocation(toAdd)) {
-            blockedCells.push_back(toAdd);
+            blockedCells.insert(toAdd);
             return true;
         }
         return false;
