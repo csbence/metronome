@@ -31,7 +31,7 @@ public:
         }
         Action(unsigned int v) : value(v) {
         }
-        constexpr char evaluate() const {
+        constexpr char toString() const {
             if (value == 1) {
                 return 'N';
             } else if (value == 2) {
@@ -144,11 +144,43 @@ private:
 
 public:
     GridWorld(const Configuration& config, std::istream& input) {
-        this->startLocation = State::newState(0, 0, 0);
-        this->goalLocation = State::newState(4, 4, 0);
-        this->width = 5;
-        this->height = 5;
         this->blockedCells = std::vector<State>{};
+        int currentHeight = 0;
+        int currentWidth = 0;
+        std::string line;
+        if (input.is_open()) {
+          getline(input, line); // get the height
+          std::stringstream convertHeight(line);
+          convertHeight >> this->height;
+          getline(input, line); //get the width
+          std::stringstream convertWidth(line);
+          convertWidth >> this->width;
+          while ( getline (input, line) ) {
+            for ( auto it = line.cbegin(); it != line.cend(); ++it) {
+              if(*it == '@') { // find the start location
+                this->startLocation = State::newState(currentWidth, currentHeight, 0);
+              }
+              else if(*it == '*') {  //find the goal location
+                this->goalLocation = State::newState(currentWidth, currentHeight, 0);
+              }
+              else if(*it == '#') { //store the objects
+                State object = State::newState(currentWidth,currentHeight, 0);
+                this->blockedCells.push_back(object);
+              }
+              else {
+                //its an open cell nothing needs to be done
+              }
+              ++currentWidth; // at the end of the character parse move along
+            }
+            currentWidth = 0; //restart character parse at beginning of line
+            ++currentHeight; //move down one line in charadter parse
+          }
+          input.close();
+        }
+        //this->startLocation = State::newState(0, 0, 0);
+        //this->goalLocation = State::newState(4, 4, 0);
+        //this->width = 5;
+        //this->height = 5;
     }
     GridWorld(State start = State::newState(0, 0, 0), State goal = State::newState(4, 4, 0), unsigned int width = 5,
             unsigned int height = 5, std::vector<State> objectStates = std::vector<State>{})
@@ -161,22 +193,22 @@ public:
      * TODO: make allow more than one dirty cell
      */
     const State transition(const State& s, const Action& a) const {
-        if (a.evaluate() == 'N') {
+        if (a.toString() == 'N') {
             State n = s.newState(s.getX(), s.getY() - 1, 0);
             if (isLegalLocation(n)) {
                 return n;
             }
-        } else if (a.evaluate() == 'E') {
+        } else if (a.toString() == 'E') {
             State n = s.newState(s.getX() + 1, s.getY(), 1);
             if (isLegalLocation(n)) {
                 return n;
             }
-        } else if (a.evaluate() == 'S') {
+        } else if (a.toString() == 'S') {
             State n = s.newState(s.getX(), s.getY() + 1, 2);
             if (isLegalLocation(n)) {
                 return n;
             }
-        } else if (a.evaluate() == 'W') {
+        } else if (a.toString() == 'W') {
             State n = s.newState(s.getX() - 1, s.getY(), 3);
             if (isLegalLocation(n)) {
                 return n;
