@@ -24,9 +24,6 @@ public:
      * Cost <- value for taking action from a state
      */
     class Action {
-    private:
-        unsigned int value;
-
     public:
         Action() : value(0) {
         }
@@ -58,24 +55,11 @@ public:
         void setValue(const unsigned int toSet) {
             value = toSet;
         }*/
+    private:
+        unsigned int value;
     };
     typedef unsigned long Cost;
     class State {
-    private:
-        unsigned int x;
-        unsigned int y;
-        //        unsigned long cost;
-        //        GridWorld::Action action;
-
-        friend void swap(State& first, State& second) {
-            using std::swap;
-            swap(first.x, second.x);
-            swap(first.y, second.y);
-        }
-
-        State(unsigned int x, unsigned int y, unsigned int a) : x(x), y(y) {
-        }
-
     public:
         State() {
             newState(0,0,0);
@@ -102,55 +86,21 @@ public:
         bool operator==(const State& state) const {
             return x == state.x && y == state.y;
         }
-    };
+    private:
+        unsigned int x;
+        unsigned int y;
+        //        unsigned long cost;
+        //        GridWorld::Action action;
 
-private:
-    /*
-     * maxActions <- maximum number of actions
-     * width/height <- internal size representation of world
-     * blockedCells <- stores locations of the objects in world
-     * dirtyCells <- stores locations of dirt in the world
-     * startLocation <- where the agent begins
-     * goalLocation <- where the agent needs to end up
-     * initalAmountDirty <- how many cells are dirty
-     * initialCost <- constant cost value
-     * obstacles <- stores references to obstacles
-     */
-    const unsigned int maxActions = 5;
-    unsigned int width;
-    unsigned int height;
-    std::unordered_set<State, typename metronome::Hasher<State>>  blockedCells;
-    std::vector<State> dirtyCells;
-    State startLocation = State::newState(0, 0, 0);
-    State goalLocation = State::newState(4, 4, 0);
-    unsigned int initialAmountDirty = 1;
-    const unsigned long initialCost = 1;
-    // std::unordered_map<State, State*, typename metronome::Hasher<State>> nodes{};
-
-    /*
-      * Given a state and action pair give the cost
-      * for taking the action in the state
-      * TODO: make it take a cost function instead of constant
-
-
-    const Cost getCost(const State& s, const Action& a) {
-        return initialCost;
-    }
-
-    const Action randomAction() {
-        return Action(rand() & maxActions);
-    }
-
-     TODO: make allow more than one dirty cell
-    const bool addDirtyCell(const State& toAdd) {
-        if (isLegalLocation(toAdd)) {
-            dirtyCells.push_back(toAdd);
-            return true;
+        friend void swap(State& first, State& second) {
+            using std::swap;
+            swap(first.x, second.x);
+            swap(first.y, second.y);
         }
-        return false;
-    }
-     */
 
+        State(unsigned int x, unsigned int y, unsigned int a) : x(x), y(y) {
+        }
+    };
 public:
     GridWorld(const Configuration& config, std::istream& input) {
         this->blockedCells = std::unordered_set<State, typename metronome::Hasher<State>>{};
@@ -180,55 +130,42 @@ public:
             currentWidth = 0; // restart character parse at beginning of line
             ++currentHeight; // move down one line in charadter parse
         }
-        // this->startLocation = State::newState(0, 0, 0);
-        // this->goalLocation = State::newState(4, 4, 0);
-        // this->width = 5;
-        // this->height = 5;
     }
-    /*GridWorld(State start = State::newState(0, 0, 0),
-            State goal = State::newState(4, 4, 0),
-            unsigned int width = 5,
-            unsigned int height = 5,
-            std::vector<State> objectStates = std::vector<State>{})
-            : width(width), height(height), blockedCells(objectStates), startLocation(start), goalLocation(goal) {
-    }
-    */
-
     /*
      * Calculate the transition state given
      * a state and action pair
      * TODO: make allow more than one dirty cell
      */
-    const State transition(const State& s, const Action& a) const {
-        if (a.toChar() == 'N') {
-            State n = s.newState(s.getX(), s.getY() - 1, 0);
-            if (isLegalLocation(n)) {
-                return n;
+    const State transition(const State& state, const Action& action) const {
+        if (action.toChar() == 'N') {
+            State newState = state.newState(state.getX(), state.getY() - 1, 0);
+            if (isLegalLocation(newState)) {
+                return newState;
             }
-        } else if (a.toChar() == 'E') {
-            State n = s.newState(s.getX() + 1, s.getY(), 1);
-            if (isLegalLocation(n)) {
-                return n;
+        } else if (action.toChar() == 'E') {
+            State newState = state.newState(state.getX() + 1, state.getY(), 1);
+            if (isLegalLocation(newState)) {
+                return newState;
             }
-        } else if (a.toChar() == 'S') {
-            State n = s.newState(s.getX(), s.getY() + 1, 2);
-            if (isLegalLocation(n)) {
-                return n;
+        } else if (action.toChar() == 'S') {
+            State newState = state.newState(state.getX(), state.getY() + 1, 2);
+            if (isLegalLocation(newState)) {
+                return newState;
             }
-        } else if (a.toChar() == 'W') {
-            State n = s.newState(s.getX() - 1, s.getY(), 3);
-            if (isLegalLocation(n)) {
-                return n;
+        } else if (action.toChar() == 'W') {
+            State newState = state.newState(state.getX() - 1, state.getY(), 3);
+            if (isLegalLocation(newState)) {
+                return newState;
             }
         }
-        return s;
+        return state;
     }
 
     std::pair<unsigned int, unsigned int> randomLocation() {
-        unsigned int x = rand() % width;
-        unsigned int y = rand() % height;
+        unsigned int randomX = rand() % width;
+        unsigned int randomY = rand() % height;
 
-        return std::pair<unsigned int, unsigned int>{x, y};
+        return std::pair<unsigned int, unsigned int>{randomX, randomY};
     }
 
     const bool isGoal(const State& location) const {
@@ -311,6 +248,52 @@ public:
 
         return successors;
     }
+private:
+    /*
+     * maxActions <- maximum number of actions
+     * width/height <- internal size representation of world
+     * blockedCells <- stores locations of the objects in world
+     * dirtyCells <- stores locations of dirt in the world
+     * startLocation <- where the agent begins
+     * goalLocation <- where the agent needs to end up
+     * initalAmountDirty <- how many cells are dirty
+     * initialCost <- constant cost value
+     * obstacles <- stores references to obstacles
+     */
+    const unsigned int maxActions = 5;
+    unsigned int width;
+    unsigned int height;
+    std::unordered_set<State, typename metronome::Hasher<State>>  blockedCells;
+    std::vector<State> dirtyCells;
+    State startLocation = State::newState(0, 0, 0);
+    State goalLocation = State::newState(4, 4, 0);
+    unsigned int initialAmountDirty = 1;
+    const unsigned long initialCost = 1;
+    // std::unordered_map<State, State*, typename metronome::Hasher<State>> nodes{};
+
+    /*
+      * Given a state and action pair give the cost
+      * for taking the action in the state
+      * TODO: make it take a cost function instead of constant
+
+
+    const Cost getCost(const State& s, const Action& a) {
+        return initialCost;
+    }
+
+    const Action randomAction() {
+        return Action(rand() & maxActions);
+    }
+
+     TODO: make allow more than one dirty cell
+    const bool addDirtyCell(const State& toAdd) {
+        if (isLegalLocation(toAdd)) {
+            dirtyCells.push_back(toAdd);
+            return true;
+        }
+        return false;
+    }
+     */
 };
 }
 #endif
