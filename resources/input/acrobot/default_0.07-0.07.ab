@@ -1,0 +1,68 @@
+{
+  "endLink1LowerBound": {
+    "velocity": 0.07,
+    "position": 0.07
+  },
+  "endLink2LowerBound": {
+    "velocity": 0.07,
+    "position": 0.07
+  },
+  "endLink1UpperBound": {
+    "velocity": 0.07,
+    "position": 0.07
+  },
+  "endLink2UpperBound": {
+    "velocity": 0.07,
+    "position": 0.07
+  },
+  "initialState": {
+    "link1": {
+      "velocity": 0.0,
+      "position": 4.71238898038469
+    },
+    "link2": {
+      "velocity": 0.0,
+      "position": 0.0
+    },
+    "configuration": {
+      "maxAngularVelocity2": 28.274333882308138,
+      "positionGranularity1": 0.2991993003,
+      "minAngularVelocity2": -28.274333882308138,
+      "velocityGranularity1": 0.1045309649,
+      "positionGranularity2": 0.2991993003,
+      "minAngularVelocity1": -12.566370614359172,
+      "velocityGranularity2": 0.076731557,
+      "maxAngularVelocity1": 12.566370614359172
+    }
+  },
+  "stateConfiguration": {
+    "maxAngularVelocity2": 28.274333882308138,
+    "positionGranularity1": 0.2991993003,
+    "minAngularVelocity2": -28.274333882308138,
+    "velocityGranularity1": 0.1045309649,
+    "positionGranularity2": 0.2991993003,
+    "minAngularVelocity1": -12.566370614359172,
+    "velocityGranularity2": 0.076731557,
+    "maxAngularVelocity1": 12.566370614359172
+  },
+  "endState": {
+    "link1": {
+      "velocity": 0.0,
+      "position": 1.5707963267948966
+    },
+    "link2": {
+      "velocity": 0.0,
+      "position": 0.0
+    },
+    "configuration": {
+      "maxAngularVelocity2": 28.274333882308138,
+      "positionGranularity1": 0.2991993003,
+      "minAngularVelocity2": -28.274333882308138,
+      "velocityGranularity1": 0.1045309649,
+      "positionGranularity2": 0.2991993003,
+      "minAngularVelocity1": -12.566370614359172,
+      "velocityGranularity2": 0.076731557,
+      "maxAngularVelocity1": 12.566370614359172
+    }
+  }
+}
