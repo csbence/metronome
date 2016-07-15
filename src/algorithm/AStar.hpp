@@ -3,6 +3,7 @@
 #define BOOST_POOL_NO_MT
 
 #include "util/Hasher.hpp"
+#include "Planner.hpp"
 #include <boost/pool/object_pool.hpp>
 #include <unordered_map>
 #include <util/PriorityQueue.hpp>
@@ -11,7 +12,7 @@
 namespace metronome {
 
 template <typename Domain>
-class AStar {
+class AStar : public Planner {
     typedef typename Domain::State State;
     typedef typename Domain::Action Action;
     typedef typename Domain::Cost Cost;
@@ -19,7 +20,7 @@ class AStar {
 public:
     AStar(const Domain& domain, const Configuration&) : domain(domain), openList(10000000, fValueComparator) {
     }
-//    AStar(const AStar&) = default;
+    //    AStar(const AStar&) = default;
     AStar(AStar&&) = default;
 
     std::vector<Action> plan(State startState) {
@@ -61,8 +62,12 @@ public:
 
                 if (successorNode == nullptr) {
                     // New state discovered
-                    const Node tempSuccessorNode(currentNode, successor.state, successor.action, newCost,
-                            newCost + domain.heuristic(successor.state), true);
+                    const Node tempSuccessorNode(currentNode,
+                            successor.state,
+                            successor.action,
+                            newCost,
+                            newCost + domain.heuristic(successor.state),
+                            true);
 
                     successorNode = nodePool.construct(std::move(tempSuccessorNode));
                     openList.push(*successorNode);

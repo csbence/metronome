@@ -4,17 +4,17 @@
 namespace metronome {
 class Planner {
 public:
-    unsigned int getGeneratedNodeCound() {
+    unsigned long long getGeneratedNodeCount() {
         return generatedNodeCount;
     }
 
-    unsigned int getExpandedNodeCount() {
+    unsigned long long getExpandedNodeCount() {
         return expandedNodeCount;
     }
 
 protected:
-    unsigned int generatedNodeCount{0};
-    unsigned int expandedNodeCount{0};
+    unsigned long long generatedNodeCount{0};
+    unsigned long long expandedNodeCount{0};
 };
 
 }

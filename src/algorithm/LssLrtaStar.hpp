@@ -13,7 +13,7 @@
 namespace metronome {
 
 template <typename Domain>
-class LssLrtaStar : Planner {
+class LssLrtaStar : public Planner {
 public:
     typedef typename Domain::State State;
     typedef typename Domain::Action Action;

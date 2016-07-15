@@ -11,6 +11,10 @@ public:
     Configuration(rapidjson::Document document) : document{std::move(document)} {
     }
 
+    Configuration(const std::string& json) : document{} {
+        document.Parse(json.c_str());
+    }
+
     bool hasMember(const std::string& key) const {
         return document.HasMember(key.c_str());
     }

@@ -20,7 +20,7 @@ set(SOURCE_FILES
         src/experiment/RealTimePlanManager.hpp
         src/experiment/Configuration.hpp
         src/experiment/Result.hpp
-        src/experiment/ConfigurationExecutor.hpp)
+        src/experiment/ConfigurationExecutor.hpp src/MetronomeException.hpp)
 
 set(TEST_FILES
         test/test.cpp

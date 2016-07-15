@@ -143,7 +143,7 @@ private:
      */
 
 public:
-    GridWorld(const Configuration& config, std::fstream& input) {
+    GridWorld(const Configuration& config, std::istream& input) {
         this->startLocation = State::newState(0, 0, 0);
         this->goalLocation = State::newState(4, 4, 0);
         this->width = 5;

@@ -14,6 +14,12 @@ long long int measureNanoTime(std::function<void()> action) {
 
     return std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count();
 }
+
+long long int currentNanoTime() {
+    auto now = std::chrono::high_resolution_clock::now().time_since_epoch();
+
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
+}
 }
 
 #endif // METRONOME_TIMEMEASUREMENT_HPP
