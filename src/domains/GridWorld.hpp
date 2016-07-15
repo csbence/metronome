@@ -31,7 +31,7 @@ public:
         }
         Action(unsigned int v) : value(v) {
         }
-        constexpr char toString() const {
+        constexpr char toChar() const {
             if (value == 1) {
                 return 'N';
             } else if (value == 2) {
@@ -45,6 +45,11 @@ public:
             } else {
                 return '~';
             }
+        }
+        const std::string toString() const {
+            std::string s;
+            s.push_back(toChar());
+            return s; 
         }
         /*constexpr unsigned int getValue() {
             return value;
@@ -190,22 +195,22 @@ public:
      * TODO: make allow more than one dirty cell
      */
     const State transition(const State& s, const Action& a) const {
-        if (a.toString() == 'N') {
+        if (a.toChar() == 'N') {
             State n = s.newState(s.getX(), s.getY() - 1, 0);
             if (isLegalLocation(n)) {
                 return n;
             }
-        } else if (a.toString() == 'E') {
+        } else if (a.toChar() == 'E') {
             State n = s.newState(s.getX() + 1, s.getY(), 1);
             if (isLegalLocation(n)) {
                 return n;
             }
-        } else if (a.toString() == 'S') {
+        } else if (a.toChar() == 'S') {
             State n = s.newState(s.getX(), s.getY() + 1, 2);
             if (isLegalLocation(n)) {
                 return n;
             }
-        } else if (a.toString() == 'W') {
+        } else if (a.toChar() == 'W') {
             State n = s.newState(s.getX() - 1, s.getY(), 3);
             if (isLegalLocation(n)) {
                 return n;
