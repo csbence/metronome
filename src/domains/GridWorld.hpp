@@ -31,7 +31,7 @@ public:
         }
         Action(unsigned int v) : value(v) {
         }
-        constexpr char evaluate() const {
+        constexpr char toString() const {
             if (value == 1) {
                 return 'N';
             } else if (value == 2) {
@@ -193,22 +193,22 @@ public:
      * TODO: make allow more than one dirty cell
      */
     const State transition(const State& s, const Action& a) const {
-        if (a.evaluate() == 'N') {
+        if (a.toString() == 'N') {
             State n = s.newState(s.getX(), s.getY() - 1, 0);
             if (isLegalLocation(n)) {
                 return n;
             }
-        } else if (a.evaluate() == 'E') {
+        } else if (a.toString() == 'E') {
             State n = s.newState(s.getX() + 1, s.getY(), 1);
             if (isLegalLocation(n)) {
                 return n;
             }
-        } else if (a.evaluate() == 'S') {
+        } else if (a.toString() == 'S') {
             State n = s.newState(s.getX(), s.getY() + 1, 2);
             if (isLegalLocation(n)) {
                 return n;
             }
-        } else if (a.evaluate() == 'W') {
+        } else if (a.toString() == 'W') {
             State n = s.newState(s.getX() - 1, s.getY(), 3);
             if (isLegalLocation(n)) {
                 return n;
