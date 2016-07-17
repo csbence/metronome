@@ -16,7 +16,7 @@ public:
         std::vector<std::string> actionStrings;
 
         for (auto& action : actions) {
-                actionStrings.emplace_back(action.toString());
+                actionStrings.push_back(action.toString());
         }
 
         return Result(configuration,

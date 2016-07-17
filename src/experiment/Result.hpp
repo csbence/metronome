@@ -45,7 +45,6 @@ public:
               actions{actions},
               timestamp{timestamp} {};
 
-private:
     const Configuration& configuration;
     const std::string errorMessage;
     const bool success;
