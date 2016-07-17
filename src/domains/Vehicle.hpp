@@ -10,26 +10,26 @@
 #include <functional>
 #include <vector>
 
-namespace metronome{
+namespace metronome {
 class Vehicle : GridWorld {
 public:
     typedef GridWorld::State State;
     typedef GridWorld::Action Action;
     typedef GridWorld::Cost Cost;
-/*    Vehicle(State start = State::newState(0, 0, 0), State goal = State::newState(4, 4, 0), unsigned int width = 5,
-            unsigned int height = 5, std::vector<State> objectStates = std::vector<State>{},
-            std::unordered_map<State, State*, typename metronome::Hasher<State>> safeStates =
-                    std::unordered_map<State, State*, typename metronome::Hasher<State>>{},
-            std::vector<std::pair<int, int>> velocities = std::vector<std::pair<int, int>>{})
-            : width(width),
-              height(height),
-              obstaclesLocations(objectStates),
-              start(start),
-              goal(goal),
-              bunkerCells(safeStates),
-              obstacleVelocity(velocities) {
-    }
-*/
+    /*    Vehicle(State start = State::newState(0, 0, 0), State goal = State::newState(4, 4, 0), unsigned int width = 5,
+                unsigned int height = 5, std::vector<State> objectStates = std::vector<State>{},
+                std::unordered_map<State, State*, typename metronome::Hasher<State>> safeStates =
+                        std::unordered_map<State, State*, typename metronome::Hasher<State>>{},
+                std::vector<std::pair<int, int>> velocities = std::vector<std::pair<int, int>>{})
+                : width(width),
+                  height(height),
+                  obstaclesLocations(objectStates),
+                  start(start),
+                  goal(goal),
+                  bunkerCells(safeStates),
+                  obstacleVelocity(velocities) {
+        }
+    */
     Vehicle(const Configuration& config, std::fstream input) : GridWorld(config, input) {
     }
     const bool addDyanmicObject(const State& toAdd) {
@@ -62,17 +62,15 @@ public:
 
         unsigned int actions[] = {1, 2, 3, 4, 5};
 
-        for(auto a : actions) {
+        for (auto a : actions) {
             State newState = this->transition(state, Action(a));
-            for(auto it = obstaclesLocations.begin(); it != obstaclesLocations.end(); ++it) {
-                if(*it == newState){
+            for (auto it = obstaclesLocations.begin(); it != obstaclesLocations.end(); ++it) {
+                if (*it == newState) {
                     successors.push_back(SuccessorBundle<Vehicle>{newState, a, this->deadCost});
-                }
-                else {
+                } else {
                     successors.push_back(SuccessorBundle<Vehicle>{newState, a, this->initialCost});
                 }
             }
-
         }
 
         return successors;
@@ -95,7 +93,7 @@ private:
             auto& testState = bunkerCells[State::newState(it->getX() + modX, it->getY() + modY)];
 
             if (nullptr != testState) {
-                *it = State::newState(it->getX() + (modX*-1), it->getY() + (modY*-1));
+                *it = State::newState(it->getX() + (modX * -1), it->getY() + (modY * -1));
             }
 
             *it = State::newState(it->getX() + modX, it->getY() + modY);
