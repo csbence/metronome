@@ -6,9 +6,9 @@
 #include <cstdlib>
 #include <experiment/Configuration.hpp>
 #include <functional>
+#include <unordered_set>
 #include <util/Hasher.hpp>
 #include <vector>
-#include <unordered_set>
 
 /*
  * NOTE: currently VWorld operates as GWorld
@@ -47,7 +47,7 @@ public:
         const std::string toString() const {
             std::string s;
             s.push_back(toChar());
-            return s; 
+            return s;
         }
         /*constexpr unsigned int getValue() {
             return value;
@@ -62,7 +62,7 @@ public:
     class State {
     public:
         State() {
-            newState(0,0,0);
+            newState(0, 0, 0);
         }
         State& operator=(State toCopy) {
             swap(*this, toCopy);
@@ -86,6 +86,7 @@ public:
         bool operator==(const State& state) const {
             return x == state.x && y == state.y;
         }
+
     private:
         unsigned int x;
         unsigned int y;
@@ -101,6 +102,7 @@ public:
         State(unsigned int x, unsigned int y, unsigned int a) : x(x), y(y) {
         }
     };
+
 public:
     GridWorld(const Configuration& config, std::istream& input) {
         this->blockedCells = std::unordered_set<State, typename metronome::Hasher<State>>{};
@@ -174,7 +176,7 @@ public:
 
     const bool inBlockedCells(const State& location) const {
         auto search = blockedCells.find(location);
-        if(search != blockedCells.end()) {
+        if (search != blockedCells.end()) {
             return true;
         }
         return false;
@@ -248,6 +250,7 @@ public:
 
         return successors;
     }
+
 private:
     /*
      * maxActions <- maximum number of actions
@@ -263,7 +266,7 @@ private:
     const unsigned int maxActions = 5;
     unsigned int width;
     unsigned int height;
-    std::unordered_set<State, typename metronome::Hasher<State>>  blockedCells;
+    std::unordered_set<State, typename metronome::Hasher<State>> blockedCells;
     std::vector<State> dirtyCells;
     State startLocation = State::newState(0, 0, 0);
     State goalLocation = State::newState(4, 4, 0);
