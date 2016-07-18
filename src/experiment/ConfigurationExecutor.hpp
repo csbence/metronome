@@ -6,8 +6,8 @@
 #include "RealTimePlanManager.hpp"
 #include "Result.hpp"
 #include <MetronomeException.hpp>
-#include <algorithm/AStar.hpp>
-#include <algorithm/LssLrtaStar.hpp>
+#include <algorithms/AStar.hpp>
+#include <algorithms/LssLrtaStar.hpp>
 #include <domains/GridWorld.hpp>
 #include <easylogging++.h>
 #include <rapidjson/document.h>
@@ -17,7 +17,7 @@ namespace metronome {
 static const std::string RAW_DOMAIN{"rawDomain"};
 static const std::string DOMAIN_NAME{"domainName"};
 static const std::string DOMAIN_PATH{"domainPath"};
-    static const std::string DOMAIN_INSTANCE{"domainInstanceName"};
+static const std::string DOMAIN_INSTANCE{"domainInstanceName"};
 static const std::string ALGORITHM_NAME{"algorithmName"};
 static const std::string TERMINATION_CHECKER_TYPE{"terminationCheckerType"};
 static const std::string ACTION_DURATION{"actionDuration"};
@@ -30,7 +30,7 @@ static const std::string ALGORITHM_LSS_LRTA_STAR{"LSS_LRTA_STAR"};
 
 class ConfigurationExecutor {
 public:
-    static Result executeConfiguration(Configuration configuration) {
+    static Result executeConfiguration(const Configuration& configuration, const std::string& resourcesDir) {
         // todo validate configuration
 
         if (!configuration.hasMember(DOMAIN_NAME)) {
@@ -41,7 +41,7 @@ public:
         std::string domainName{configuration.getString(DOMAIN_NAME)};
 
         if (domainName == DOMAIN_GRID_WORLD) {
-            return executeDomain<GridWorld>(configuration);
+            return executeDomain<GridWorld>(configuration, resourcesDir);
         } else {
             LOG(ERROR) << "Unknown domain name: " << domainName << std::endl;
             return Result(configuration, "Unknown: domainName");
@@ -50,13 +50,13 @@ public:
 
 private:
     template <typename Domain>
-    static Result executeDomain(const Configuration& configuration) {
+    static Result executeDomain(const Configuration& configuration, const std::string& resourcesDir) {
         if (!(configuration.hasMember(RAW_DOMAIN) || configuration.hasMember(DOMAIN_PATH))) {
             LOG(ERROR) << "Domain not found. Raw domain or domain path must be provided." << std::endl;
             return Result(configuration, "Missing: rawDomain AND domainPath");
         }
 
-        Domain domain{getDomain<Domain>(configuration)};
+        Domain domain{getDomain<Domain>(configuration, resourcesDir)};
 
         if (!configuration.hasMember(ALGORITHM_NAME)) {
             LOG(ERROR) << "Algorithm name not found." << std::endl;
@@ -70,20 +70,21 @@ private:
         } else if (algorithmName == ALGORITHM_LSS_LRTA_STAR) {
             return executeRealTimePlanner<Domain, LssLrtaStar<Domain>>(configuration, domain);
         } else {
-            LOG(ERROR) << "Unknown algorithm name: " << algorithmName << std::endl;
+            LOG(ERROR) << "Unknown algorithms name: " << algorithmName << std::endl;
             return Result(configuration, "Unknown: algorithmName");
         }
     }
 
     template <typename Domain>
-    static Domain getDomain(const Configuration& configuration) {
+    static Domain getDomain(const Configuration& configuration, const std::string& resourcesDir) {
         if (configuration.hasMember(RAW_DOMAIN)) {
             std::string rawDomain{configuration.getString(RAW_DOMAIN)};
             std::stringstream stringStream{rawDomain};
 
             return Domain{configuration, stringStream};
         } else if (configuration.hasMember(DOMAIN_PATH)) {
-            std::string domainPath{configuration.getString(DOMAIN_PATH)};
+            std::string domainPath{resourcesDir + configuration.getString(DOMAIN_PATH)};
+
             std::fstream fileInputStream;
 
             fileInputStream.open(domainPath, std::fstream::in);

@@ -5,8 +5,8 @@
 #include <experiment/termination/TimeTerminationChecker.hpp>
 #include <fcntl.h>
 #include <unordered_map>
-#include <util/Hasher.hpp>
-#include <util/PriorityQueue.hpp>
+#include <utils/Hasher.hpp>
+#include <utils/PriorityQueue.hpp>
 #include <vector>
 #define BOOST_POOL_NO_MT
 
@@ -21,7 +21,7 @@ public:
 
     LssLrtaStar(const Domain& domain, const Configuration&) : domain{domain} {
     }
-//    LssLrtaStar(const LssLrtaStar&) = default;
+    //    LssLrtaStar(const LssLrtaStar&) = default;
     LssLrtaStar(LssLrtaStar&&) = default;
 
     std::vector<Action> selectActions(const State& startState, TimeTerminationChecker terminationChecker) {
@@ -36,7 +36,7 @@ public:
         }
 
         const Node localStartNode =
-            Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true);
+                Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true);
 
         ++generatedNodeCount;
         auto startNode = nodePool.construct(localStartNode);
@@ -265,7 +265,7 @@ private:
         return 0;
     }
 
-    const Domain &domain;
+    const Domain& domain;
     PriorityQueue<Node> openList{10000000, fValueComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
     boost::object_pool<Node> nodePool{100000000, 100000000};

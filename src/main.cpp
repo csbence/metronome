@@ -6,15 +6,21 @@
 
 INITIALIZE_EASYLOGGINGPP
 
-int main() {
+int main(int argc, char** argv) {
+    if (argc == 1) {
+        std::cerr << "Resource path is not provided." << std::endl;
+        return 1;
+    }
+
+    std::string resourceDir{argv[1]};
+
     using namespace metronome;
     LOG(INFO) << "Unstoppable precision!" << std::endl;
 
     const char* json = "{\"timeLimit\" : 150000000000,\n"
-                       "\"domainPath\" : \"/home/aifs2/doylew/Public/metronome/resources/input/vacuum/dylan/uniform.vw\",\n"
-                       "\"domainInstanceName\" : "
-                       "\"/home/aifs2/doylew/Public/metronome/resources/input/vacuum/dylan/"
-                       "uniform.vw\",\n"
+                       "\"domainPath\" : "
+                       "\"/input/vacuum/dylan/uniform.vw\",\n"
+                       "\"domainInstanceName\" : \"Manual test instance\",\n"
                        "\"actionDuration\" : 6000000,\n"
                        "\"domainName\" : \"GRID_WORLD\",\n"
                        "\"terminationType\" : \"time\",\n"
@@ -24,12 +30,7 @@ int main() {
 
     printf("Original JSON:\n %s\n", json);
 
-    //    rapidjson::Document document;
-    //    document.Parse(json);
-    //    rapidjson::StringBuffe   //    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    //    document.Accept(writer);
-
-    const Result result = ConfigurationExecutor::executeConfiguration(Configuration(json));
+    const Result result = ConfigurationExecutor::executeConfiguration(Configuration(json), resourceDir);
 
     LOG(INFO) << "Execution completed in " << result.planningTime / 1000000 << "ms " << std::endl;
     LOG(INFO) << "Path length: " << result.pathLength << std::endl;

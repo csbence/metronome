@@ -2,11 +2,11 @@
 #define METRONOME_ASTAR_HPP
 #define BOOST_POOL_NO_MT
 
-#include "util/Hasher.hpp"
 #include "Planner.hpp"
+#include "utils/Hasher.hpp"
 #include <boost/pool/object_pool.hpp>
 #include <unordered_map>
-#include <util/PriorityQueue.hpp>
+#include <utils/PriorityQueue.hpp>
 #include <vector>
 
 namespace metronome {
@@ -19,14 +19,18 @@ class AStar : public Planner {
 
 public:
     AStar(const Domain& domain, const Configuration&) : domain(domain), openList(10000000, fValueComparator) {
+        // Force the object pool to allocate memory
+        State state;
+        Node node = Node(nullptr, std::move(state), Action(-1), 0, 0, true);
+        nodePool.destroy(nodePool.construct(node));
     }
-    //    AStar(const AStar&) = default;
-    AStar(AStar&&) = default;
 
     std::vector<Action> plan(State startState) {
         std::vector<Action> constructedPlan;
 
-        Node localStartNode = Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true);
+        Cost heuristic = domain.heuristic(startState);
+        Node localStartNode = Node(nullptr, std::move(startState), Action(-1), 0, heuristic, true);
+
         auto startNode = nodePool.construct(localStartNode);
 
         nodes[localStartNode.state] = startNode;
@@ -124,7 +128,7 @@ private:
     const Domain& domain;
     PriorityQueue<Node> openList;
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes;
-    boost::object_pool<Node> nodePool{100000000, 100000000};
+    boost::object_pool<Node> nodePool{1, 100000000};
 };
 }
 
