@@ -20,6 +20,12 @@ long long int currentNanoTime() {
 
     return std::chrono::duration_cast<std::chrono::nanoseconds>(now).count();
 }
+
+void logTime(const std::string message = "") {
+    static long long int startTime = currentNanoTime();
+    LOG(INFO) << (currentNanoTime() - startTime) / 1000000 << message;
+}
+
 }
 
 #endif // METRONOME_TIMEMEASUREMENT_HPP
