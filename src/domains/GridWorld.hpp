@@ -3,6 +3,7 @@
 
 #include "SuccessorBundle.hpp"
 #include <boost/assert.hpp>
+#include <boost/optional.hpp>
 #include <cstdlib>
 #include <experiment/Configuration.hpp>
 #include <functional>
@@ -19,7 +20,7 @@
 namespace metronome {
 class GridWorld {
 public:
-    typedef unsigned long long int Cost;
+    typedef long long int Cost;
     static constexpr Cost COST_MAX = std::numeric_limits<Cost>::max();
     /*
      * State <- location of the agent as a pair
@@ -36,13 +37,11 @@ public:
             if (actionDuration == 1) {
                 return 'N';
             } else if (actionDuration == 2) {
-                return 'S';
-            } else if (actionDuration == 3) {
                 return 'E';
+            } else if (actionDuration == 3) {
+                return 'S';
             } else if (actionDuration == 4) {
                 return 'W';
-            } else if (actionDuration == 5) {
-                return 'V';
             } else {
                 return '~';
             }
@@ -117,12 +116,15 @@ public:
         std::stringstream convertHeight(line);
         convertHeight >> height;
 
+        boost::optional<State> tempStarState;
+        boost::optional<State> tempGoalState;
+
         while (getline(input, line)) {
             for (auto it = line.cbegin(); it != line.cend(); ++it) {
                 if (*it == '@') { // find the start location
-                    startLocation = State(currentWidth, currentHeight);
+                    tempStarState = State(currentWidth, currentHeight);
                 } else if (*it == '*') { // find the goal location
-                    goalLocation = State(currentWidth, currentHeight);
+                    tempGoalState = State(currentWidth, currentHeight);
                 } else if (*it == '#') { // store the objects
                     State object = State(currentWidth, currentHeight);
                     obstacles.insert(object);
@@ -138,16 +140,17 @@ public:
             currentWidth = 0; // restart character parse at beginning of line
             ++currentHeight; // move down one line in charadter parse
         }
+
         if (currentHeight != height) {
             throw MetronomeException("GridWorld is not complete. Height doesn't match input configuration.");
         }
-        if (startLocation == State() || goalLocation == State()) {
-            if (startLocation == State()) {
-                throw MetronomeException("Unknown start location. Start location is not defined.");
-            } else {
-                throw MetronomeException("Unknown goal location. Goal location is not defined.");
-            }
+
+        if (!tempStarState.is_initialized() || !tempGoalState.is_initialized()) {
+            throw MetronomeException("Unknown start or goal location. Start or goal location is not defined.");
         }
+
+        startLocation = tempStarState.get();
+        goalLocation = tempGoalState.get();
     }
     /*
      * Calculate the transition state given
@@ -175,6 +178,7 @@ public:
                 return newState;
             }
         }
+
         return state;
     }
 
@@ -183,11 +187,7 @@ public:
     }
 
     const bool isObstacle(const State& location) const {
-        auto search = obstacles.find(location);
-        if (search != obstacles.end()) {
-            return true;
-        }
-        return false;
+        return obstacles.find(location) != obstacles.end();
     }
 
     const bool isLegalLocation(const State& location) const {
@@ -224,28 +224,21 @@ public:
 
     Cost heuristic(const State& state) const {
         Cost horizontalDistance = goalLocation.getX() - state.getX();
-
-        if (goalLocation.getX() < state.getX()) {
-            horizontalDistance = state.getX() - goalLocation.getX();
-        }
-
         Cost verticalDistance = goalLocation.getY() - state.getY();
-
-        if (goalLocation.getY() < state.getY()) {
-            verticalDistance = state.getY() - goalLocation.getY();
-        }
-
-        return (horizontalDistance + verticalDistance) * actionDuration;
+        return (std::abs(horizontalDistance) + std::abs(verticalDistance)) * actionDuration;
     }
 
     std::vector<SuccessorBundle<GridWorld>> successors(State state) const {
         std::vector<SuccessorBundle<GridWorld>> successors;
 
-        unsigned int actions[] = {1, 2, 3, 4, 5};
+        unsigned int actions[] = {1, 2, 3, 4};
 
         for (auto a : actions) {
+
             State newState = transition(state, Action(a));
-            successors.push_back(SuccessorBundle<GridWorld>{newState, a, initialCost});
+            if(!(newState == state)) {
+                successors.push_back(SuccessorBundle<GridWorld>{newState, a, actionDuration});
+            }
         }
 
         return successors;
@@ -268,7 +261,6 @@ private:
     std::unordered_set<State, typename metronome::Hasher<State>> obstacles;
     State startLocation = State();
     State goalLocation = State();
-    const unsigned long initialCost = 1;
     Cost actionDuration;
 };
 }

@@ -30,11 +30,20 @@ int main(int argc, char** argv) {
 
     printf("Original JSON:\n %s\n", json);
 
-    const Result result = ConfigurationExecutor::executeConfiguration(Configuration(json), resourceDir);
+    try {
+        const Result result = ConfigurationExecutor::executeConfiguration(Configuration(json), resourceDir);
 
-    LOG(INFO) << "Execution completed in " << result.planningTime / 1000000 << "ms";
-    LOG(INFO) << "Path length: " << result.pathLength;
-    LOG(INFO) << "Nodes :: expanded: " << result.expandedNodes << " generated: " << result.generatedNodes;
+        LOG(INFO) << "Execution completed in " << result.planningTime / 1000000 << "ms";
+        LOG(INFO) << "Path length: " << result.pathLength;
+        LOG(INFO) << "Nodes :: expanded: " << result.expandedNodes << " generated: " << result.generatedNodes;
+
+        for (auto action : result.actions) {
+            LOG(INFO) << action;
+        }
+
+    } catch (const MetronomeException& exception) {
+        LOG(ERROR) << exception.what();
+    }
 
     return 0;
 }

@@ -239,6 +239,7 @@ private:
             currentNode = currentNode->parent;
         }
 
+        std::reverse(actions.begin(), actions.end());
         return actions;
     }
 

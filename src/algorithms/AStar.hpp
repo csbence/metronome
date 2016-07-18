@@ -26,8 +26,6 @@ public:
     }
 
     std::vector<Action> plan(State startState) {
-        std::vector<Action> constructedPlan;
-
         Cost heuristic = domain.heuristic(startState);
         Node localStartNode = Node(nullptr, std::move(startState), Action(-1), 0, heuristic, true);
 
@@ -46,12 +44,16 @@ public:
             }
 
             if (domain.isGoal(currentNode->state)) {
+                std::vector<Action> actions;
+
                 // Goal is reached
                 while (!domain.isStart(currentNode->state)) {
-                    constructedPlan.push_back(currentNode->action);
+                    actions.push_back(currentNode->action);
                     currentNode = currentNode->parent;
                 }
-                return constructedPlan;
+
+                std::reverse(actions.begin(), actions.end());
+                return actions;
             }
 
             for (auto successor : domain.successors(currentNode->state)) {
