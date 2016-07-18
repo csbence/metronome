@@ -82,7 +82,8 @@ public:
     void reorder(std::function<int(const T&, const T&)> comparator) {
         this->comparator = comparator;
         for (unsigned int i = 0; i < size; i++) {
-            siftDown(i, queue[i]);
+            T& item = *queue[i];
+            siftDown(i, item);
         }
     }
 

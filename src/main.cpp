@@ -1,8 +1,7 @@
 #include "easylogging++.h"
-#include "rapidjson/document.h"
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/writer.h"
-#include "util/TimeMeasurement.hpp"
+//#include "rapidjson/document.h"
+//#include "rapidjson/stringbuffer.h"
+//#include "rapidjson/writer.h"
 #include <experiment/ConfigurationExecutor.hpp>
 
 INITIALIZE_EASYLOGGINGPP
@@ -13,7 +12,9 @@ int main() {
 
     const char* json = "{\"timeLimit\" : 150000000000,\n"
                        "\"domainPath\" : \"input/vacuum/h_400.vw\",\n"
-                       "\"domainInstanceName\" : \"/Users/bencecserna/Documents/Development/projects/ai/metronome/resources/input/vacuum/h_400.vw\",\n"
+                       "\"domainInstanceName\" : "
+                       "\"/Users/bencecserna/Documents/Development/projects/ai/metronome/resources/input/vacuum/dylan/"
+                       "uniform.vw\",\n"
                        "\"actionDuration\" : 6000000,\n"
                        "\"domainName\" : \"GRID_WORLD\",\n"
                        "\"terminationType\" : \"time\",\n"
@@ -23,15 +24,17 @@ int main() {
 
     printf("Original JSON:\n %s\n", json);
 
-    rapidjson::Document document;
-    document.Parse(json);
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    document.Accept(writer);
+    //    rapidjson::Document document;
+    //    document.Parse(json);
+    //    rapidjson::StringBuffe   //    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    //    document.Accept(writer);
 
-    ConfigurationExecutor::executeConfiguration(Configuration(json));
+    const Result result = ConfigurationExecutor::executeConfiguration(Configuration(json));
 
-    LOG(INFO) << "Json test: " << buffer.GetString() << std::endl;
+    LOG(INFO) << "Execution completed in " << result.planningTime / 1000000 << "ms " << std::endl;
+    LOG(INFO) << "Path length: " << result.pathLength << std::endl;
+
+    //    LOG(INFO) << "Json test: " << buffer.GetString() << std::endl;
 
     return 0;
 }

@@ -5,7 +5,9 @@ namespace metronome {
 
 class TimeTerminationChecker {
 public:
-    bool reachedTermination();
+    bool reachedTermination() {
+        return false; // TODO Add implementation
+    };
 };
 }
 

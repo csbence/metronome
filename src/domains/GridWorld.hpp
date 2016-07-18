@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include <util/Hasher.hpp>
 #include <vector>
+#include <limits>
 
 /*
  * NOTE: currently VWorld operates as GWorld
@@ -18,6 +19,8 @@
 namespace metronome {
 class GridWorld {
 public:
+    typedef unsigned long long int Cost;
+    static constexpr Cost COST_MAX = std::numeric_limits<Cost>::max();
     /*
      * State <- location of the agent as a pair
      * Action <- value representing the action taken {N,S,E,W,V} = {0,1,2,3,4}
@@ -58,7 +61,6 @@ public:
     private:
         unsigned int value;
     };
-    typedef unsigned long Cost;
     class State {
     public:
         State() {

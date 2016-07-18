@@ -4,6 +4,7 @@
 #include "PlanManager.hpp"
 #include "util/TimeMeasurement.hpp"
 #include <MetronomeException.hpp>
+#include <experiment/termination/TimeTerminationChecker.hpp>
 namespace metronome {
 template <typename Domain, typename Planner>
 class RealTimePlanManager : PlanManager<Domain, Planner> {
@@ -11,11 +12,12 @@ public:
     Result plan(const Configuration& configuration, const Domain& domain, Planner& planner) {
         std::vector<typename Domain::Action> actions;
         long long int planningTime{0};
-        Domain::State currentState = domain.getStartState();
+        typename Domain::State currentState = domain.getStartState();
+        TimeTerminationChecker terminationChecker;
 
         while (!domain.isGoal(currentState)) {
             auto planningIterationTime = measureNanoTime([&] {
-                auto actionList{planner.plan(currentState)};
+                auto actionList{planner.selectActions(currentState, terminationChecker)};
 
                 for (auto& action : actionList) {
                     currentState = domain.transition(currentState, action);
@@ -51,10 +53,10 @@ public:
 template <typename Domain>
 class ActionBundle {
 public:
-    ActionBundle(Domain::Action action, Domain::Cost cost) : action{action}, cost{cost} {
+    ActionBundle(typename Domain::Action action, typename Domain::Cost cost) : action{action}, cost{cost} {
     }
-    const Domain::Action action;
-    const Domain::Cost cost;
+    const typename Domain::Action action;
+    const typename Domain::Cost cost;
 };
 }
 

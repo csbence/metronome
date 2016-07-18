@@ -24,7 +24,7 @@ public:
 //    LssLrtaStar(const LssLrtaStar&) = default;
     LssLrtaStar(LssLrtaStar&&) = default;
 
-    std::vector<Action> selectAction(const State& startState, TimeTerminationChecker terminationChecker) {
+    std::vector<Action> selectActions(const State& startState, TimeTerminationChecker terminationChecker) {
         if (domain.isGoal(startState)) {
             // Goal is already reached
             return std::vector<Action>();
@@ -35,9 +35,15 @@ public:
             learn(terminationChecker);
         }
 
-        auto bestNode = explore(startState, terminationChecker);
+        const Node localStartNode =
+            Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true);
 
-        return extractPath(bestNode);
+        ++generatedNodeCount;
+        auto startNode = nodePool.construct(localStartNode);
+
+        auto bestNode = explore(startNode, terminationChecker);
+
+        return extractPath(bestNode, startNode);
         // TODO return best node and extract plan
     }
 
@@ -90,7 +96,7 @@ private:
                 : predecessor{predecessor}, action{action}, actionCost{actionCost} {
         }
 
-        const Node* predecessor;
+        Node* predecessor;
         const Action action;
         const Cost actionCost;
     };
@@ -109,7 +115,7 @@ private:
 
             // update heuristic value of each predecessor
             for (auto predecessor : currentNode->predecessors) {
-                Node* predecessorNode = predecessor.node;
+                Node* predecessorNode = predecessor.predecessor;
 
                 if (predecessorNode->iteration == iterationCounter && !predecessorNode->open) {
                     // This node was already learned and closed in the current iteration
@@ -134,16 +140,11 @@ private:
         }
     }
 
-    Node* explore(const State& startState, TimeTerminationChecker terminationChecker) {
+    Node* explore(Node* startNode, TimeTerminationChecker terminationChecker) {
         ++iterationCounter;
         clearOpenList();
         openList.reorder(fValueComparator);
 
-        const Node localStartNode =
-                Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true);
-
-        ++generatedNodeCount;
-        auto startNode = nodePool.construct(localStartNode);
         Node* currentNode = startNode;
 
         nodes[startNode->state] = startNode;
@@ -209,7 +210,7 @@ private:
     }
 
     void clearOpenList() {
-        openList.forEach([](Node& node) { node.open = false; });
+        openList.forEach([](Node* node) { node->open = false; });
         openList.clear();
     }
 
