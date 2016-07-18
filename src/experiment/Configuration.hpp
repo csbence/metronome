@@ -3,6 +3,20 @@
 
 #include "rapidjson/document.h"
 namespace metronome {
+
+static const std::string RAW_DOMAIN{"rawDomain"};
+static const std::string DOMAIN_NAME{"domainName"};
+static const std::string DOMAIN_PATH{"domainPath"};
+static const std::string DOMAIN_INSTANCE{"domainInstanceName"};
+static const std::string ALGORITHM_NAME{"algorithmName"};
+static const std::string TERMINATION_CHECKER_TYPE{"terminationCheckerType"};
+static const std::string ACTION_DURATION{"actionDuration"};
+static const std::string TIME_LIMIT{"timeLimit"};
+
+static const std::string DOMAIN_GRID_WORLD{"GRID_WORLD"};
+
+static const std::string ALGORITHM_A_STAR{"A_STAR"};
+static const std::string ALGORITHM_LSS_LRTA_STAR{"LSS_LRTA_STAR"};
 class Configuration {
 public:
     Configuration() : document{} {};
