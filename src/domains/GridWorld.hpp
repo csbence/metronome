@@ -6,10 +6,10 @@
 #include <cstdlib>
 #include <experiment/Configuration.hpp>
 #include <functional>
+#include <limits>
 #include <unordered_set>
 #include <util/Hasher.hpp>
 #include <vector>
-#include <limits>
 
 /*
  * NOTE: currently VWorld operates as GWorld
@@ -83,7 +83,8 @@ public:
             return ret;
         }
         std::size_t hash() const {
-            return x + 0x9e3779b9 + (y << 6) + (y >> 2);
+            unsigned int i = x ^ +y << 16 ^ y >> 16;
+            return i;
         }
         bool operator==(const State& state) const {
             return x == state.x && y == state.y;
@@ -107,7 +108,7 @@ public:
 
 public:
     GridWorld(const Configuration& config, std::istream& input) {
-        if(!input) {
+        if (!input) {
             throw MetronomeException("Invalid input configuration (is the path invalid or file empty?).");
         }
         this->blockedCells = std::unordered_set<State, typename metronome::Hasher<State>>{};
@@ -123,8 +124,7 @@ public:
             std::stringstream convertHeight(line);
             std::cout << line << std::endl;
             convertHeight >> this->height;
-        }
-        catch (__exception& exception) {
+        } catch (__exception& exception) {
             LOG(ERROR) << exception.name << std::endl;
             throw MetronomeException("");
         }
@@ -142,15 +142,11 @@ public:
                 }
                 ++currentWidth; // at the end of the character parse move along
             }
-            try {
-                if (currentWidth != this->width) {
-                    throw MetronomeException("GridWorld is not complete. Width doesn't match input configuration.");
-                }
+
+            if (currentWidth != this->width) {
+                throw MetronomeException("GridWorld is not complete. Width doesn't match input configuration.");
             }
-            catch (MetronomeException& metronomeException) {
-                LOG(ERROR) << metronomeException.what() << std::endl;
-                throw MetronomeException("");
-            }
+
             currentWidth = 0; // restart character parse at beginning of line
             ++currentHeight; // move down one line in charadter parse
         }
@@ -161,13 +157,11 @@ public:
             if (this->startLocation == State::newState(-1, -1) || this->goalLocation == State::newState(-1, -1)) {
                 if (this->startLocation == State::newState(-1, -1)) {
                     throw MetronomeException("Unknown start location. Start location is not defined.");
-                }
-                else {
+                } else {
                     throw MetronomeException("Unknown goal location. Goal location is not defined.");
                 }
             }
-        }
-        catch (MetronomeException& metronomeException) {
+        } catch (MetronomeException& metronomeException) {
             LOG(ERROR) << metronomeException.what() << std::endl;
             throw MetronomeException("");
         }
@@ -307,8 +301,8 @@ private:
     unsigned int height;
     std::unordered_set<State, typename metronome::Hasher<State>> blockedCells;
     std::vector<State> dirtyCells;
-    State startLocation = State::newState(-1,-1);
-    State goalLocation = State::newState(-1,-1);
+    State startLocation = State::newState(-1, -1);
+    State goalLocation = State::newState(-1, -1);
     unsigned int initialAmountDirty = 1;
     const unsigned long initialCost = 1;
     // std::unordered_map<State, State*, typename metronome::Hasher<State>> nodes{};
