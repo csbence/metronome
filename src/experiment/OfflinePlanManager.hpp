@@ -2,7 +2,7 @@
 #define METRONOME_OFFLINEPLANMANAGER_HPP
 
 #include "PlanManager.hpp"
-#include "util/TimeMeasurement.hpp"
+#include "utils/TimeMeasurement.hpp"
 namespace metronome {
 template <typename Domain, typename Planner>
 class OfflinePlanManager : PlanManager<Domain, Planner> {

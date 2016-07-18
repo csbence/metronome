@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include <util/TimeMeasurement.hpp>
+#include <utils/TimeMeasurement.hpp>
 #include "Configuration.hpp"
 namespace metronome {
 class Result {

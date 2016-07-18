@@ -16,7 +16,6 @@ protected:
     unsigned long long generatedNodeCount{0};
     unsigned long long expandedNodeCount{0};
 };
-
 }
 
-#endif //METRONOME_PLANNER_HPP
+#endif // METRONOME_PLANNER_HPP

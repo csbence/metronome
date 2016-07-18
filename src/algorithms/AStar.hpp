@@ -3,10 +3,10 @@
 #define BOOST_POOL_NO_MT
 
 #include "Planner.hpp"
-#include "util/Hasher.hpp"
+#include "utils/Hasher.hpp"
 #include <boost/pool/object_pool.hpp>
 #include <unordered_map>
-#include <util/PriorityQueue.hpp>
+#include <utils/PriorityQueue.hpp>
 #include <vector>
 
 namespace metronome {

@@ -2,7 +2,7 @@
 #define METRONOME_REALTIMEPLANMANAGER_HPP
 
 #include "PlanManager.hpp"
-#include "util/TimeMeasurement.hpp"
+#include "utils/TimeMeasurement.hpp"
 #include <MetronomeException.hpp>
 #include <experiment/termination/TimeTerminationChecker.hpp>
 namespace metronome {

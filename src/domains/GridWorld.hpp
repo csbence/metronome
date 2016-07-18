@@ -8,7 +8,7 @@
 #include <functional>
 #include <limits>
 #include <unordered_set>
-#include <util/Hasher.hpp>
+#include <utils/Hasher.hpp>
 #include <vector>
 
 /*
@@ -115,15 +115,15 @@ public:
         int currentHeight = 0;
         int currentWidth = 0;
         std::string line;
-        char *end;
+        char* end;
         getline(input, line); // get the width
         std::stringstream convertWidth(line);
-        if(std::strtol(line.c_str(), &end, 10) == 0) {
+        if (std::strtol(line.c_str(), &end, 10) == 0) {
             throw MetronomeException("GridWorld first line must be a number.");
         }
         convertWidth >> this->width;
         getline(input, line); // get the height
-        if(std::strtol(line.c_str(), &end, 10)== 0 ) {
+        if (std::strtol(line.c_str(), &end, 10) == 0) {
             throw MetronomeException("GridWorld second line must be a number.");
         }
         std::stringstream convertHeight(line);
@@ -156,8 +156,7 @@ public:
         if (this->startLocation == State::newState(-1, -1) || this->goalLocation == State::newState(-1, -1)) {
             if (this->startLocation == State::newState(-1, -1)) {
                 throw MetronomeException("Unknown start location. Start location is not defined.");
-            }
-            else {
+            } else {
                 throw MetronomeException("Unknown goal location. Goal location is not defined.");
             }
         }
