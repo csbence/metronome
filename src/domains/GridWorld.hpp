@@ -6,10 +6,10 @@
 #include <cstdlib>
 #include <experiment/Configuration.hpp>
 #include <functional>
+#include <limits>
 #include <unordered_set>
 #include <util/Hasher.hpp>
 #include <vector>
-#include <limits>
 
 /*
  * NOTE: currently VWorld operates as GWorld
@@ -83,7 +83,8 @@ public:
             return ret;
         }
         std::size_t hash() const {
-            return x + 0x9e3779b9 + (y << 6) + (y >> 2);
+            unsigned int i = x ^ +y << 16 ^ y >> 16;
+            return i;
         }
         bool operator==(const State& state) const {
             return x == state.x && y == state.y;
@@ -107,7 +108,7 @@ public:
 
 public:
     GridWorld(const Configuration& config, std::istream& input) {
-        if(!input) {
+        if (!input) {
             throw MetronomeException("Invalid input configuration (is the path invalid or file empty?).");
         }
         this->blockedCells = std::unordered_set<State, typename metronome::Hasher<State>>{};
@@ -145,6 +146,7 @@ public:
             if (currentWidth != this->width) {
                 throw MetronomeException("GridWorld is not complete. Width doesn't match input configuration.");
             }
+
             currentWidth = 0; // restart character parse at beginning of line
             ++currentHeight; // move down one line in charadter parse
         }
@@ -156,7 +158,7 @@ public:
                 throw MetronomeException("Unknown start location. Start location is not defined.");
             }
             else {
-                 throw MetronomeException("Unknown goal location. Goal location is not defined.");
+                throw MetronomeException("Unknown goal location. Goal location is not defined.");
             }
         }
     }
@@ -295,8 +297,8 @@ private:
     unsigned int height;
     std::unordered_set<State, typename metronome::Hasher<State>> blockedCells;
     std::vector<State> dirtyCells;
-    State startLocation = State::newState(-1,-1);
-    State goalLocation = State::newState(-1,-1);
+    State startLocation = State::newState(-1, -1);
+    State goalLocation = State::newState(-1, -1);
     unsigned int initialAmountDirty = 1;
     const unsigned long initialCost = 1;
     // std::unordered_map<State, State*, typename metronome::Hasher<State>> nodes{};
