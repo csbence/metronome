@@ -37,7 +37,7 @@ TEST_CASE("GridWorld setting variables", "[GridWorld]") {
 
     metronome::GridWorld::State pair1 = metronome::GridWorld::State::newState(3, 5);
     metronome::GridWorld::State pair2 = metronome::GridWorld::State::newState(1, 3);
-    REQUIRE(vacuumWorld.getNumberBlockedCells() == 0);
+    REQUIRE(vacuumWorld.getNumberObstacles() == 0);
     REQUIRE(vacuumWorld.getNumberDirtyCells() == 1);
     REQUIRE(vacuumWorld.getStartState().getX() == 0);
     REQUIRE(vacuumWorld.getStartState().getY() == 0);

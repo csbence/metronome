@@ -33,7 +33,7 @@ public:
     Vehicle(const Configuration& config, std::fstream input) : GridWorld(config, input) {
     }
     const bool addDyanmicObject(const State& toAdd) {
-        return this->addBlockedCell(toAdd);
+        return this->addObstacle(toAdd);
     }
 
     const State transition(const State& state, const Action& action) {
