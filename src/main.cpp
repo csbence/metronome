@@ -11,9 +11,9 @@ int main() {
     LOG(INFO) << "Unstoppable precision!" << std::endl;
 
     const char* json = "{\"timeLimit\" : 150000000000,\n"
-                       "\"domainPath\" : \"input/vacuum/h_400.vw\",\n"
+                       "\"domainPath\" : \"/home/aifs2/doylew/Public/metronome/resources/input/vacuum/dylan/uniform.vw\",\n"
                        "\"domainInstanceName\" : "
-                       "\"/Users/bencecserna/Documents/Development/projects/ai/metronome/resources/input/vacuum/dylan/"
+                       "\"/home/aifs2/doylew/Public/metronome/resources/input/vacuum/dylan/"
                        "uniform.vw\",\n"
                        "\"actionDuration\" : 6000000,\n"
                        "\"domainName\" : \"GRID_WORLD\",\n"

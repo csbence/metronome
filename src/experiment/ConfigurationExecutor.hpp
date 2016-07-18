@@ -17,6 +17,7 @@ namespace metronome {
 static const std::string RAW_DOMAIN{"rawDomain"};
 static const std::string DOMAIN_NAME{"domainName"};
 static const std::string DOMAIN_PATH{"domainPath"};
+    static const std::string DOMAIN_INSTANCE{"domainInstanceName"};
 static const std::string ALGORITHM_NAME{"algorithmName"};
 static const std::string TERMINATION_CHECKER_TYPE{"terminationCheckerType"};
 static const std::string ACTION_DURATION{"actionDuration"};
