@@ -83,8 +83,7 @@ public:
             return ret;
         }
         std::size_t hash() const {
-            unsigned int i = x ^ +y << 16 ^ y >> 16;
-            return i;
+            return x ^ +y << 16 ^ y >> 16;
         }
         bool operator==(const State& state) const {
             return x == state.x && y == state.y;
