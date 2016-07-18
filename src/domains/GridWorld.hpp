@@ -63,17 +63,15 @@ public:
     };
     class State {
     public:
-        State() {
-            newState(0, 0, 0);
+        State() : x(0), y(0) {
+        }
+        State(unsigned int x, unsigned int y, unsigned int a = 0) : x(x), y(y)  {
         }
         State& operator=(State toCopy) {
             swap(*this, toCopy);
             return *this;
         }
 
-        static const State newState(unsigned int x, unsigned int y, unsigned int a = 0) {
-            return State(x, y, a);
-        }
         const unsigned int getX() const {
             const unsigned int ret = x;
             return ret;
@@ -99,9 +97,6 @@ public:
             using std::swap;
             swap(first.x, second.x);
             swap(first.y, second.y);
-        }
-
-        State(unsigned int x, unsigned int y, unsigned int a) : x(x), y(y) {
         }
     };
 
@@ -131,11 +126,11 @@ public:
         while (getline(input, line)) {
             for (auto it = line.cbegin(); it != line.cend(); ++it) {
                 if (*it == '@') { // find the start location
-                    this->startLocation = State::newState(currentWidth, currentHeight, 0);
+                    this->startLocation = State(currentWidth, currentHeight, 0);
                 } else if (*it == '*') { // find the goal location
-                    this->goalLocation = State::newState(currentWidth, currentHeight, 0);
+                    this->goalLocation = State(currentWidth, currentHeight, 0);
                 } else if (*it == '#') { // store the objects
-                    State object = State::newState(currentWidth, currentHeight, 0);
+                    State object = State(currentWidth, currentHeight, 0);
                     this->obstacles.insert(object);
                 } else {
                     // its an open cell nothing needs to be done
@@ -152,8 +147,8 @@ public:
         if (currentHeight != this->height) {
             throw MetronomeException("GridWorld is not complete. Height doesn't match input configuration.");
         }
-        if (this->startLocation == State::newState(-1, -1) || this->goalLocation == State::newState(-1, -1)) {
-            if (this->startLocation == State::newState(-1, -1)) {
+        if (this->startLocation == State() || this->goalLocation == State()) {
+            if (this->startLocation == State()) {
                 throw MetronomeException("Unknown start location. Start location is not defined.");
             } else {
                 throw MetronomeException("Unknown goal location. Goal location is not defined.");
@@ -166,22 +161,22 @@ public:
      */
     const State transition(const State& state, const Action& action) const {
         if (action.toChar() == 'N') {
-            State newState = state.newState(state.getX(), state.getY() - 1, 0);
+            State newState = State(state.getX(), state.getY() - 1);
             if (isLegalLocation(newState)) {
                 return newState;
             }
         } else if (action.toChar() == 'E') {
-            State newState = state.newState(state.getX() + 1, state.getY(), 1);
+            State newState = State(state.getX() + 1, state.getY());
             if (isLegalLocation(newState)) {
                 return newState;
             }
         } else if (action.toChar() == 'S') {
-            State newState = state.newState(state.getX(), state.getY() + 1, 2);
+            State newState = State(state.getX(), state.getY() + 1);
             if (isLegalLocation(newState)) {
                 return newState;
             }
         } else if (action.toChar() == 'W') {
-            State newState = state.newState(state.getX() - 1, state.getY(), 3);
+            State newState = State(state.getX() - 1, state.getY());
             if (isLegalLocation(newState)) {
                 return newState;
             }
@@ -277,8 +272,8 @@ private:
     unsigned int width;
     unsigned int height;
     std::unordered_set<State, typename metronome::Hasher<State>> obstacles;
-    State startLocation = State::newState(-1, -1);
-    State goalLocation = State::newState(-1, -1);
+    State startLocation = State();
+    State goalLocation = State();
     const unsigned long initialCost = 1;
 };
 }
