@@ -83,8 +83,7 @@ public:
             return ret;
         }
         std::size_t hash() const {
-            unsigned int i = x ^ +y << 16 ^ y >> 16;
-            return i;
+            return x ^ +y << 16 ^ y >> 16;
         }
         bool operator==(const State& state) const {
             return x == state.x && y == state.y;
@@ -235,18 +234,19 @@ public:
     }
 
     Cost heuristic(const State& state) const {
-        Cost manhattenDistance = 0;
-        long long int horizontalDistance = this->goalLocation.getX() - state.getX();
+        Cost horizontalDistance = this->goalLocation.getX() - state.getX();
+
         if (this->goalLocation.getX() < state.getX()) {
             horizontalDistance = state.getX() - this->goalLocation.getX();
         }
-        long long int verticalDistance = this->goalLocation.getY() - state.getY();
+
+        Cost verticalDistance = this->goalLocation.getY() - state.getY();
+
         if (this->goalLocation.getY() < state.getY()) {
             verticalDistance = state.getY() - this->goalLocation.getY();
         }
 
-        manhattenDistance = horizontalDistance + verticalDistance;
-        return manhattenDistance;
+        return horizontalDistance + verticalDistance;
     }
 
     std::vector<SuccessorBundle<GridWorld>> successors(State state) const {

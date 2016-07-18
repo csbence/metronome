@@ -38,7 +38,7 @@ public:
         openList.push(localStartNode);
 
         while (!openList.isEmpty()) {
-            // TODO increment expanded counter
+            ++expandedNodeCount;
             Node* currentNode = openList.pop();
 
             if (!currentNode->open) {
@@ -59,7 +59,7 @@ public:
                     continue; // Skip parent TODO this might be unnecessary
                 }
 
-                // TODO increment generated node count
+                ++generatedNodeCount;
 
                 auto& successorNode = nodes[successor.state];
                 auto newCost = successor.actionCost + currentNode->g;

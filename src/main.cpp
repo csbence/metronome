@@ -32,8 +32,9 @@ int main(int argc, char** argv) {
 
     const Result result = ConfigurationExecutor::executeConfiguration(Configuration(json), resourceDir);
 
-    LOG(INFO) << "Execution completed in " << result.planningTime / 1000000 << "ms " << std::endl;
-    LOG(INFO) << "Path length: " << result.pathLength << std::endl;
+    LOG(INFO) << "Execution completed in " << result.planningTime / 1000000 << "ms";
+    LOG(INFO) << "Path length: " << result.pathLength;
+    LOG(INFO) << "Nodes :: expanded: " << result.expandedNodes << " generated: " << result.generatedNodes;
 
     //    LOG(INFO) << "Json test: " << buffer.GetString() << std::endl;
 
