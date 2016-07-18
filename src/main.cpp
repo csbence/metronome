@@ -3,18 +3,24 @@
 //#include "rapidjson/stringbuffer.h"
 //#include "rapidjson/writer.h"
 #include <experiment/ConfigurationExecutor.hpp>
+#include <boost/program_options.hpp>
 
 INITIALIZE_EASYLOGGINGPP
 
-int main() {
+int main(int argc, char* argv[]) {
+    namespace po = boost::program_options;
+
+
+
+
     using namespace metronome;
     LOG(INFO) << "Unstoppable precision!" << std::endl;
 
     const char* json = "{\"timeLimit\" : 150000000000,\n"
-                       "\"domainPath\" : \"/home/aifs2/doylew/Public/metronome/resources/input/vacuum/dylan/uniform.vw\",\n"
-                       "\"domainInstanceName\" : "
-                       "\"/home/aifs2/doylew/Public/metronome/resources/input/vacuum/dylan/"
+                       "\"domainPath\" : "
+                       "\"/Users/bencecserna/Documents/Development/projects/ai/metronome/resources/input/vacuum/dylan/"
                        "uniform.vw\",\n"
+                       "\"domainInstanceName\" : \"Manual test instance\",\n"
                        "\"actionDuration\" : 6000000,\n"
                        "\"domainName\" : \"GRID_WORLD\",\n"
                        "\"terminationType\" : \"time\",\n"

@@ -86,6 +86,10 @@ private:
             std::string domainPath{configuration.getString(DOMAIN_PATH)};
             std::fstream fileInputStream;
 
+            std::getenv("METRONOME_DOME");
+            if ()
+
+
             fileInputStream.open(domainPath, std::fstream::in);
             Domain domain{configuration, fileInputStream};
             fileInputStream.close();
