@@ -36,7 +36,5 @@ int main(int argc, char** argv) {
     LOG(INFO) << "Path length: " << result.pathLength;
     LOG(INFO) << "Nodes :: expanded: " << result.expandedNodes << " generated: " << result.generatedNodes;
 
-    //    LOG(INFO) << "Json test: " << buffer.GetString() << std::endl;
-
     return 0;
 }
