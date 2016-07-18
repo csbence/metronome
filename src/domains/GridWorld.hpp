@@ -111,19 +111,19 @@ public:
         if (!input) {
             throw MetronomeException("Invalid input configuration (is the path invalid or file empty?).");
         }
-        this->blockedCells = std::unordered_set<State, typename metronome::Hasher<State>>{};
+        this->obstacles = std::unordered_set<State, typename metronome::Hasher<State>>{};
         int currentHeight = 0;
         int currentWidth = 0;
         std::string line;
-        char *end;
+        char* end;
         getline(input, line); // get the width
         std::stringstream convertWidth(line);
-        if(std::strtol(line.c_str(), &end, 10) == 0) {
+        if (std::strtol(line.c_str(), &end, 10) == 0) {
             throw MetronomeException("GridWorld first line must be a number.");
         }
         convertWidth >> this->width;
         getline(input, line); // get the height
-        if(std::strtol(line.c_str(), &end, 10)== 0 ) {
+        if (std::strtol(line.c_str(), &end, 10) == 0) {
             throw MetronomeException("GridWorld second line must be a number.");
         }
         std::stringstream convertHeight(line);
@@ -137,7 +137,7 @@ public:
                     this->goalLocation = State::newState(currentWidth, currentHeight, 0);
                 } else if (*it == '#') { // store the objects
                     State object = State::newState(currentWidth, currentHeight, 0);
-                    this->blockedCells.insert(object);
+                    this->obstacles.insert(object);
                 } else {
                     // its an open cell nothing needs to be done
                 }
@@ -156,8 +156,7 @@ public:
         if (this->startLocation == State::newState(-1, -1) || this->goalLocation == State::newState(-1, -1)) {
             if (this->startLocation == State::newState(-1, -1)) {
                 throw MetronomeException("Unknown start location. Start location is not defined.");
-            }
-            else {
+            } else {
                 throw MetronomeException("Unknown goal location. Goal location is not defined.");
             }
         }
@@ -165,7 +164,6 @@ public:
     /*
      * Calculate the transition state given
      * a state and action pair
-     * TODO: make allow more than one dirty cell
      */
     const State transition(const State& state, const Action& action) const {
         if (action.toChar() == 'N') {
@@ -192,35 +190,20 @@ public:
         return state;
     }
 
-    std::pair<unsigned int, unsigned int> randomLocation() {
-        unsigned int randomX = rand() % width;
-        unsigned int randomY = rand() % height;
-
-        return std::pair<unsigned int, unsigned int>{randomX, randomY};
-    }
-
     const bool isGoal(const State& location) const {
         return location.getX() == goalLocation.getX() && location.getY() == goalLocation.getY();
     }
 
-    const bool inBlockedCells(const State& location) const {
-        auto search = blockedCells.find(location);
-        if (search != blockedCells.end()) {
+    const bool isObstacle(const State& location) const {
+        auto search = obstacles.find(location);
+        if (search != obstacles.end()) {
             return true;
         }
         return false;
     }
 
     const bool isLegalLocation(const State& location) const {
-        return location.getX() < width && location.getY() < height && !inBlockedCells(location);
-    }
-
-    void setWidth(unsigned int newWidth) {
-        width = newWidth;
-    }
-
-    void setHeight(unsigned int newHeight) {
-        height = newHeight;
+        return location.getX() < width && location.getY() < height && !isObstacle(location);
     }
 
     const int getWidth() {
@@ -231,21 +214,16 @@ public:
         return height;
     }
 
-    const bool addBlockedCell(const State& toAdd) {
+    const bool addObstacle(const State& toAdd) {
         if (isLegalLocation(toAdd)) {
-            blockedCells.insert(toAdd);
+            obstacles.insert(toAdd);
             return true;
         }
         return false;
     }
 
-    const std::vector<State>::size_type getNumberBlockedCells() {
-        return blockedCells.size();
-    }
-
-    const std::vector<State>::size_type getNumberDirtyCells() {
-        // return dirtyCells.size();
-        return initialAmountDirty;
+    const std::vector<State>::size_type getNumberObstacles() {
+        return obstacles.size();
     }
 
     const State getStartState() const {
@@ -258,12 +236,16 @@ public:
 
     Cost heuristic(const State& state) const {
         Cost manhattenDistance = 0;
-
-        Cost horizontalDistance = this->goalLocation.getX() - state.getX();
-        Cost verticalDistance = this->goalLocation.getY() - state.getY();
+        long long int horizontalDistance = this->goalLocation.getX() - state.getX();
+        if (this->goalLocation.getX() < state.getX()) {
+            horizontalDistance = 0;
+        }
+        long long int verticalDistance = this->goalLocation.getY() - state.getY();
+        if (this->goalLocation.getY() < state.getY()) {
+            verticalDistance = 0;
+        }
 
         manhattenDistance = horizontalDistance + verticalDistance;
-
         return manhattenDistance;
     }
 
@@ -284,7 +266,7 @@ private:
     /*
      * maxActions <- maximum number of actions
      * width/height <- internal size representation of world
-     * blockedCells <- stores locations of the objects in world
+     * obstacles <- stores locations of the objects in world
      * dirtyCells <- stores locations of dirt in the world
      * startLocation <- where the agent begins
      * goalLocation <- where the agent needs to end up
@@ -292,40 +274,12 @@ private:
      * initialCost <- constant cost value
      * obstacles <- stores references to obstacles
      */
-    const unsigned int maxActions = 5;
     unsigned int width;
     unsigned int height;
-    std::unordered_set<State, typename metronome::Hasher<State>> blockedCells;
-    std::vector<State> dirtyCells;
+    std::unordered_set<State, typename metronome::Hasher<State>> obstacles;
     State startLocation = State::newState(-1, -1);
     State goalLocation = State::newState(-1, -1);
-    unsigned int initialAmountDirty = 1;
     const unsigned long initialCost = 1;
-    // std::unordered_map<State, State*, typename metronome::Hasher<State>> nodes{};
-
-    /*
-      * Given a state and action pair give the cost
-      * for taking the action in the state
-      * TODO: make it take a cost function instead of constant
-
-
-    const Cost getCost(const State& s, const Action& a) {
-        return initialCost;
-    }
-
-    const Action randomAction() {
-        return Action(rand() & maxActions);
-    }
-
-     TODO: make allow more than one dirty cell
-    const bool addDirtyCell(const State& toAdd) {
-        if (isLegalLocation(toAdd)) {
-            dirtyCells.push_back(toAdd);
-            return true;
-        }
-        return false;
-    }
-     */
 };
 }
 #endif
