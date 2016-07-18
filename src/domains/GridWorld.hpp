@@ -238,11 +238,11 @@ public:
         Cost manhattenDistance = 0;
         long long int horizontalDistance = this->goalLocation.getX() - state.getX();
         if (this->goalLocation.getX() < state.getX()) {
-            horizontalDistance = 0;
+            horizontalDistance = state.getX() - this->goalLocation.getX();
         }
         long long int verticalDistance = this->goalLocation.getY() - state.getY();
         if (this->goalLocation.getY() < state.getY()) {
-            verticalDistance = 0;
+            verticalDistance = state.getY() - this->goalLocation.getY();
         }
 
         manhattenDistance = horizontalDistance + verticalDistance;
