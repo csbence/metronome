@@ -114,20 +114,20 @@ public:
         int currentHeight = 0;
         int currentWidth = 0;
         std::string line;
-        try {
-            getline(input, line); // get the width
-            std::stringstream convertWidth(line);
-            std::cout << line << std::endl;
-            convertWidth >> this->width;
-            getline(input, line); // get the height
-            std::stringstream convertHeight(line);
-            std::cout << line << std::endl;
-            convertHeight >> this->height;
+        char *end;
+        getline(input, line); // get the width
+        std::stringstream convertWidth(line);
+        if(std::strtol(line.c_str(), &end, 10) == 0) {
+            throw MetronomeException("GridWorld first line must be a number.");
         }
-        catch (__exception& exception) {
-            LOG(ERROR) << exception.name << std::endl;
-            throw MetronomeException("");
+        convertWidth >> this->width;
+        getline(input, line); // get the height
+        if(std::strtol(line.c_str(), &end, 10)== 0 ) {
+            throw MetronomeException("GridWorld second line must be a number.");
         }
+        std::stringstream convertHeight(line);
+        convertHeight >> this->height;
+
         while (getline(input, line)) {
             for (auto it = line.cbegin(); it != line.cend(); ++it) {
                 if (*it == '@') { // find the start location
@@ -142,34 +142,22 @@ public:
                 }
                 ++currentWidth; // at the end of the character parse move along
             }
-            try {
-                if (currentWidth != this->width) {
-                    throw MetronomeException("GridWorld is not complete. Width doesn't match input configuration.");
-                }
-            }
-            catch (MetronomeException& metronomeException) {
-                LOG(ERROR) << metronomeException.what() << std::endl;
-                throw MetronomeException("");
+            if (currentWidth != this->width) {
+                throw MetronomeException("GridWorld is not complete. Width doesn't match input configuration.");
             }
             currentWidth = 0; // restart character parse at beginning of line
             ++currentHeight; // move down one line in charadter parse
         }
-        try {
-            if (currentHeight != this->height) {
-                throw MetronomeException("GridWorld is not complete. Height doesn't match input configuration.");
-            }
-            if (this->startLocation == State::newState(-1, -1) || this->goalLocation == State::newState(-1, -1)) {
-                if (this->startLocation == State::newState(-1, -1)) {
-                    throw MetronomeException("Unknown start location. Start location is not defined.");
-                }
-                else {
-                    throw MetronomeException("Unknown goal location. Goal location is not defined.");
-                }
-            }
+        if (currentHeight != this->height) {
+            throw MetronomeException("GridWorld is not complete. Height doesn't match input configuration.");
         }
-        catch (MetronomeException& metronomeException) {
-            LOG(ERROR) << metronomeException.what() << std::endl;
-            throw MetronomeException("");
+        if (this->startLocation == State::newState(-1, -1) || this->goalLocation == State::newState(-1, -1)) {
+            if (this->startLocation == State::newState(-1, -1)) {
+                throw MetronomeException("Unknown start location. Start location is not defined.");
+            }
+            else {
+                 throw MetronomeException("Unknown goal location. Goal location is not defined.");
+            }
         }
     }
     /*
