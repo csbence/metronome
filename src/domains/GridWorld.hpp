@@ -234,18 +234,19 @@ public:
     }
 
     Cost heuristic(const State& state) const {
-        Cost manhattenDistance = 0;
-        long long int horizontalDistance = this->goalLocation.getX() - state.getX();
+        Cost horizontalDistance = this->goalLocation.getX() - state.getX();
+
         if (this->goalLocation.getX() < state.getX()) {
             horizontalDistance = 0;
         }
-        long long int verticalDistance = this->goalLocation.getY() - state.getY();
+
+        Cost verticalDistance = this->goalLocation.getY() - state.getY();
+
         if (this->goalLocation.getY() < state.getY()) {
             verticalDistance = 0;
         }
 
-        manhattenDistance = horizontalDistance + verticalDistance;
-        return manhattenDistance;
+        return horizontalDistance + verticalDistance;
     }
 
     std::vector<SuccessorBundle<GridWorld>> successors(State state) const {
