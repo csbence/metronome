@@ -21,13 +21,13 @@ public:
     AStar(const Domain& domain, const Configuration&) : domain(domain), openList(10000000, fValueComparator) {
         // Force the object pool to allocate memory
         State state;
-        Node node = Node(nullptr, std::move(state), Action(-1), 0, 0, true);
+        Node node = Node(nullptr, std::move(state), Action(), 0, 0);
         nodePool.destroy(nodePool.construct(node));
     }
 
     std::vector<Action> plan(State startState) {
         Cost heuristic = domain.heuristic(startState);
-        Node localStartNode = Node(nullptr, std::move(startState), Action(-1), 0, heuristic, true);
+        Node localStartNode = Node(nullptr, std::move(startState), Action(), 0, heuristic);
 
         auto startNode = nodePool.construct(localStartNode);
 
@@ -95,7 +95,7 @@ private:
     class Node {
     public:
         Node(Node* parent, State state, Action action, Cost g, Cost f)
-                : parent{parent}, state{state}, action{std::move(action)}, g{g}, f{f}, open{open} {
+                : parent{parent}, state{state}, action{std::move(action)}, g{g}, f{f} {
         }
 
         unsigned long hash() {
