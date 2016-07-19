@@ -20,27 +20,27 @@
 namespace metronome {
 class GridWorld {
 public:
-    typedef unsigned long long int Cost;
+    typedef long long int Cost;
     static constexpr Cost COST_MAX = std::numeric_limits<Cost>::max();
     /*
      * State <- location of the agent as a pair
-     * Action <- actionDuration representing the action taken {N,S,E,W,V} = {0,1,2,3,4}
-     * Cost <- actionDuration for taking action from a state
+     * Action <- value representing the action taken {N,S,E,W,V} = {0,1,2,3,4}
+     * Cost <- value for taking action from a state
      */
     class Action {
     public:
-        Action() : actionDuration(0) {
+        Action() : value(0) {
         }
-        Action(unsigned int actionDuration) : actionDuration(actionDuration) {
+        Action(unsigned int actionDuration) : value(actionDuration) {
         }
         constexpr char toChar() const {
-            if (actionDuration == 1) {
+            if (value == 1) {
                 return 'N';
-            } else if (actionDuration == 2) {
+            } else if (value == 2) {
                 return 'E';
-            } else if (actionDuration == 3) {
+            } else if (value == 3) {
                 return 'S';
-            } else if (actionDuration == 4) {
+            } else if (value == 4) {
                 return 'W';
             } else {
                 return '~';
@@ -53,7 +53,7 @@ public:
         }
 
     private:
-        unsigned int actionDuration;
+        unsigned int value;
     };
     class State {
     public:
@@ -66,19 +66,21 @@ public:
             return *this;
         }
 
-        const unsigned int getX() const {
-            const unsigned int ret = x;
-            return ret;
+        unsigned int getX() const {
+            return x;
         }
-        const unsigned int getY() const {
-            const unsigned int ret = y;
-            return ret;
+        unsigned int getY() const {
+            return y;
         }
         std::size_t hash() const {
             return x ^ +y << 16 ^ y >> 16;
         }
         bool operator==(const State& state) const {
             return x == state.x && y == state.y;
+        }
+        std::string toString() {
+            std::string string{"x: "};
+            return string + std::to_string(x) + " y: " + std::to_string(y);
         }
 
     private:
@@ -95,7 +97,7 @@ public:
 public:
     GridWorld(const Configuration& configuration, std::istream& input) {
         if (!configuration.hasMember(ACTION_DURATION)) {
-            throw MetronomeException("No actionDuration provided.");
+            throw MetronomeException("No value provided.");
         }
         actionDuration = configuration.getLong(ACTION_DURATION);
         obstacles = std::unordered_set<State, typename metronome::Hasher<State>>{};
@@ -228,14 +230,14 @@ public:
         unsigned int horizontalDistance =
                 std::max(goalLocation.getX(), state.getX()) - std::min(goalLocation.getX(), state.getX());
         unsigned int totalDistance = verticalDistance + horizontalDistance;
-        Cost manhattanDistance = static_cast<Cost>(totalDistance);
-        return 0;
+        Cost manhattanDistance = static_cast<Cost>(totalDistance) * actionDuration;
+        return manhattanDistance;
     }
 
     std::vector<SuccessorBundle<GridWorld>> successors(State state) const {
         std::vector<SuccessorBundle<GridWorld>> successors;
 
-        unsigned int actions[] = {1, 2, 3, 4};
+        static const unsigned int actions[] = {4, 3, 2, 1};
 
         for (auto a : actions) {
             State newState = transition(state, Action(a));
@@ -256,7 +258,7 @@ private:
      * startLocation <- where the agent begins
      * goalLocation <- where the agent needs to end up
      * initalAmountDirty <- how many cells are dirty
-     * initialCost <- constant cost actionDuration
+     * initialCost <- constant cost value
      * obstacles <- stores references to obstacles
      */
     unsigned int width;
@@ -266,5 +268,15 @@ private:
     State goalLocation = State();
     Cost actionDuration;
 };
+
+std::ostream& operator<<(std::ostream& stream, const GridWorld::Action& action) {
+    stream << "action: " << action.toChar();
+    return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const GridWorld::State& state) {
+    stream << "x: " << state.getX() << " y: " << state.getY();
+    return stream;
+}
 }
 #endif

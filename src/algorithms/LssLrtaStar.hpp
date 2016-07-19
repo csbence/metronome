@@ -193,7 +193,7 @@ private:
                 continue;
             }
 
-            // only generate those state that are not visited yet or whose cost actionDuration are lower than this path
+            // only generate those state that are not visited yet or whose cost value are lower than this path
             Cost successorGValueFromCurrent{currentGValue + successor.actionCost};
             if (successorNode->g > successorGValueFromCurrent) {
                 successorNode->g = successorGValueFromCurrent;

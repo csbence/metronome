@@ -39,14 +39,10 @@ public:
             ++expandedNodeCount;
             Node* currentNode = openList.pop();
 
-            if (!currentNode->open) {
-                continue; // This node was disabled
-            }
-
             if (domain.isGoal(currentNode->state)) {
                 std::vector<Action> actions;
-
                 // Goal is reached
+
                 while (!domain.isStart(currentNode->state)) {
                     actions.push_back(currentNode->action);
                     currentNode = currentNode->parent;
@@ -56,10 +52,11 @@ public:
                 return actions;
             }
 
-            for (auto successor : domain.successors(currentNode->state)) {
-                if (successor.state == currentNode->state) {
-                    continue; // Skip parent TODO this might be unnecessary
-                }
+            auto successors = domain.successors(currentNode->state);
+            for (auto successor : successors) {
+                //                if (successor.state == currentNode->state) {
+                //                    continue; // Skip parent TODO this might be unnecessary
+                //                }
 
                 ++generatedNodeCount;
 
@@ -72,14 +69,18 @@ public:
                             successor.state,
                             successor.action,
                             newCost,
-                            newCost + domain.heuristic(successor.state),
-                            true);
+                            newCost + domain.heuristic(successor.state));
 
                     successorNode = nodePool.construct(std::move(tempSuccessorNode));
+//                    LOG(INFO) << "addToOpen(NEW): " + successorNode->toString();
                     openList.push(*successorNode);
-                } else if (successorNode->open && successorNode->g > newCost) {
+                } else if (successorNode->g > newCost) {
                     // Better path found to an existing state
+                    successorNode->parent = currentNode;
+                    successorNode->action = successor.action;
                     successorNode->g = newCost;
+                    successorNode->f = newCost + domain.heuristic(successor.state);
+
                     openList.update(*successorNode);
                 } else {
                     // The new path is not better than the existing
@@ -93,12 +94,23 @@ public:
 private:
     class Node {
     public:
-        Node(Node* parent, State state, Action action, Cost g, Cost f, bool open)
+        Node(Node* parent, State state, Action action, Cost g, Cost f)
                 : parent{parent}, state{state}, action{std::move(action)}, g{g}, f{f}, open{open} {
         }
 
         unsigned long hash() {
             return state->hash();
+        }
+
+        std::string toString() {
+            std::ostringstream stream;
+            stream << "s: " << state << " f: " << f << " a: " << action << " p: ";
+            if (parent == nullptr) {
+                stream << "NULL";
+            } else {
+                stream << parent->state;
+            }
+            return stream.str();
         }
 
         bool operator==(const Node& node) const {
@@ -111,8 +123,6 @@ private:
         Action action;
         Cost g;
         Cost f;
-        /** True if the node is in the open list. */
-        bool open;
     };
 
     static int fValueComparator(const Node& lhs, const Node& rhs) {
