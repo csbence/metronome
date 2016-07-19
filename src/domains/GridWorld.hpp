@@ -20,7 +20,7 @@
 namespace metronome {
 class GridWorld {
 public:
-    typedef long long int Cost;
+    typedef unsigned long long int Cost;
     static constexpr Cost COST_MAX = std::numeric_limits<Cost>::max();
     /*
      * State <- location of the agent as a pair
@@ -99,8 +99,8 @@ public:
         }
         actionDuration = configuration.getLong(ACTION_DURATION);
         obstacles = std::unordered_set<State, typename metronome::Hasher<State>>{};
-        int currentHeight = 0;
-        int currentWidth = 0;
+        unsigned int currentHeight = 0;
+        unsigned int currentWidth = 0;
         std::string line;
         char* end;
         getline(input, line); // get the width
@@ -194,11 +194,11 @@ public:
         return location.getX() < width && location.getY() < height && !isObstacle(location);
     }
 
-    const int getWidth() {
+    const unsigned int getWidth() {
         return width;
     }
 
-    const int getHeight() {
+    const unsigned int getHeight() {
         return height;
     }
 
@@ -223,9 +223,13 @@ public:
     }
 
     Cost heuristic(const State& state) const {
-        Cost horizontalDistance = goalLocation.getX() - state.getX();
-        Cost verticalDistance = goalLocation.getY() - state.getY();
-        return (std::abs(horizontalDistance) + std::abs(verticalDistance)) * actionDuration;
+        unsigned int verticalDistance =
+                std::max(goalLocation.getY(), state.getY()) - std::min(goalLocation.getY(), state.getY());
+        unsigned int horizontalDistance =
+                std::max(goalLocation.getX(), state.getX()) - std::min(goalLocation.getX(), state.getX());
+        unsigned int totalDistance = verticalDistance + horizontalDistance;
+        Cost manhattanDistance = static_cast<Cost>(totalDistance);
+        return 0;
     }
 
     std::vector<SuccessorBundle<GridWorld>> successors(State state) const {
@@ -234,9 +238,8 @@ public:
         unsigned int actions[] = {1, 2, 3, 4};
 
         for (auto a : actions) {
-
             State newState = transition(state, Action(a));
-            if(!(newState == state)) {
+            if (!(newState == state)) {
                 successors.push_back(SuccessorBundle<GridWorld>{newState, a, actionDuration});
             }
         }
