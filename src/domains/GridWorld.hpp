@@ -11,6 +11,7 @@
 #include <unordered_set>
 #include <utils/Hasher.hpp>
 #include <vector>
+#include "MetronomeException.hpp"
 
 /*
  * NOTE: currently VWorld operates as GWorld
