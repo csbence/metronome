@@ -2,12 +2,13 @@
 #define METRONOME_ASTAR_HPP
 #define BOOST_POOL_NO_MT
 
-#include "Planner.hpp"
-#include "utils/Hasher.hpp"
 #include <boost/pool/object_pool.hpp>
 #include <unordered_map>
 #include <utils/PriorityQueue.hpp>
 #include <vector>
+#include "Planner.hpp"
+#include "utils/Hasher.hpp"
+#include "experiment/Configuration.hpp"
 
 namespace metronome {
 
@@ -72,7 +73,7 @@ public:
                             newCost + domain.heuristic(successor.state));
 
                     successorNode = nodePool.construct(std::move(tempSuccessorNode));
-//                    LOG(INFO) << "addToOpen(NEW): " + successorNode->toString();
+                    //                    LOG(INFO) << "addToOpen(NEW): " + successorNode->toString();
                     openList.push(*successorNode);
                 } else if (successorNode->g > newCost) {
                     // Better path found to an existing state
