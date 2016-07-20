@@ -21,7 +21,7 @@ set(SOURCE_FILES
         src/experiment/Configuration.hpp
         src/experiment/Result.hpp
         src/experiment/ConfigurationExecutor.hpp
-        src/MetronomeException.hpp)
+        src/MetronomeException.hpp src/utils/Visualizer.hpp)
 
 set(TEST_FILES
         test/test.cpp
@@ -30,10 +30,10 @@ set(TEST_FILES
         test/algorithms/AStarTest.hpp
         test/algorithms/LssLrtaStarTest.hpp
         src/utils/TimeMeasurement.hpp
-        test/experiment/TimeTerminationCheckerTest.hpp)
+        test/experiment/TimeTerminationCheckerTest.hpp test/domains/VehicleTest.hpp)
 
-add_executable(Metronome ${SOURCE_FILES})
-add_executable(MetronomeTest ${TEST_FILES})
+add_executable(Metronome ${SOURCE_FILES} src/utils/Visualizer.hpp)
+add_executable(MetronomeTest ${TEST_FILES} test/domains/VehicleTest.hpp)
 
 find_package(Boost 1.55.0 COMPONENTS thread system REQUIRED)
 

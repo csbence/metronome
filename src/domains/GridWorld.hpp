@@ -249,6 +249,35 @@ public:
         return successors;
     }
 
+    void visualize(std::ostream& display) const {
+        for(auto i = 0; i < height; ++i) {
+            for(auto j = 0; j < width; ++j) {
+                if(startLocation.getX() == j && startLocation.getY() == i) {
+                    display << '@';
+                }
+                else if(goalLocation.getX() == j && goalLocation.getY() == i) {
+                    display << '*';
+                }
+                else if(isObstacle(State(j,i))) {
+                    display << '#';
+                }
+                else {
+                    display << '_';
+                }
+            }
+            display << "\n";
+        }
+        display << "\n";
+    }
+
+    void animate(std::ostream& display, std::vector<Action> actions) const {
+        for(auto action : actions) {
+            if(action.toChar() == 'N') {
+                
+            }
+        }
+    }
+
 private:
     /*
      * maxActions <- maximum number of actions

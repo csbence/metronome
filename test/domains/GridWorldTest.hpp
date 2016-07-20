@@ -1,8 +1,8 @@
-#include <experiment/ConfigurationExecutor.hpp>
-#include <iostream>
+#include <utils/Visualizer.hpp>
 #include "catch.hpp"
 #include "domains/GridWorld.hpp"
 #include "easylogging++.h"
+#include "experiment/ConfigurationExecutor.hpp"
 
 namespace {
 const char* json = "{\"timeLimit\" : 150000000000,\n"
@@ -75,4 +75,9 @@ TEST_CASE("GridWorld getters", "[GridWorld]") {
         }
     }
 }
+    TEST_CASE("GridWorld visualization", "[GridWorld]") {
+        metronome::GridWorld gridWorld = testGrid;
+        metronome::Visualizer<metronome::GridWorld> visualizer(gridWorld);
+        visualizer.visualize(std::cout);
+    }
 }
