@@ -49,17 +49,14 @@ TEST_CASE("GridWorld setting variables", "[GridWorld]") {
     metronome::GridWorld::State pair1 = metronome::GridWorld::State(3, 5);
     metronome::GridWorld::State pair2 = metronome::GridWorld::State(1, 3);
 
-    REQUIRE(gridWorld.getNumberObstacles() == 0);
-    REQUIRE(gridWorld.getStartState().getX() == 0);
+    REQUIRE(gridWorld.getNumberObstacles() == 32);
+    REQUIRE(gridWorld.getStartState().getX() == 6);
     REQUIRE(gridWorld.getStartState().getY() == 0);
 
     REQUIRE(pair1.getX() == 3);
     REQUIRE(pair1.getY() == 5);
     REQUIRE(pair2.getX() == 1);
     REQUIRE(pair2.getY() == 3);
-
-    REQUIRE(gridWorld.getStartState().getX() == 3);
-    REQUIRE(gridWorld.getStartState().getY() == 0);
 }
 
 TEST_CASE("GridWorld getters", "[GridWorld]") {
@@ -70,7 +67,11 @@ TEST_CASE("GridWorld getters", "[GridWorld]") {
             metronome::GridWorld::State testState = metronome::GridWorld::State(i, j);
 
             LOG(INFO) << "R_LOC: " << testState.getX() << " " << testState.getY() << std::endl;
-            REQUIRE(gridWorld.isLegalLocation(testState));
+            if (gridWorld.isObstacle(testState)) {
+                REQUIRE(!gridWorld.isLegalLocation(testState));
+            } else {
+                REQUIRE(gridWorld.isLegalLocation(testState));
+            }
         }
     }
 }
