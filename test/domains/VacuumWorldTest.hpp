@@ -13,8 +13,8 @@ TEST_CASE("GridWorld creation", "[GridWorld]") {
 }
 
 TEST_CASE("GridWorld::State = operator", "[GridWorld]") {
-    metronome::GridWorld::State s = metronome::GridWorld::State::newState(0, 0);
-    metronome::GridWorld::State t = metronome::GridWorld::State::newState(9, 9);
+    metronome::GridWorld::State s = metronome::GridWorld::State(0, 0);
+    metronome::GridWorld::State t = metronome::GridWorld::State(9, 9);
 
     REQUIRE(s.getX() == 0);
     REQUIRE(s.getY() == 0);

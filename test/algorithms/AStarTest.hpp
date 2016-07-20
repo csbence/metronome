@@ -1,9 +1,9 @@
-#include "algorithm/AStar.hpp"
-#include <catch.hpp>
-#include <domains/GridWorld.hpp>
-#include <domains/Vehicle.hpp>
-#include <experiment/Configuration.hpp>
-#include <easylogging++.h>
+#include "algorithms/AStar.hpp"
+#include "catch.hpp"
+#include "domains/GridWorld.hpp"
+#include "domains/Vehicle.hpp"
+#include "easylogging++.h"
+#include "experiment/Configuration.hpp"
 
 namespace {
 
@@ -45,16 +45,16 @@ public:
 //}
 
 TEST_CASE("AStar - GridWorld test", "[GridWorld]") {
-/*    metronome::GridWorld testDomain;
-    metronome::Configuration config;
-    metronome::AStar<metronome::GridWorld> aStar(testDomain, config);
+    /*    metronome::GridWorld testDomain;
+        metronome::Configuration config;
+        metronome::AStar<metronome::GridWorld> aStar(testDomain, config);
 
-    std::vector<metronome::GridWorld::Action> ret = aStar.plan(testDomain.getStartState());
-    LOG(INFO) << "Solution: " << std::endl;
-    for (auto i : ret) {
-        LOG(INFO) << i.toString() << std::endl;
-    }
-*/
+        std::vector<metronome::GridWorld::Action> ret = aStar.plan(testDomain.getStartState());
+        LOG(INFO) << "Solution: " << std::endl;
+        for (auto i : ret) {
+            LOG(INFO) << i.toString() << std::endl;
+        }
+    */
 }
 
 /*TEST_CASE("AStar - Vehicle test", "[Vehicle]") {

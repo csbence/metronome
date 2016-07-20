@@ -1,4 +1,4 @@
-#include "algorithm/LssLrtaStar.hpp"
+#include "algorithms/LssLrtaStar.hpp"
 #include <catch.hpp>
 #include <domains/GridWorld.hpp>
 #include <easylogging++.h>

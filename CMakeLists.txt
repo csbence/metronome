@@ -20,7 +20,8 @@ set(SOURCE_FILES
         src/experiment/RealTimePlanManager.hpp
         src/experiment/Configuration.hpp
         src/experiment/Result.hpp
-        src/experiment/ConfigurationExecutor.hpp src/MetronomeException.hpp)
+        src/experiment/ConfigurationExecutor.hpp
+        src/MetronomeException.hpp)
 
 set(TEST_FILES
         test/test.cpp
@@ -28,7 +29,8 @@ set(TEST_FILES
         test/domains/VacuumWorldTest.hpp
         test/algorithms/AStarTest.hpp
         test/algorithms/LssLrtaStarTest.hpp
-        src/utils/TimeMeasurement.hpp)
+        src/utils/TimeMeasurement.hpp
+        test/experiment/TimeTerminationCheckerTest.hpp)
 
 add_executable(Metronome ${SOURCE_FILES})
 add_executable(MetronomeTest ${TEST_FILES})

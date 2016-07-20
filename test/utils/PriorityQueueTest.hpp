@@ -1,6 +1,6 @@
 #include "catch.hpp"
 #include "easylogging++.h"
-#include "util/PriorityQueue.hpp"
+#include "utils/PriorityQueue.hpp"
 
 namespace {
 
