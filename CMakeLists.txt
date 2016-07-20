@@ -21,7 +21,7 @@ set(SOURCE_FILES
         src/experiment/Configuration.hpp
         src/experiment/Result.hpp
         src/experiment/ConfigurationExecutor.hpp
-        src/MetronomeException.hpp)
+        src/MetronomeException.hpp src/algorithms/OfflinePlanner.hpp src/algorithms/OnlinePlanner.hpp)
 
 set(TEST_FILES
         test/test.cpp

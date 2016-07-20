@@ -1,33 +1,37 @@
 #ifndef METRONOME_LSSLRTASTAR_HPP
 #define METRONOME_LSSLRTASTAR_HPP
-#include "Planner.hpp"
+#include <fcntl.h>
 #include <boost/pool/object_pool.hpp>
 #include <experiment/termination/TimeTerminationChecker.hpp>
-#include <fcntl.h>
 #include <unordered_map>
 #include <utils/Hasher.hpp>
 #include <utils/PriorityQueue.hpp>
 #include <vector>
+#include "OnlinePlanner.hpp"
 #define BOOST_POOL_NO_MT
 
 namespace metronome {
 
 template <typename Domain>
-class LssLrtaStar : public Planner {
+class LssLrtaStar final : public OnlinePlanner<Domain> {
 public:
     typedef typename Domain::State State;
     typedef typename Domain::Action Action;
     typedef typename Domain::Cost Cost;
+    typedef typename OnlinePlanner<Domain>::ActionBundle ActionBundle;
 
     LssLrtaStar(const Domain& domain, const Configuration&) : domain{domain} {
+        // Force the object pool to allocate memory
+        State state;
+        Node node = Node(nullptr, std::move(state), Action(), 0, 0, true);
+        nodePool.destroy(nodePool.construct(node));
     }
-    //    LssLrtaStar(const LssLrtaStar&) = default;
-    LssLrtaStar(LssLrtaStar&&) = default;
 
-    std::vector<Action> selectActions(const State& startState, TimeTerminationChecker terminationChecker) {
+    std::vector<ActionBundle> selectActions(const State& startState,
+            const TimeTerminationChecker& terminationChecker) override {
         if (domain.isGoal(startState)) {
             // Goal is already reached
-            return std::vector<Action>();
+            return std::vector<ActionBundle>();
         }
 
         // Learning phase
@@ -38,7 +42,7 @@ public:
         const Node localStartNode =
                 Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true);
 
-        ++generatedNodeCount;
+        Planner::incrementGeneratedNodeCount();
         auto startNode = nodePool.construct(localStartNode);
 
         auto bestNode = explore(startNode, terminationChecker);
@@ -159,7 +163,7 @@ private:
     }
 
     void expandNode(Node* sourceNode) {
-        ++expandedNodeCount;
+        Planner::incrementExpandedNodeCount();
 
         auto currentGValue = sourceNode->g;
         for (auto successor : domain.successors(sourceNode->state)) {
@@ -168,7 +172,7 @@ private:
             Node*& successorNode = nodes[successorState];
 
             if (successorNode == nullptr) {
-                ++generatedNodeCount;
+                Planner::incrementGeneratedNodeCount();
 
                 const Node tempSuccessorNode(
                         sourceNode, successor.state, successor.action, successor.actionCost, domain.COST_MAX, true);
@@ -226,21 +230,22 @@ private:
         openList.push(node);
     }
 
-    std::vector<Action> extractPath(const Node* targetNode, const Node* sourceNode) const {
+    std::vector<ActionBundle> extractPath(const Node* targetNode, const Node* sourceNode) const {
         if (targetNode == sourceNode) {
-            return std::vector<Action>();
+            return std::vector<ActionBundle>();
         }
 
-        std::vector<Action> actions{1000};
+        std::vector<ActionBundle> actionBundles;
         auto currentNode = targetNode;
 
         while (currentNode != sourceNode) {
-            actions.push_back(currentNode->action);
+            // The g difference of the child and the parent gives the action cost from the parent
+//            actionBundles.emplace_back(currentNode->action, currentNode->parent->g - currentNode->g);
             currentNode = currentNode->parent;
         }
 
-        std::reverse(actions.begin(), actions.end());
-        return actions;
+        std::reverse(actionBundles.begin(), actionBundles.end());
+        return actionBundles;
     }
 
     static int fValueComparator(const Node& lhs, const Node& rhs) {
