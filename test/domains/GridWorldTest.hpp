@@ -21,7 +21,7 @@ metronome::GridWorld testGrid =
         metronome::ConfigurationExecutor::extractDomain<metronome::GridWorld>(metronome::Configuration(json),
                 resourceDir);
 
-TEST_CASE("GridWorld creation", "[GridWorld]") {
+TEST_CASE("GridWorld creation test", "[GridWorld]") {
     metronome::GridWorld gridWorld = testGrid;
 
     REQUIRE(gridWorld.getWidth() == 13);
