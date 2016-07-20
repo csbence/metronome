@@ -4,7 +4,7 @@
 #include "../dependencies/catch.hpp"
 #include "algorithms/AStarTest.hpp"
 #include "algorithms/LssLrtaStarTest.hpp"
-#include "domains/VacuumWorldTest.hpp"
+#include "domains/GridWorldTest.hpp"
 #include "easylogging++.h"
 #include "experiment/TimeTerminationCheckerTest.hpp"
 #include "utils/PriorityQueueTest.hpp"
