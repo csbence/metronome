@@ -4,6 +4,8 @@
 
 namespace {
 
+using namespace metronome;
+
 struct TestNode {
     TestNode(int value) : value(value) {
     }

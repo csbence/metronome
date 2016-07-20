@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+namespace metronome {
+
 template <typename T>
 class PriorityQueue {
 public:
@@ -162,5 +164,6 @@ private:
     std::vector<T*> queue;
     unsigned int size;
 };
+}
 
 #endif // METRONOME_PRIORITY_QUEUE_HPP
