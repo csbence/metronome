@@ -1,17 +1,17 @@
 #ifndef METRONOME_CONFIGURATIONEXECUTOR_HPP
 #define METRONOME_CONFIGURATIONEXECUTOR_HPP
 
-#include "Configuration.hpp"
-#include "OfflinePlanManager.hpp"
-#include "RealTimePlanManager.hpp"
-#include "Result.hpp"
+#include <easylogging++.h>
+#include <rapidjson/document.h>
 #include <MetronomeException.hpp>
 #include <algorithms/AStar.hpp>
 #include <algorithms/LssLrtaStar.hpp>
 #include <domains/GridWorld.hpp>
-#include <easylogging++.h>
-#include <rapidjson/document.h>
 #include <string>
+#include "Configuration.hpp"
+#include "OfflinePlanManager.hpp"
+#include "RealTimePlanManager.hpp"
+#include "Result.hpp"
 namespace metronome {
 
 class ConfigurationExecutor {
@@ -32,6 +32,11 @@ public:
             LOG(ERROR) << "Unknown domain name: " << domainName << std::endl;
             return Result(configuration, "Unknown: domainName");
         }
+    }
+
+    template <typename Domain>
+    static Domain extractDomain(const Configuration& configuration, const std::string& resourcesDir) {
+        return getDomain<Domain>(configuration,resourcesDir);
     }
 
 private:

@@ -21,8 +21,9 @@ int nodeCompare(const TestNode& lhs, const TestNode& rhs) {
     return 0;
 }
 
-TEST_CASE("PriorityQueue add/clear test", "[PriorityQueue]") {
+TEST_CASE("PriorityQueue add/clear tests", "[PriorityQueue]") {
     PriorityQueue<TestNode> queue(100, nodeCompare);
+    REQUIRE(true);
 
     REQUIRE(queue.getCapacity() == 100);
 

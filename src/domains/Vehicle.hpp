@@ -90,13 +90,13 @@ private:
                 modY *= -1;
             }
 
-            auto& testState = bunkerCells[State::newState(it->getX() + modX, it->getY() + modY)];
+            auto& testState = bunkerCells[State(it->getX() + modX, it->getY() + modY)];
 
             if (nullptr != testState) {
-                *it = State::newState(it->getX() + (modX * -1), it->getY() + (modY * -1));
+                *it = State(it->getX() + (modX * -1), it->getY() + (modY * -1));
             }
 
-            *it = State::newState(it->getX() + modX, it->getY() + modY);
+            *it = State(it->getX() + modX, it->getY() + modY);
         }
     }
 

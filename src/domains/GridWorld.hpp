@@ -1,7 +1,6 @@
 #ifndef VACUUM_WORLD_HPP
 #define VACUUM_WORLD_HPP
 
-#include "SuccessorBundle.hpp"
 #include <boost/assert.hpp>
 #include <boost/optional.hpp>
 #include <cstdlib>
@@ -12,12 +11,8 @@
 #include <utils/Hasher.hpp>
 #include <vector>
 #include "MetronomeException.hpp"
+#include "SuccessorBundle.hpp"
 
-/*
- * NOTE: currently VWorld operates as GWorld
- * its assumed there is only one dirty cell
- * just for simplicity and getting stuff working
- */
 namespace metronome {
 class GridWorld {
 public:
@@ -34,6 +29,7 @@ public:
         }
         Action(unsigned int actionDuration) : value(actionDuration) {
         }
+        /*Character representation of the Action*/
         constexpr char toChar() const {
             if (value == 1) {
                 return 'N';
@@ -47,6 +43,7 @@ public:
                 return '~';
             }
         }
+        /*String representation of the Action*/
         const std::string toString() const {
             std::string s;
             s.push_back(toChar());
@@ -54,6 +51,7 @@ public:
         }
 
     private:
+        /*Internal cost of the Action*/
         unsigned int value;
     };
     class State {
@@ -66,7 +64,7 @@ public:
             swap(*this, toCopy);
             return *this;
         }
-
+        /*Standard getters for the State(x,y)*/
         unsigned int getX() const {
             return x;
         }
@@ -85,9 +83,10 @@ public:
         }
 
     private:
+        /*State(x,y) representation*/
         unsigned int x;
         unsigned int y;
-
+        /*Function facilitating operator==*/
         friend void swap(State& first, State& second) {
             using std::swap;
             swap(first.x, second.x);
@@ -96,6 +95,7 @@ public:
     };
 
 public:
+    /*Entry point for using this Domain*/
     GridWorld(const Configuration& configuration, std::istream& input) {
         if (!configuration.hasMember(ACTION_DURATION)) {
             throw MetronomeException("No value provided.");
@@ -184,27 +184,26 @@ public:
 
         return state;
     }
-
+    /*Validating a goal state*/
     const bool isGoal(const State& location) const {
         return location.getX() == goalLocation.getX() && location.getY() == goalLocation.getY();
     }
-
+    /*Validating an obstacle state*/
     const bool isObstacle(const State& location) const {
         return obstacles.find(location) != obstacles.end();
     }
-
+    /*Validating the agent can visit the state*/
     const bool isLegalLocation(const State& location) const {
         return location.getX() < width && location.getY() < height && !isObstacle(location);
     }
-
+    /*Standard getters for the (width,height) of the domain*/
     const unsigned int getWidth() {
         return width;
     }
-
     const unsigned int getHeight() {
         return height;
     }
-
+    /*Adding an obstacle to the domain*/
     const bool addObstacle(const State& toAdd) {
         if (isLegalLocation(toAdd)) {
             obstacles.insert(toAdd);

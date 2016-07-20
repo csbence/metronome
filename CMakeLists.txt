@@ -26,7 +26,7 @@ set(SOURCE_FILES
 set(TEST_FILES
         test/test.cpp
         test/utils/PriorityQueueTest.hpp
-        test/domains/VacuumWorldTest.hpp
+        test/domains/GridWorldTest.hpp
         test/algorithms/AStarTest.hpp
         test/algorithms/LssLrtaStarTest.hpp
         src/utils/TimeMeasurement.hpp
