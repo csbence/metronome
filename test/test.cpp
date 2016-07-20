@@ -2,12 +2,12 @@
 #define CATCH_CONFIG_COLOUR_NONE
 
 #include "../dependencies/catch.hpp"
-#include "easylogging++.h"
-#include <boost/multi_array.hpp>
-#include "util/PriorityQueueTest.hpp"
+#include "algorithms/AStarTest.hpp"
+#include "algorithms/LssLrtaStarTest.hpp"
 #include "domains/VacuumWorldTest.hpp"
-#include "algorithm/AStarTest.hpp"
-#include "algorithm/LssLrtaStarTest.hpp"
+#include "easylogging++.h"
+#include "experiment/TimeTerminationCheckerTest.hpp"
+#include "utils/PriorityQueueTest.hpp"
 
 INITIALIZE_EASYLOGGINGPP
 
