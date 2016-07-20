@@ -29,6 +29,13 @@ Cpp11BracedListStyle: true
 DerivePointerAlignment: false
 DisableFormat: false
 ForEachMacros: ['BOOST_FOREACH']
+IncludeCategories:
+  - Regex:           '^<.*\.h>'
+    Priority:        1
+  - Regex:           '^<.*'
+    Priority:        2
+  - Regex:           '.*'
+    Priority:        3
 IndentCaseLabels: false
 IndentWidth: 4
 IndentWrappedFunctionNames: false
