@@ -37,9 +37,9 @@ int main(int argc, char** argv) {
         LOG(INFO) << "Path length: " << result.pathLength;
         LOG(INFO) << "Nodes :: expanded: " << result.expandedNodes << " generated: " << result.generatedNodes;
 
-//        for (auto action : result.actions) {
-//            LOG(INFO) << action;
-//        }
+        //        for (auto action : result.actions) {
+        //            LOG(INFO) << action;
+        //        }
 
     } catch (const MetronomeException& exception) {
         LOG(ERROR) << exception.what();

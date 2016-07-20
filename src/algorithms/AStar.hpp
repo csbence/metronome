@@ -6,14 +6,15 @@
 #include <unordered_map>
 #include <utils/PriorityQueue.hpp>
 #include <vector>
+#include "OfflinePlanner.hpp"
 #include "Planner.hpp"
-#include "utils/Hasher.hpp"
 #include "experiment/Configuration.hpp"
+#include "utils/Hasher.hpp"
 
 namespace metronome {
 
 template <typename Domain>
-class AStar : public Planner {
+class AStar final : public OfflinePlanner<Domain> {
     typedef typename Domain::State State;
     typedef typename Domain::Action Action;
     typedef typename Domain::Cost Cost;
@@ -26,9 +27,9 @@ public:
         nodePool.destroy(nodePool.construct(node));
     }
 
-    std::vector<Action> plan(State startState) {
+    std::vector<Action> plan(const State& startState) override {
         Cost heuristic = domain.heuristic(startState);
-        Node localStartNode = Node(nullptr, std::move(startState), Action(), 0, heuristic);
+        Node localStartNode = Node(nullptr, startState, Action(), 0, heuristic);
 
         auto startNode = nodePool.construct(localStartNode);
 
@@ -37,7 +38,7 @@ public:
         openList.push(localStartNode);
 
         while (!openList.isEmpty()) {
-            ++expandedNodeCount;
+            Planner::incrementExpandedNodeCount();
             Node* currentNode = openList.pop();
 
             if (domain.isGoal(currentNode->state)) {
@@ -59,7 +60,7 @@ public:
                 //                    continue; // Skip parent TODO this might be unnecessary
                 //                }
 
-                ++generatedNodeCount;
+                Planner::incrementGeneratedNodeCount();
 
                 auto& successorNode = nodes[successor.state];
                 auto newCost = successor.actionCost + currentNode->g;
@@ -95,19 +96,19 @@ public:
 private:
     class Node {
     public:
-        Node(Node* parent, State state, Action action, Cost g, Cost f)
+        Node(Node* parent, const State state, Action action, Cost g, Cost f)
                 : parent{parent}, state{state}, action{std::move(action)}, g{g}, f{f} {
         }
 
-        unsigned long hash() {
+        unsigned long hash() const {
             return state->hash();
         }
 
-        std::string toString() {
+        std::string toString() const {
             std::ostringstream stream;
             stream << "s: " << state << " f: " << f << " a: " << action << " p: ";
             if (parent == nullptr) {
-                stream << "NULL";
+                stream << "None";
             } else {
                 stream << parent->state;
             }
@@ -120,7 +121,7 @@ private:
 
         mutable unsigned int index;
         Node* parent;
-        State state;
+        const State state;
         Action action;
         Cost g;
         Cost f;
