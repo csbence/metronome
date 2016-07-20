@@ -3,7 +3,7 @@
 
 #include "GridWorld.hpp"
 #include "SuccessorBundle.hpp"
-#include <bits/unordered_map.h>
+#include <unordered_map>
 #include <boost/assert.hpp>
 #include <cstdlib>
 #include <ctime>
