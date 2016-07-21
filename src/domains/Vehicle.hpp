@@ -127,6 +127,13 @@ public:
         std::stringstream convertHeight(line);
         convertHeight >> height;
 
+        for(auto i = 0; i < width; ++i){
+            for(auto j = 0; j < height; ++j){
+                obstacles[i][j] = false;
+                bunkers[i][j] = false;
+            }
+        }
+
         boost::optional<State> tempStartState;
         boost::optional<State> tempGoalState;
 
@@ -139,7 +146,10 @@ public:
                     tempGoalState = State(currentWidth, currentHeight);
                 } else if (*it == '#') { // store the objects
                     obstacles[currentWidth][currentHeight] = true;
+                } else if (*it == '$') {
+                    bunkers[currentWidth][currentHeight] = true;
                 } else {
+                    // open cell!
                 }
                 ++currentWidth;
                 ++currentIndex;
@@ -211,8 +221,8 @@ private:
     static long randomSeed;
     unsigned int width;
     unsigned int height;
-    bool obstacles;
-    bool bunkers;
+    std::vector<std::vector<bool>> obstacles;
+    std::vector<std::vector<bool>> bunkers;
     State startLocation = State();
     State goalLocation = State();
     Cost actionDuration;
