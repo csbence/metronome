@@ -47,6 +47,44 @@ public:
 
     class State {
     public:
+        State() : x(0), y(0), xVelocity(0), yVelocity(0) {
+        }
+        State(unsigned int x, unsigned int y) : x(x), y(y) {
+            if (randomSeedFlag) {
+                std::srand(randomSeed);
+            } else {
+                std::srand(std::time(0));
+            }
+            xVelocity = std::rand() % 3;
+            yVelocity = std::rand() % 3;
+        }
+        State& operator=(State toCopy) {
+            swap(*this, toCopy);
+            return *this;
+        }
+
+        unsigned int getX() const {
+            return x;
+        }
+        unsigned int getY() const {
+            return y;
+        }
+        int getXVelocity() const {
+            return xVelocity;
+        }
+        int getYVelocity() const {
+            return yVelocity;
+        }
+        std::size_t hash() const {
+            return x ^ y << 16 ^ y >> 16;
+        }
+        bool operator=(const State& state) const {
+            return x == state.x && y == state.y && xVelocity == state.xVelocity && yVelocity == state.yVelocity;
+        }
+        const std::string toString() const {
+            std::string string("x: ");
+            return string + std::to_string(x) + " y: " + std::to_string(y);
+        }
 
     private:
         unsigned int x;
@@ -56,14 +94,55 @@ public:
 
         friend void swap(State& first, State& second) {
             using std::swap;
-            swap(first.x, second,x);
+            swap(first.x, second.x);
             swap(first.y, second.y);
             swap(first.xVelocity, second.xVelocity);
             swap(first.yVelocity, second.yVelocity);
         }
     };
 
-    Vehicle(const Configuration& config, std::istream& input) {
+    Vehicle(const Configuration& configuration, std::istream& input) {
+        if (!configuration.hasMember(ACTION_DURATION)) {
+            throw MetronomeException("No value provided.");
+        }
+        actionDuration = configuration.getLong(ACTION_DURATION);
+        unsigned int currentHeight = 0;
+        unsigned int currentWidth = 0;
+        unsigned int currentIndex = 0;
+        std::string line;
+        char* end;
+        getline(input, line);
+        std::stringstream convertWidth(line);
+        if (std::strtol(line.c_str(), &end, 10) == 0) {
+            throw MetronomeException("Vehicle first line must be a number.");
+        }
+        convertWidth >> width;
+        getline(input, line);
+        if (std::strtol(line.c_str(), &end, 10) == 0) {
+            throw MetronomeException("Vehicle second line must be a number.");
+        }
+        std::stringstream convertHeight(line);
+        convertHeight >> height;
+
+        boost::optional<State> tempStartState;
+        boost::optional<State> tempGoalState;
+
+        while (getline(input, line)) {
+            for(auto it = line.cbegin(); it != line.cend(); ++it) {
+               //do something for IO
+            }
+        }
+
+        if(currentHeight != height){
+            throw MetronomeException("Vehicle is not complete. Height doesn't match input configuration.");
+        }
+
+        if(!tempStartState.is_initialized() || !tempGoalState.is_initialized()) {
+            throw MetronomeException("Vehicle unknown start or goal location. Start or goal location is not defined.");
+        }
+
+        startLocation = tempStartState.get();
+        startLocation = tempGoalState.get();
     }
     //    const bool addDyanmicObject(const State& toAdd) {
     //        return this->addObstacle(toAdd);
@@ -109,7 +188,15 @@ public:
     //        return successors;
     //    }
     //
-    // private:
+private:
+    static bool randomSeedFlag;
+    static long randomSeed;
+    unsigned int width;
+    unsigned int height;
+    bool obstacles[INT_MAX][INT_MAX];
+    State startLocation = State();
+    State goalLocation = State();
+    Cost actionDuration;
     //    void moveObstacles() {
     //        for (auto it = obstaclesLocations.begin(); it != obstaclesLocations.end(); ++it) {
     //            int cur = 0;
