@@ -47,7 +47,7 @@ public:
 
     class State {
     public:
-        State() : x(0), y(0), xVelocity(0), yVelocity(0) {
+        State() : x(0), y(0), xVelocity(0), yVelocity(0), index(x + y) {
         }
         State(unsigned int x, unsigned int y) : x(x), y(y) {
             if (randomSeedFlag) {
@@ -57,6 +57,8 @@ public:
             }
             xVelocity = std::rand() % 3;
             yVelocity = std::rand() % 3;
+
+            index = x + y;
         }
         State& operator=(State toCopy) {
             swap(*this, toCopy);
@@ -91,6 +93,7 @@ public:
         unsigned int y;
         int xVelocity;
         int yVelocity;
+        int index;
 
         friend void swap(State& first, State& second) {
             using std::swap;
@@ -128,16 +131,31 @@ public:
         boost::optional<State> tempGoalState;
 
         while (getline(input, line)) {
-            for(auto it = line.cbegin(); it != line.cend(); ++it) {
-               //do something for IO
+            for (auto it = line.cbegin(); it != line.cend(); ++it) {
+                // do something for IO
+                if (*it == '@') { // find the start location
+                    tempStartState = State(currentWidth, currentHeight);
+                } else if (*it == '*') { // find the goal location
+                    tempGoalState = State(currentWidth, currentHeight);
+                } else if (*it == '#') { // store the objects
+                    obstacles[currentWidth][currentHeight] = true;
+                } else {
+                }
+                ++currentWidth;
+                ++currentIndex;
             }
+            if (currentWidth != width) {
+                throw MetronomeException("Vehicle is not complete. Widthd doesn't match the input configuration.");
+            }
+            currentWidth = 0;
+            ++currentHeight;
         }
 
-        if(currentHeight != height){
+        if (currentHeight != height) {
             throw MetronomeException("Vehicle is not complete. Height doesn't match input configuration.");
         }
 
-        if(!tempStartState.is_initialized() || !tempGoalState.is_initialized()) {
+        if (!tempStartState.is_initialized() || !tempGoalState.is_initialized()) {
             throw MetronomeException("Vehicle unknown start or goal location. Start or goal location is not defined.");
         }
 
@@ -193,7 +211,8 @@ private:
     static long randomSeed;
     unsigned int width;
     unsigned int height;
-    bool obstacles[INT_MAX][INT_MAX];
+    bool obstacles;
+    bool bunkers;
     State startLocation = State();
     State goalLocation = State();
     Cost actionDuration;
