@@ -27,7 +27,7 @@ public:
     public:
         Action() : value(0) {
         }
-        Action(unsigned int actionDuration) : value(actionDuration) {
+        Action(unsigned int value) : value(value) {
         }
         /*Character representation of the Action*/
         constexpr char toChar() const {
