@@ -17,17 +17,6 @@ int main(int argc, char** argv) {
     using namespace metronome;
 
     std::cout << std::endl;
-    std::cout << "|¯¯¯\\  ______  /¯¯¯|   " << std::endl;
-    std::cout << "| |\\ \\ \\    / / /| |   " << std::endl;
-    std::cout << "| | \\ \\ \\  / / / | |   " << std::endl;
-    std::cout << "| |  \\_\\ \\/ /_/  | |   " << std::endl;
-    std::cout << "| |      /\\      | |   " << std::endl;
-    std::cout << "| |     /  \\     | |   " << std::endl;
-    std::cout << "|_|    /____\\    |_|   " << std::endl;
-    std::cout << "---- Metronome  ----"<< std::endl;
-    std::cout << " When time matters!" << std::endl << std::endl;
-
-    std::cout << std::endl;
     std::cout << " ___            ___     " << std::endl;
     std::cout << "|###\\  ______  /###|   " << std::endl;
     std::cout << "|#|\\#\\ \\    / /#/|#|   " << std::endl;
