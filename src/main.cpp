@@ -15,7 +15,29 @@ int main(int argc, char** argv) {
     std::string resourceDir{argv[1]};
 
     using namespace metronome;
-    LOG(INFO) << "Unstoppable precision!" << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "|¯¯¯\\  ______  /¯¯¯|   " << std::endl;
+    std::cout << "| |\\ \\ \\    / / /| |   " << std::endl;
+    std::cout << "| | \\ \\ \\  / / / | |   " << std::endl;
+    std::cout << "| |  \\_\\ \\/ /_/  | |   " << std::endl;
+    std::cout << "| |      /\\      | |   " << std::endl;
+    std::cout << "| |     /  \\     | |   " << std::endl;
+    std::cout << "|_|    /____\\    |_|   " << std::endl;
+    std::cout << "---- Metronome  ----"<< std::endl;
+    std::cout << " When time matters!" << std::endl << std::endl;
+
+    std::cout << std::endl;
+    std::cout << " ___            ___     " << std::endl;
+    std::cout << "|###\\  ______  /###|   " << std::endl;
+    std::cout << "|#|\\#\\ \\    / /#/|#|   " << std::endl;
+    std::cout << "|#| \\#\\ \\  / /#/ |#|   " << std::endl;
+    std::cout << "|#|  \\#\\ \\/ /#/  |#|   " << std::endl;
+    std::cout << "|#|      /\\      |#|   " << std::endl;
+    std::cout << "|#|     /  \\     |#|   " << std::endl;
+    std::cout << "|#|    /____\\    |#|   " << std::endl;
+    std::cout << "---- Metronome  ----"<< std::endl;
+    std::cout << " When time matters!" << std::endl << std::endl;
 
     const char* json = "{\"timeLimit\" : 150000000000,\n"
                        "\"domainPath\" : "
@@ -25,10 +47,9 @@ int main(int argc, char** argv) {
                        "\"domainName\" : \"GRID_WORLD\",\n"
                        "\"terminationType\" : \"time\",\n"
                        "\"list\" : [1, 2],\n"
-                       "\"objects\" : {\"a\": [], \"b\": {}},\n"
-                       "\"algorithmName\" : \"A_STAR\"}";
+                       "\"algorithmName\" : \"LSS_LRTA_STAR\"}";
 
-    printf("Original JSON:\n %s\n", json);
+//    printf("Original JSON:\n %s\n", json);
 
     try {
         const Result result = ConfigurationExecutor::executeConfiguration(Configuration(json), resourceDir);
