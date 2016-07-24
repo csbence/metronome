@@ -35,9 +35,9 @@ public:
         }
 
         // Learning phase
-        if (openList.isNotEmpty()) {
-            learn(terminationChecker);
-        }
+//        if (openList.isNotEmpty()) {
+//            learn(terminationChecker);
+//        }
 
         const Node localStartNode =
                 Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true);
@@ -48,7 +48,6 @@ public:
         auto bestNode = explore(startNode, terminationChecker);
 
         return extractPath(bestNode, startNode);
-        // TODO return best node and extract plan
     }
 
 private:
@@ -72,6 +71,17 @@ private:
 
         bool operator==(const Node& node) const {
             return state == node.state;
+        }
+
+        std::string toString() const {
+            std::ostringstream stream;
+            stream << "s: " << state << " g: " << g << " h: " << h << " a: " << action << " p: ";
+            if (parent == nullptr) {
+                stream << "None";
+            } else {
+                stream << parent->state;
+            }
+            return stream.str();
         }
 
         /** Index used by the priority queue */
@@ -164,12 +174,14 @@ private:
 
     void expandNode(Node* sourceNode) {
         Planner::incrementExpandedNodeCount();
+//        LOG_EVERY_N(10000, INFO) << "10000 expanded openList: " << openList.getSize() ;
 
         auto currentGValue = sourceNode->g;
         for (auto successor : domain.successors(sourceNode->state)) {
             auto successorState = successor.state;
 
             Node*& successorNode = nodes[successorState];
+//            LOG_EVERY_N(10000, INFO) << "1M successor";
 
             if (successorNode == nullptr) {
                 Planner::incrementGeneratedNodeCount();
@@ -193,7 +205,7 @@ private:
             successorNode->predecessors.emplace_back(sourceNode, successor.action, successor.actionCost);
 
             // Skip if we got back to the parent
-            if (successorState == sourceNode->parent->state) {
+            if (sourceNode->parent != nullptr && successorState == sourceNode->parent->state) {
                 continue;
             }
 
@@ -220,6 +232,10 @@ private:
 
     Node* popOpenList() {
         // TODO check if open is empty end throw goal not reachable if yes
+        if (openList.isEmpty()) {
+            throw MetronomeException("Open list was empty.");
+        }
+
         Node* node = openList.pop();
         node->open = false;
         return node;
@@ -232,6 +248,7 @@ private:
 
     std::vector<ActionBundle> extractPath(const Node* targetNode, const Node* sourceNode) const {
         if (targetNode == sourceNode) {
+//            LOG(INFO) << "We didn't move:" << sourceNode->toString();
             return std::vector<ActionBundle>();
         }
 
@@ -240,7 +257,7 @@ private:
 
         while (currentNode != sourceNode) {
             // The g difference of the child and the parent gives the action cost from the parent
-//            actionBundles.emplace_back(currentNode->action, currentNode->parent->g - currentNode->g);
+            actionBundles.emplace_back(currentNode->action, currentNode->parent->g - currentNode->g);
             currentNode = currentNode->parent;
         }
 
