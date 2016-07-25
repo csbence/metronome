@@ -35,9 +35,9 @@ public:
         }
 
         // Learning phase
-//        if (openList.isNotEmpty()) {
-//            learn(terminationChecker);
-//        }
+        if (openList.isNotEmpty()) {
+            learn(terminationChecker);
+        }
 
         const Node localStartNode =
                 Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true);
@@ -169,25 +169,29 @@ private:
             expandNode(currentNode);
         }
 
-        return currentNode;
+        return currentNode; // todo this might be one step behind the best
     }
 
     void expandNode(Node* sourceNode) {
         Planner::incrementExpandedNodeCount();
-//        LOG_EVERY_N(10000, INFO) << "10000 expanded openList: " << openList.getSize() ;
+        //        LOG_EVERY_N(10000, INFO) << "10000 expanded openList: " << openList.getSize() ;
 
         auto currentGValue = sourceNode->g;
         for (auto successor : domain.successors(sourceNode->state)) {
             auto successorState = successor.state;
 
             Node*& successorNode = nodes[successorState];
-//            LOG_EVERY_N(10000, INFO) << "1M successor";
+            //            LOG_EVERY_N(10000, INFO) << "1M successor";
 
             if (successorNode == nullptr) {
                 Planner::incrementGeneratedNodeCount();
 
-                const Node tempSuccessorNode(
-                        sourceNode, successor.state, successor.action, successor.actionCost, domain.COST_MAX, true);
+                const Node tempSuccessorNode(sourceNode,
+                        successor.state,
+                        successor.action,
+                        domain.COST_MAX,
+                        domain.heuristic(successor.state),
+                        true);
 
                 successorNode = nodePool.construct(std::move(tempSuccessorNode));
             }
@@ -248,7 +252,7 @@ private:
 
     std::vector<ActionBundle> extractPath(const Node* targetNode, const Node* sourceNode) const {
         if (targetNode == sourceNode) {
-//            LOG(INFO) << "We didn't move:" << sourceNode->toString();
+            //            LOG(INFO) << "We didn't move:" << sourceNode->toString();
             return std::vector<ActionBundle>();
         }
 
