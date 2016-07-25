@@ -2,12 +2,14 @@
 #define METRONOME_LSSLRTASTAR_HPP
 #include <fcntl.h>
 #include <boost/pool/object_pool.hpp>
-#include <experiment/termination/TimeTerminationChecker.hpp>
 #include <unordered_map>
-#include <utils/Hasher.hpp>
-#include <utils/PriorityQueue.hpp>
 #include <vector>
+#include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
+#include "experiment/Configuration.hpp"
+#include "experiment/termination/TimeTerminationChecker.hpp"
+#include "utils/Hasher.hpp"
+#include "utils/PriorityQueue.hpp"
 #define BOOST_POOL_NO_MT
 
 namespace metronome {
@@ -65,7 +67,11 @@ private:
                   iteration{iteration} {
         }
 
-        unsigned long hash() {
+        Cost f() const {
+            return g + h;
+        }
+
+        unsigned long hash() const {
             return state->hash();
         }
 
@@ -119,7 +125,7 @@ private:
         ++iterationCounter;
 
         // Reorder the open list based on the heuristic values
-        openList.reorder(hValueComparator);
+        openList.reorder(hComparator);
 
         while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
             auto currentNode = popOpenList();
@@ -157,7 +163,7 @@ private:
     Node* explore(Node* startNode, TimeTerminationChecker terminationChecker) {
         ++iterationCounter;
         clearOpenList();
-        openList.reorder(fValueComparator);
+        openList.reorder(fComparator);
 
         Node* currentNode = startNode;
 
@@ -269,13 +275,10 @@ private:
         return actionBundles;
     }
 
-    static int fValueComparator(const Node& lhs, const Node& rhs) {
-        Cost lhsF = lhs.g + lhs.h;
-        Cost rhsF = rhs.g + rhs.h;
-
-        if (lhsF < rhsF)
+    static int fComparator(const Node& lhs, const Node& rhs) {
+        if (lhs.f() < rhs.f())
             return -1;
-        if (lhsF > rhsF)
+        if (rhs.f() > rhs.f())
             return 1;
         if (lhs.g > rhs.g)
             return -1;
@@ -284,7 +287,7 @@ private:
         return 0;
     }
 
-    static int hValueComparator(const Node& lhs, const Node& rhs) {
+    static int hComparator(const Node& lhs, const Node& rhs) {
         if (lhs.h < rhs.h)
             return -1;
         if (lhs.h > rhs.h)
@@ -293,7 +296,7 @@ private:
     }
 
     const Domain& domain;
-    PriorityQueue<Node> openList{10000000, fValueComparator};
+    PriorityQueue<Node> openList{10000000, fComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
     boost::object_pool<Node> nodePool{100000000, 100000000};
     unsigned int iterationCounter{0};
