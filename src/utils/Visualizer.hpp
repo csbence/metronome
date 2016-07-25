@@ -13,7 +13,7 @@ public:
     void visualize(std::ostream& display) const {
         domain.visualize(display);
     }
-    void animate(std::ostream& display, const std::vector<Domain::Action> actions) const {
+    void animate(std::ostream& display, const std::vector<typename Domain::Action> actions) const {
         domain.animate(display, actions);
     }
 

@@ -27,7 +27,7 @@ public:
     public:
         Action() : value(0) {
         }
-        Action(unsigned int actionDuration) : value(actionDuration) {
+        Action(unsigned int value) : value(value) {
         }
         /*Character representation of the Action*/
         constexpr char toChar() const {
@@ -72,7 +72,7 @@ public:
             return y;
         }
         std::size_t hash() const {
-            return x ^ +y << 16 ^ y >> 16;
+            return x ^ y << 16 ^ y >> 16;
         }
         bool operator==(const State& state) const {
             return x == state.x && y == state.y;
@@ -93,8 +93,6 @@ public:
             swap(first.y, second.y);
         }
     };
-
-public:
     /*Entry point for using this Domain*/
     GridWorld(const Configuration& configuration, std::istream& input) {
         if (!configuration.hasMember(ACTION_DURATION)) {
@@ -149,7 +147,7 @@ public:
         }
 
         if (!tempStarState.is_initialized() || !tempGoalState.is_initialized()) {
-            throw MetronomeException("Unknown start or goal location. Start or goal location is not defined.");
+            throw MetronomeException("Vehicle unknown start or goal location. Start or goal location is not defined.");
         }
 
         startLocation = tempStarState.get();
