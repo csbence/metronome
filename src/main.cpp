@@ -2,46 +2,47 @@
 //#include "rapidjson/document.h"
 //#include "rapidjson/stringbuffer.h"
 //#include "rapidjson/writer.h"
+#include "rapidjson/filereadstream.h"
 #include <experiment/ConfigurationExecutor.hpp>
+//#include <iostream>
+#include <cstdio>
+
 
 INITIALIZE_EASYLOGGINGPP
 
+void printSplashScreen();
+
 int main(int argc, char** argv) {
+    printSplashScreen();
+
     if (argc == 1) {
         std::cerr << "Resource path is not provided." << std::endl;
         return 1;
     }
 
+    if (argc == 2) {
+        std::cerr << "Configuration file path is not provided." << std::endl;
+        return 1;
+    }
+
     std::string resourceDir{argv[1]};
+    std::string configurationPath{argv[2]};
 
     using namespace metronome;
+    using namespace rapidjson;
 
-    std::cout << std::endl;
-    std::cout << " ___            ___     " << std::endl;
-    std::cout << "|###\\  ______  /###|   " << std::endl;
-    std::cout << "|#|\\#\\ \\    / /#/|#|   " << std::endl;
-    std::cout << "|#| \\#\\ \\  / /#/ |#|   " << std::endl;
-    std::cout << "|#|  \\#\\ \\/ /#/  |#|   " << std::endl;
-    std::cout << "|#|      /\\      |#|   " << std::endl;
-    std::cout << "|#|     /  \\     |#|   " << std::endl;
-    std::cout << "|#|    /____\\    |#|   " << std::endl;
-    std::cout << "---- Metronome  ----"<< std::endl;
-    std::cout << " When time matters!" << std::endl << std::endl;
+    FILE* fp = fopen(configurationPath.c_str(), "r");
+    char readBuffer[65536];
+    FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+    Document document;
+    document.ParseStream(is);
+    fclose(fp);
 
-    const char* json = "{\"timeLimit\" : 150000000000,\n"
-                       "\"domainPath\" : "
-                       "\"/input/vacuum/dylan/uniform.vw\",\n"
-                       "\"domainInstanceName\" : \"Manual test instance\",\n"
-                       "\"actionDuration\" : 6000000,\n"
-                       "\"domainName\" : \"GRID_WORLD\",\n"
-                       "\"terminationType\" : \"time\",\n"
-                       "\"list\" : [1, 2],\n"
-                       "\"algorithmName\" : \"LSS_LRTA_STAR\"}";
-
-//    printf("Original JSON:\n %s\n", json);
+//    getchar();
 
     try {
-        const Result result = ConfigurationExecutor::executeConfiguration(Configuration(json), resourceDir);
+        const Result result = ConfigurationExecutor::executeConfiguration(Configuration(std::move(document)),
+                                                                          resourceDir);
 
         LOG(INFO) << "Execution completed in " << result.planningTime / 1000000 << "ms";
         LOG(INFO) << "Path length: " << result.pathLength;
@@ -56,4 +57,17 @@ int main(int argc, char** argv) {
     }
 
     return 0;
+}
+void printSplashScreen() {
+    std::__1::cout << std::__1::endl;
+    std::__1::cout << " ___            ___     " << std::__1::endl;
+    std::__1::cout << "|###\\  ______  /###|   " << std::__1::endl;
+    std::__1::cout << "|#|\\#\\ \\    / /#/|#|   " << std::__1::endl;
+    std::__1::cout << "|#| \\#\\ \\  / /#/ |#|   " << std::__1::endl;
+    std::__1::cout << "|#|  \\#\\ \\/ /#/  |#|   " << std::__1::endl;
+    std::__1::cout << "|#|      /\\      |#|   " << std::__1::endl;
+    std::__1::cout << "|#|     /  \\     |#|   " << std::__1::endl;
+    std::__1::cout << "|#|    /____\\    |#|   " << std::__1::endl;
+    std::__1::cout << "---- Metronome  ----" << std::__1::endl;
+    std::__1::cout << " When time matters!" << std::__1::endl << std::__1::endl;
 }

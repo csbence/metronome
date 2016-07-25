@@ -44,6 +44,8 @@ public:
             planningTime += planningIterationTime;
         }
 
+        LOG(INFO) << "Planning: Done";
+
         auto pathLength = actions.size();
 
         std::vector<std::string> actionStrings;

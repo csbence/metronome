@@ -1,6 +1,8 @@
 #ifndef METRONOME_PLANNER_HPP
 #define METRONOME_PLANNER_HPP
 
+namespace metronome {
+
 class Planner {
 public:
     virtual unsigned long long getGeneratedNodeCount() const final {
