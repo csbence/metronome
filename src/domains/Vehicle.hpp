@@ -6,6 +6,7 @@
 #include <ctime>
 #include <functional>
 #include <unordered_map>
+#include <utils/PointTuple.hpp>
 #include <vector>
 #include "GridWorld.hpp"
 #include "SuccessorBundle.hpp"
@@ -127,8 +128,8 @@ public:
         std::stringstream convertHeight(line);
         convertHeight >> height;
 
-        for(auto i = 0; i < width; ++i){
-            for(auto j = 0; j < height; ++j){
+        for (auto i = 0; i < width; ++i) {
+            for (auto j = 0; j < height; ++j) {
                 obstacles[i][j] = false;
                 bunkers[i][j] = false;
             }
@@ -145,8 +146,10 @@ public:
                 } else if (*it == '*') { // find the goal location
                     tempGoalState = State(currentWidth, currentHeight);
                 } else if (*it == '#') { // store the objects
+                    obstacleIndices.push_back(metronome::PointTuple(currentWidth, currentHeight));
                     obstacles[currentWidth][currentHeight] = true;
                 } else if (*it == '$') {
+                    bunkerIndices.push_back(metronome::PointTuple(currentWidth, currentHeight));
                     bunkers[currentWidth][currentHeight] = true;
                 } else {
                     // open cell!
@@ -172,6 +175,7 @@ public:
         startLocation = tempStartState.get();
         startLocation = tempGoalState.get();
     }
+
     //    const bool addDyanmicObject(const State& toAdd) {
     //        return this->addObstacle(toAdd);
     //    }
@@ -217,46 +221,39 @@ public:
     //    }
     //
 private:
+    void moveObstacles() {
+        for (auto obstacleIndex : obstacleIndices) {
+            int cur = 0;
+            int modX = it->int modY = obstacleVelocity[cur].second;
+
+            if (it->getX() + modX > this->width) {
+                modX *= -1;
+            }
+            if (it->getY() + modY > this->height) {
+                modY *= -1;
+            }
+
+            auto& testState = bunkerCells[State(it->getX() + modX, it->getY() + modY)];
+
+            if (nullptr != testState) {
+                *it = State(it->getX() + (modX * -1), it->getY() + (modY * -1));
+            }
+
+            *it = State(it->getX() + modX, it->getY() + modY);
+        }
+    }
     static bool randomSeedFlag;
     static long randomSeed;
     unsigned int width;
     unsigned int height;
+    std::vector<metronome::PointTuple> obstacleIndices;
+    std::vector<metronome::PointTuple> bunkerIndices;
     std::vector<std::vector<bool>> obstacles;
     std::vector<std::vector<bool>> bunkers;
     State startLocation = State();
     State goalLocation = State();
     Cost actionDuration;
-    //    void moveObstacles() {
-    //        for (auto it = obstaclesLocations.begin(); it != obstaclesLocations.end(); ++it) {
-    //            int cur = 0;
-    //            int modX = it->
-    //            int modY = obstacleVelocity[cur].second;
-    //
-    //            if (it->getX() + modX > this->width) {
-    //                modX *= -1;
-    //            }
-    //            if (it->getY() + modY > this->height) {
-    //                modY *= -1;
-    //            }
-    //
-    //            auto& testState = bunkerCells[State(it->getX() + modX, it->getY() + modY)];
-    //
-    //            if (nullptr != testState) {
-    //                *it = State(it->getX() + (modX * -1), it->getY() + (modY * -1));
-    //            }
-    //
-    //            *it = State(it->getX() + modX, it->getY() + modY);
-    //        }
-    //    }
-    //
-    //    State start;
-    //    State goal;
-    //    unsigned int height;
-    //    unsigned int width;
-    //    std::vector<State> obstaclesLocations;
-    //    std::unordered_map<State, State*, typename metronome::Hasher<State>> bunkerCells;
-    //    Cost initialCost = 1;
-    //    Cost deadCost = 1000000;
+    Cost deadCost = actionDuration * 2;
 };
 }
 #endif // METRONOME_VEHICLE_HPP

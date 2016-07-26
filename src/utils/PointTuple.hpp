@@ -2,9 +2,9 @@
 #define METRONOME_TUPLE_HPP
 
 namespace metronome {
-class Tuple {
+class PointTuple {
 public:
-    Tuple(unsigned int x, unsigned int y) : x(x), y(y) {
+    PointTuple(unsigned int x, unsigned int y) : x(x), y(y) {
     }
     unsigned int x;
     unsigned int y;
