@@ -22,7 +22,7 @@ set(SOURCE_FILES
         src/experiment/Result.hpp
         src/experiment/ConfigurationExecutor.hpp
         src/MetronomeException.hpp src/utils/Visualizer.hpp
-        src/algorithms/OfflinePlanner.hpp src/algorithms/OnlinePlanner.hpp src/utils/PointTuple.hpp)
+        src/algorithms/OfflinePlanner.hpp src/algorithms/OnlinePlanner.hpp src/utils/Location2D.hpp)
 
 set(TEST_FILES
         test/test.cpp
