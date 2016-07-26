@@ -2,9 +2,12 @@
 #define METRONOME_TUPLE_HPP
 
 namespace metronome {
-class PointTuple {
+class Location2D {
 public:
-    PointTuple(unsigned int x, unsigned int y) : x(x), y(y) {
+    Location2D() : x(0), y(0) {
+
+    }
+    Location2D(unsigned int x, unsigned int y) : x(x), y(y) {
     }
     unsigned int x;
     unsigned int y;
