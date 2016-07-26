@@ -242,6 +242,7 @@ private:
             *it = State(it->getX() + modX, it->getY() + modY);
         }
     }
+    
     static bool randomSeedFlag;
     static long randomSeed;
     unsigned int width;
