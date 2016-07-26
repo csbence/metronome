@@ -50,7 +50,7 @@ public:
     public:
         State() : x(0), y(0), xVelocity(0), yVelocity(0), index(x + y) {
         }
-        State(unsigned int x, unsigned int y) : x(x), y(y) {
+        State(const unsigned int x, const unsigned int y) : x(x), y(y) {
             if (randomSeedFlag) {
                 std::srand(randomSeed);
             } else {
@@ -244,13 +244,30 @@ private:
 
             auto inObstacle = bunkers[obstacleIndex.x + modX][obstacleIndex.y + modY];
 
-            if (!inObstacle) {
-                curState = &State(curState->getX() + (modX * -1), curState->getY() + (modY * -1));
-            } else {
-                curState = &State(curState->getX() + modX, curState->getY() + modY);
+            if (!inObstacle) { // if it is hitting an obstacle bounce
+                State newState = State(curState->getXVelocity() + (modX * -1), curState->getY() + (modY* -1));
+                curState = &newState;
+            } else { // otherwise just move to the new location
+                State newState = State(curState->getXVelocity() + modX, curState->getY() + modY);
+                curState = &newState;
             }
         }
     }
+
+    /*
+     * randomSeedFlag <- notifies the ctor if we are using internal seed or user-defined
+     * randomSeed <- the seed we use for generating the velocities of the obstacles
+     * width <- how wide the world is
+     * height <- how tall the world is
+     * obstacleIndices <- where the obstacles are using direct addressing *NOTE: vector is a container for a
+     * bunkerIndices <- where the bunkers are using direct addressing      *NOTE: dynamic array!!!!!!!!!!!!!!
+     * obstacles <- bit vector using direct addressing of the obstacles
+     * bunkers <- bit vector using direct addressing of the bunkers ** NOTE: are these redundant?***
+     * startLocation <- where the agent starts
+     * goalLocation <- where the agent needs to go
+     * deadCost <- to calculate if we are in a dead state if the cost is twice the actionDuration then we pronounce it dead
+     * generatedStates <- our cache trick to insure velocity consistency when generating states
+     */
     static bool randomSeedFlag;
     static long randomSeed;
     unsigned int width;
