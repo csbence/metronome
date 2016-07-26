@@ -30,6 +30,8 @@ public:
                 return 'S';
             } else if (value == 4) {
                 return 'W';
+            } else if (value == 5) {
+                return '0';
             } else {
                 return '~';
             }
@@ -192,6 +194,11 @@ public:
             if (isLegalLocation(newState)) {
                 return newState;
             }
+        } else if (action.toChar() == '0' && bunkers[state.getX()][state.getY()]) {
+            State newState = State(state.getX(), state.getY());
+            if (isLegalLocation(newState)) {
+                return newState;
+            }
         }
 
         return state;
@@ -206,7 +213,7 @@ public:
     std::vector<SuccessorBundle<Vehicle>> successors(State state) {
         std::vector<SuccessorBundle<Vehicle>> successors;
 
-        unsigned int actions[] = {1, 2, 3, 4, 5};
+        unsigned int actions[] = {5, 4, 3, 2, 1};
 
         for (auto a : actions) {
             State newState = transition(state, Action(a));
