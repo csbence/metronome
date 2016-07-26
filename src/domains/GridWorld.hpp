@@ -25,10 +25,8 @@ public:
      */
     class Action {
     public:
-        Action() : value(0) {
-        }
-        Action(unsigned int value) : value(value) {
-        }
+        Action() : value(0) {}
+        Action(unsigned int value) : value(value) {}
         /*Character representation of the Action*/
         constexpr char toChar() const {
             if (value == 1) {
@@ -56,27 +54,17 @@ public:
     };
     class State {
     public:
-        State() : x(0), y(0) {
-        }
-        State(unsigned int x, unsigned int y) : x(x), y(y) {
-        }
+        State() : x(0), y(0) {}
+        State(unsigned int x, unsigned int y) : x(x), y(y) {}
         State& operator=(State toCopy) {
             swap(*this, toCopy);
             return *this;
         }
         /*Standard getters for the State(x,y)*/
-        unsigned int getX() const {
-            return x;
-        }
-        unsigned int getY() const {
-            return y;
-        }
-        std::size_t hash() const {
-            return x ^ y << 16 ^ y >> 16;
-        }
-        bool operator==(const State& state) const {
-            return x == state.x && y == state.y;
-        }
+        unsigned int getX() const { return x; }
+        unsigned int getY() const { return y; }
+        std::size_t hash() const { return x ^ y << 16 ^ y >> 16; }
+        bool operator==(const State& state) const { return x == state.x && y == state.y; }
         std::string toString() {
             std::string string{"x: "};
             return string + std::to_string(x) + " y: " + std::to_string(y);
@@ -187,20 +175,14 @@ public:
         return location.getX() == goalLocation.getX() && location.getY() == goalLocation.getY();
     }
     /*Validating an obstacle state*/
-    const bool isObstacle(const State& location) const {
-        return obstacles.find(location) != obstacles.end();
-    }
+    const bool isObstacle(const State& location) const { return obstacles.find(location) != obstacles.end(); }
     /*Validating the agent can visit the state*/
     const bool isLegalLocation(const State& location) const {
         return location.getX() < width && location.getY() < height && !isObstacle(location);
     }
     /*Standard getters for the (width,height) of the domain*/
-    const unsigned int getWidth() {
-        return width;
-    }
-    const unsigned int getHeight() {
-        return height;
-    }
+    const unsigned int getWidth() { return width; }
+    const unsigned int getHeight() { return height; }
     /*Adding an obstacle to the domain*/
     const bool addObstacle(const State& toAdd) {
         if (isLegalLocation(toAdd)) {
@@ -210,27 +192,24 @@ public:
         return false;
     }
 
-    const std::vector<State>::size_type getNumberObstacles() {
-        return obstacles.size();
-    }
+    const std::vector<State>::size_type getNumberObstacles() { return obstacles.size(); }
 
-    const State getStartState() const {
-        return startLocation;
-    }
+    const State getStartState() const { return startLocation; }
 
     const bool isStart(const State& state) const {
         return state.getX() == startLocation.getX() && state.getY() == startLocation.getY();
     }
 
-    Cost heuristic(const State& state) const {
+    Cost distance(const State& state) const {
         unsigned int verticalDistance =
                 std::max(goalLocation.getY(), state.getY()) - std::min(goalLocation.getY(), state.getY());
         unsigned int horizontalDistance =
                 std::max(goalLocation.getX(), state.getX()) - std::min(goalLocation.getX(), state.getX());
         unsigned int totalDistance = verticalDistance + horizontalDistance;
-        Cost manhattanDistance = static_cast<Cost>(totalDistance) * actionDuration;
-        return manhattanDistance;
+        Cost manhattanDistance = static_cast<Cost>(totalDistance);
     }
+
+    Cost heuristic(const State& state) const { return distance(state) * actionDuration; }
 
     std::vector<SuccessorBundle<GridWorld>> successors(State state) const {
         std::vector<SuccessorBundle<GridWorld>> successors;

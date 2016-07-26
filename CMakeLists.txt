@@ -7,6 +7,9 @@ set(SOURCE_FILES
         src/main.cpp
         src/algorithms/AStar.hpp
         src/algorithms/LssLrtaStar.hpp
+        src/algorithms/FHat.hpp
+        src/algorithms/OfflinePlanner.hpp
+        src/algorithms/OnlinePlanner.hpp
         src/domains/GridWorld.hpp
         src/utils/PriorityQueue.hpp
         src/utils/Hasher.hpp
@@ -22,7 +25,7 @@ set(SOURCE_FILES
         src/experiment/Result.hpp
         src/experiment/ConfigurationExecutor.hpp
         src/MetronomeException.hpp src/utils/Visualizer.hpp
-        src/algorithms/OfflinePlanner.hpp src/algorithms/OnlinePlanner.hpp src/utils/PointTuple.hpp)
+        src/utils/PointTuple.hpp)
 
 set(TEST_FILES
         test/test.cpp
