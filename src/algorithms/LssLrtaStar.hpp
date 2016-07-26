@@ -2,12 +2,14 @@
 #define METRONOME_LSSLRTASTAR_HPP
 #include <fcntl.h>
 #include <boost/pool/object_pool.hpp>
-#include <experiment/termination/TimeTerminationChecker.hpp>
 #include <unordered_map>
-#include <utils/Hasher.hpp>
-#include <utils/PriorityQueue.hpp>
 #include <vector>
+#include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
+#include "experiment/Configuration.hpp"
+#include "experiment/termination/TimeTerminationChecker.hpp"
+#include "utils/Hasher.hpp"
+#include "utils/PriorityQueue.hpp"
 #define BOOST_POOL_NO_MT
 
 namespace metronome {
@@ -48,7 +50,6 @@ public:
         auto bestNode = explore(startNode, terminationChecker);
 
         return extractPath(bestNode, startNode);
-        // TODO return best node and extract plan
     }
 
 private:
@@ -66,12 +67,27 @@ private:
                   iteration{iteration} {
         }
 
-        unsigned long hash() {
+        Cost f() const {
+            return g + h;
+        }
+
+        unsigned long hash() const {
             return state->hash();
         }
 
         bool operator==(const Node& node) const {
             return state == node.state;
+        }
+
+        std::string toString() const {
+            std::ostringstream stream;
+            stream << "s: " << state << " g: " << g << " h: " << h << " a: " << action << " p: ";
+            if (parent == nullptr) {
+                stream << "None";
+            } else {
+                stream << parent->state;
+            }
+            return stream.str();
         }
 
         /** Index used by the priority queue */
@@ -109,7 +125,7 @@ private:
         ++iterationCounter;
 
         // Reorder the open list based on the heuristic values
-        openList.reorder(hValueComparator);
+        openList.reorder(hComparator);
 
         while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
             auto currentNode = popOpenList();
@@ -147,7 +163,7 @@ private:
     Node* explore(Node* startNode, TimeTerminationChecker terminationChecker) {
         ++iterationCounter;
         clearOpenList();
-        openList.reorder(fValueComparator);
+        openList.reorder(fComparator);
 
         Node* currentNode = startNode;
 
@@ -159,23 +175,29 @@ private:
             expandNode(currentNode);
         }
 
-        return currentNode;
+        return currentNode; // todo this might be one step behind the best
     }
 
     void expandNode(Node* sourceNode) {
         Planner::incrementExpandedNodeCount();
+        //        LOG_EVERY_N(10000, INFO) << "10000 expanded openList: " << openList.getSize() ;
 
         auto currentGValue = sourceNode->g;
         for (auto successor : domain.successors(sourceNode->state)) {
             auto successorState = successor.state;
 
             Node*& successorNode = nodes[successorState];
+            //            LOG_EVERY_N(10000, INFO) << "1M successor";
 
             if (successorNode == nullptr) {
                 Planner::incrementGeneratedNodeCount();
 
-                const Node tempSuccessorNode(
-                        sourceNode, successor.state, successor.action, successor.actionCost, domain.COST_MAX, true);
+                const Node tempSuccessorNode(sourceNode,
+                        successor.state,
+                        successor.action,
+                        domain.COST_MAX,
+                        domain.heuristic(successor.state),
+                        true);
 
                 successorNode = nodePool.construct(std::move(tempSuccessorNode));
             }
@@ -193,7 +215,7 @@ private:
             successorNode->predecessors.emplace_back(sourceNode, successor.action, successor.actionCost);
 
             // Skip if we got back to the parent
-            if (successorState == sourceNode->parent->state) {
+            if (sourceNode->parent != nullptr && successorState == sourceNode->parent->state) {
                 continue;
             }
 
@@ -220,6 +242,10 @@ private:
 
     Node* popOpenList() {
         // TODO check if open is empty end throw goal not reachable if yes
+        if (openList.isEmpty()) {
+            throw MetronomeException("Open list was empty.");
+        }
+
         Node* node = openList.pop();
         node->open = false;
         return node;
@@ -232,6 +258,7 @@ private:
 
     std::vector<ActionBundle> extractPath(const Node* targetNode, const Node* sourceNode) const {
         if (targetNode == sourceNode) {
+            //            LOG(INFO) << "We didn't move:" << sourceNode->toString();
             return std::vector<ActionBundle>();
         }
 
@@ -240,7 +267,7 @@ private:
 
         while (currentNode != sourceNode) {
             // The g difference of the child and the parent gives the action cost from the parent
-//            actionBundles.emplace_back(currentNode->action, currentNode->parent->g - currentNode->g);
+            actionBundles.emplace_back(currentNode->action, currentNode->parent->g - currentNode->g);
             currentNode = currentNode->parent;
         }
 
@@ -248,13 +275,10 @@ private:
         return actionBundles;
     }
 
-    static int fValueComparator(const Node& lhs, const Node& rhs) {
-        Cost lhsF = lhs.g + lhs.h;
-        Cost rhsF = rhs.g + rhs.h;
-
-        if (lhsF < rhsF)
+    static int fComparator(const Node& lhs, const Node& rhs) {
+        if (lhs.f() < rhs.f())
             return -1;
-        if (lhsF > rhsF)
+        if (rhs.f() > rhs.f())
             return 1;
         if (lhs.g > rhs.g)
             return -1;
@@ -263,7 +287,7 @@ private:
         return 0;
     }
 
-    static int hValueComparator(const Node& lhs, const Node& rhs) {
+    static int hComparator(const Node& lhs, const Node& rhs) {
         if (lhs.h < rhs.h)
             return -1;
         if (lhs.h > rhs.h)
@@ -272,7 +296,7 @@ private:
     }
 
     const Domain& domain;
-    PriorityQueue<Node> openList{10000000, fValueComparator};
+    PriorityQueue<Node> openList{10000000, fComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
     boost::object_pool<Node> nodePool{100000000, 100000000};
     unsigned int iterationCounter{0};

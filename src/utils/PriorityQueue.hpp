@@ -108,7 +108,7 @@ public:
     }
 
     bool isNotEmpty() const {
-        return size == 0;
+        return size != 0;
     }
 
 private:

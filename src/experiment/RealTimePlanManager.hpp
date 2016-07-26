@@ -29,6 +29,8 @@ public:
 
                 auto actionBundles{planner.selectActions(currentState, terminationChecker)};
 
+                LOG_N_TIMES(10, INFO) << "Actions to take: " << actionBundles.size();
+
                 timeBound = 0;
                 for (auto& actionBundle : actionBundles) {
                     currentState = domain.transition(currentState, actionBundle.action);
@@ -41,6 +43,8 @@ public:
             // Increase the total planning time after each planning iteration
             planningTime += planningIterationTime;
         }
+
+        LOG(INFO) << "Planning: Done";
 
         auto pathLength = actions.size();
 
