@@ -209,9 +209,9 @@ public:
         unsigned int actions[] = {1, 2, 3, 4, 5};
 
         for (auto a : actions) {
-            State newState = this->transition(state, Action(a));
-            for (auto it = obstaclesLocations.begin(); it != obstaclesLocations.end(); ++it) {
-                if (*it == newState) {
+            State newState = transition(state, Action(a));
+            for (auto obstacleIndex : obstacleIndices) {
+                if (obstacleIndex.x == newState.getX() && obstacleIndex.y == newState.getY()) {
                     successors.push_back(SuccessorBundle<Vehicle>{newState, a, deadCost});
                 } else {
                     successors.push_back(SuccessorBundle<Vehicle>{newState, a, actionDuration});
