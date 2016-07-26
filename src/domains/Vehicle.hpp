@@ -263,12 +263,16 @@ private:
                 State newState = State(curState->getX() + (modX * -1), curState->getY() + (modY * -1));
                 curState = &newState;
                 generatedStates[obstacleIndex.x][obstacleIndex.y] = curState;
+                obstacleIndex.x = curState->getX() + (modX * -1);
+                obstacleIndex.y = curState->getY() + (modY * -1);
                 // need to update the new obstacleIndex don't know how
             } else { // otherwise just move to the new location
                 obstacles[curState->getX() + modX][curState->getY() + modY] = true;
                 State newState = State(curState->getX() + modX, curState->getY() + modY);
                 curState = &newState;
                 generatedStates[obstacleIndex.x][obstacleIndex.y] = curState;
+                obstacleIndex.x = curState->getX() + modX;
+                obstacleIndex.y = curState->getY() + modY;
                 // need to update the new obstacleIndex don't know how
             }
         }
