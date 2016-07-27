@@ -1,4 +1,4 @@
-#include <domains/Vehicle.hpp>
+#include <domains/Traffic.hpp>
 #include "catch.hpp"
 #include "easylogging++.h"
 #include "experiment/ConfigurationExecutor.hpp"
@@ -16,15 +16,15 @@ const char* json = "{\"timeLimit\" : 150000000000,\n"
                    "\"algorithmName\" : \"A_STAR\"}";
 
 const std::string resourceDir = "/home/aifs2/doylew/Public/metronome/resources";
-metronome::Vehicle testGrid =
-        metronome::ConfigurationExecutor::extractDomain<metronome::Vehicle>(metronome::Configuration(json),
+metronome::Traffic testGrid =
+        metronome::ConfigurationExecutor::extractDomain<metronome::Traffic>(metronome::Configuration(json),
                 resourceDir);
-TEST_CASE("Vehicle basic creation test", "[Vehicle]") {
-    metronome::Vehicle vehicle = testGrid;
-    REQUIRE(vehicle.getStartLocation() == metronome::Vehicle::State(6, 0));
+TEST_CASE("Traffic basic creation test", "[Traffic]") {
+    metronome::Traffic traffic = testGrid;
+    REQUIRE(traffic.getStartLocation() == metronome::Traffic::State(6, 0));
 }
-TEST_CASE("Vehicle object movements test", "[Vehicle]") {
-        metronome::Vehicle vehicle = testGrid;
+TEST_CASE("Traffic object movements test", "[Traffic]") {
+        metronome::Traffic traffic = testGrid;
 
 
 }

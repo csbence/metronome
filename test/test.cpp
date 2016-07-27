@@ -8,7 +8,7 @@
 #include "experiment/TimeTerminationCheckerTest.hpp"
 //#include "utils/PriorityQueueTest.hpp"
 #include "domains/GridWorldTest.hpp"
-//#include "domains/VehicleTest.hpp"
+//#include "domains/TrafficTest.hpp"
 INITIALIZE_EASYLOGGINGPP
 
 TEST_CASE("Main test", "[main]") {

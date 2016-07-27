@@ -4,13 +4,13 @@ Real time search library implemented in C++
 
 # features
 
-Search domains including VaccumWorld, Vehicle, TestDomain 
+Search domains including VaccumWorld, Traffic, TestDomain
 
 Algorithm set that makes use of real time search paradigms 
 
 # todo
 
-Finish VacuumWorld and Vehicle representation
+Finish VacuumWorld and Traffic representation
 
 Implement real time A* and its extentions (LSS-LRTA*)
 

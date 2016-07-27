@@ -135,7 +135,7 @@ public:
         }
 
         if (!tempStarState.is_initialized() || !tempGoalState.is_initialized()) {
-            throw MetronomeException("Vehicle unknown start or goal location. Start or goal location is not defined.");
+            throw MetronomeException("Traffic unknown start or goal location. Start or goal location is not defined.");
         }
 
         startLocation = tempStarState.get();
@@ -207,6 +207,7 @@ public:
                 std::max(goalLocation.getX(), state.getX()) - std::min(goalLocation.getX(), state.getX());
         unsigned int totalDistance = verticalDistance + horizontalDistance;
         Cost manhattanDistance = static_cast<Cost>(totalDistance);
+        return manhattanDistance;
     }
 
     Cost heuristic(const State& state) const { return distance(state) * actionDuration; }

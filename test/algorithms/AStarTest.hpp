@@ -1,7 +1,7 @@
 #include "algorithms/AStar.hpp"
 #include "catch.hpp"
 #include "domains/GridWorld.hpp"
-#include "domains/Vehicle.hpp"
+#include "domains/Traffic.hpp"
 #include "easylogging++.h"
 #include "experiment/Configuration.hpp"
 
@@ -57,9 +57,9 @@ TEST_CASE("AStar - GridWorld test", "[GridWorld]") {
     */
 }
 
-/*TEST_CASE("AStar - Vehicle test", "[Vehicle]") {
-    Vehicle testDomain;
-    metronome::AStar<Vehicle> aStar(testDomain);
+/*TEST_CASE("AStar - Traffic test", "[Traffic]") {
+    Traffic testDomain;
+    metronome::AStar<Traffic> aStar(testDomain);
 
     std::vector<GridWorld::Action> ret = aStar.plan(testDomain.getStartLocation());
     LOG(INFO) << "Solution: " << std::endl;

@@ -1,5 +1,5 @@
-#ifndef METRONOME_VEHICLE_HPP
-#define METRONOME_VEHICLE_HPP
+#ifndef METRONOME_TRAFFIC_HPP
+#define METRONOME_TRAFFIC_HPP
 
 #include <boost/assert.hpp>
 #include <cstdlib>
@@ -12,7 +12,7 @@
 #include "SuccessorBundle.hpp"
 
 namespace metronome {
-class Vehicle {
+class Traffic {
 public:
     typedef long long int Cost;
     static constexpr Cost COST_MAX = std::numeric_limits<Cost>::max();
@@ -101,7 +101,7 @@ public:
         }
     };
 
-    Vehicle(const Configuration& configuration, std::istream& input) {
+    Traffic(const Configuration& configuration, std::istream& input) {
         if (!configuration.hasMember(ACTION_DURATION)) {
             throw MetronomeException("No value provided.");
         }
@@ -114,12 +114,12 @@ public:
         getline(input, line);
         std::stringstream convertWidth(line);
         if (std::strtol(line.c_str(), &end, 10) == 0) {
-            throw MetronomeException("Vehicle first line must be a number.");
+            throw MetronomeException("Traffic first line must be a number.");
         }
         convertWidth >> width;
         getline(input, line);
         if (std::strtol(line.c_str(), &end, 10) == 0) {
-            throw MetronomeException("Vehicle second line must be a number.");
+            throw MetronomeException("Traffic second line must be a number.");
         }
         std::stringstream convertHeight(line);
         convertHeight >> height;
@@ -154,18 +154,18 @@ public:
                 ++currentIndex;
             }
             if (currentWidth != width) {
-                throw MetronomeException("Vehicle is not complete. Widthd doesn't match the input configuration.");
+                throw MetronomeException("Traffic is not complete. Widthd doesn't match the input configuration.");
             }
             currentWidth = 0;
             ++currentHeight;
         }
 
         if (currentHeight != height) {
-            throw MetronomeException("Vehicle is not complete. Height doesn't match input configuration.");
+            throw MetronomeException("Traffic is not complete. Height doesn't match input configuration.");
         }
 
         if (!tempStartState.is_initialized() || !tempGoalState.is_initialized()) {
-            throw MetronomeException("Vehicle unknown start or goal location. Start or goal location is not defined.");
+            throw MetronomeException("Traffic unknown start or goal location. Start or goal location is not defined.");
         }
 
         startLocation = tempStartState.get();
@@ -210,8 +210,8 @@ public:
     /*
      * this needs to be fixed....
      */
-    std::vector<SuccessorBundle<Vehicle>> successors(State state) {
-        std::vector<SuccessorBundle<Vehicle>> successors;
+    std::vector<SuccessorBundle<Traffic>> successors(State state) {
+        std::vector<SuccessorBundle<Traffic>> successors;
 
         unsigned int actions[] = {5, 4, 3, 2, 1};
 
@@ -219,9 +219,9 @@ public:
             State newState = transition(state, Action(a));
             for (auto obstacleIndex : obstacleIndices) {
                 if (obstacleIndex.x == newState.getX() && obstacleIndex.y == newState.getY()) {
-                    successors.push_back(SuccessorBundle<Vehicle>{newState, a, deadCost});
+                    successors.push_back(SuccessorBundle<Traffic>{newState, a, deadCost});
                 } else {
-                    successors.push_back(SuccessorBundle<Vehicle>{newState, a, actionDuration});
+                    successors.push_back(SuccessorBundle<Traffic>{newState, a, actionDuration});
                 }
             }
         }
@@ -316,4 +316,4 @@ private:
     static std::vector<std::vector<State*>> generatedStates;
 };
 }
-#endif // METRONOME_VEHICLE_HPP
+#endif // METRONOME_TRAFFIC_HPP
