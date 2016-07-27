@@ -2,6 +2,7 @@
 #define METRONOME_FHAT_HPP
 #include <fcntl.h>
 #include <boost/pool/object_pool.hpp>
+#include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
 #include <vector>
 #include "MetronomeException.hpp"
@@ -42,7 +43,7 @@ public:
         }
 
         const Node localStartNode =
-                Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true);
+                Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true, 0, 0, 0);
 
         Planner::incrementGeneratedNodeCount();
         auto startNode = nodePool.construct(localStartNode);
@@ -63,7 +64,7 @@ private:
                 Cost g,
                 Cost h,
                 bool open,
-                Cost hCorrected,
+                Cost hHat,
                 Cost distance,
                 Cost distanceError,
                 unsigned int iteration = 0)
@@ -73,27 +74,18 @@ private:
                   g{g},
                   h{h},
                   open{open},
-                  hHat{hCorrected},
+                  fHat{fHat},
                   distance{distance},
                   distanceError{distanceError},
-                  iteration{iteration} {
-        }
+                  iteration{iteration} {}
 
-        Cost f() const {
-            return g + h;
-        }
+        Cost f() const { return g + h; }
 
-        Cost fHat() const {
-            return g + hHat;
-        }
+        Cost gHat() const { return g + fHat; }
 
-        unsigned long hash() const {
-            return state->hash();
-        }
+        unsigned long hash() const { return state->hash(); }
 
-        bool operator==(const Node& node) const {
-            return state == node.state;
-        }
+        bool operator==(const Node& node) const { return state == node.state; }
 
         std::string toString() const {
             std::ostringstream stream;
@@ -124,7 +116,7 @@ private:
         // FHat
 
         /** Corrected heuristic cost of the node */
-        Cost hHat;
+        Cost fHat;
         Cost distance;
         Cost distanceError;
 
@@ -137,8 +129,7 @@ private:
     class Edge {
     public:
         Edge(Node* predecessor, Action action, Cost actionCost)
-                : predecessor{predecessor}, action{action}, actionCost{actionCost} {
-        }
+                : predecessor{predecessor}, action{action}, actionCost{actionCost} {}
 
         Node* predecessor;
         const Action action;
@@ -149,7 +140,7 @@ private:
         ++iterationCounter;
 
         // Reorder the open list based on the heuristic values
-        openList.reorder(hHatComparator);
+        openList.reorder(hComparator);
 
         while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
             auto currentNode = popOpenList();
@@ -174,6 +165,9 @@ private:
                     assert(predecessorNode->iteration == iterationCounter - 1);
                     predecessorNode->iteration = iterationCounter;
 
+                    predecessorNode->distanceError = currentNode->distanceError;
+                    predecessorNode->distance = currentNode->distance + 1;
+
                     addToOpenList(*predecessorNode);
                 } else if (predecessorNode->h > currentHeuristicValue + predecessor.actionCost) {
                     // This node was visited in this learning phase, but the current path is better then the previous
@@ -194,39 +188,33 @@ private:
         nodes[startNode->state] = startNode;
         addToOpenList(*startNode);
 
+        nextHeuristicError = 0;
+        nextDistanceError = 0;
+
         while (!terminationChecker.reachedTermination() && !domain.isGoal(currentNode->state)) {
             currentNode = popOpenList();
             expandNode(currentNode);
         }
+
+        distanceError = nextDistanceError;
+        heuristicError = nextHeuristicError;
 
         return currentNode; // todo this might be one step behind the best
     }
 
     void expandNode(Node* sourceNode) {
         Planner::incrementExpandedNodeCount();
-        //        LOG_EVERY_N(10000, INFO) << "10000 expanded openList: " << openList.getSize() ;
+
+        Node* bestChildNode{nullptr};
 
         auto currentGValue = sourceNode->g;
         for (auto successor : domain.successors(sourceNode->state)) {
             auto successorState = successor.state;
 
             Node*& successorNode = nodes[successorState];
-            //            LOG_EVERY_N(10000, INFO) << "1M successor";
 
             if (successorNode == nullptr) {
-                Planner::incrementGeneratedNodeCount();
-
-                auto distance = domain.distance(successorState);
-
-
-                const Node tempSuccessorNode(sourceNode,
-                        successorState,
-                        successor.action,
-                        domain.COST_MAX,
-                        domain.heuristic(successor.state),
-                        true);
-
-                successorNode = nodePool.construct(std::move(tempSuccessorNode));
+                successorNode = createNode(sourceNode, successor);
             }
 
             // If the node is outdated it should be updated.
@@ -253,13 +241,55 @@ private:
                 successorNode->parent = sourceNode;
                 successorNode->action = successor.action;
 
+                double currentDistanceEstimate =
+                        successorNode->distanceError / (1.0 - distanceError); // Dionne 2011 (3.8)
+                successorNode->fHat = successorNode->g + successorNode->h + heuristicError * currentDistanceEstimate;
+
                 if (!successorNode->open) {
                     addToOpenList(*successorNode);
                 } else {
                     openList.update(*successorNode);
                 }
             }
+
+            if (bestChildNode == nullptr || bestChildNode->f() > successorNode->f()) {
+                bestChildNode = successorNode;
+            }
         }
+
+        if (bestChildNode != nullptr) {
+            // Local error values (min 0.0)
+            double zero = 0.0;
+            double localHeuristicError = bestChildNode->f() - sourceNode->f();
+            double localDistanceError = bestChildNode->distance - sourceNode->distance + 1;
+
+            localHeuristicError = (localHeuristicError < 0.0) ? 0.0 : localHeuristicError;
+            localDistanceError = (localDistanceError < 0.0) ? 0.0 : localDistanceError;
+
+            // The next error values are the weighted average of the local error and the previous error
+            nextHeuristicError += (localHeuristicError - nextHeuristicError) / getExpandedNodeCount();
+            nextDistanceError += (localDistanceError - nextDistanceError) / getExpandedNodeCount();
+        }
+    }
+
+    Node* createNode(Node* sourceNode, SuccessorBundle<Domain> successor) {
+        incrementGeneratedNodeCount();
+
+        auto successorState = successor.state;
+        auto distance = domain.distance(successorState);
+        auto heuristic = domain.heuristic(successorState);
+
+        const Node tempSuccessorNode(sourceNode,
+                successorState,
+                successor.action,
+                domain.COST_MAX,
+                heuristic,
+                true,
+                distance * heuristicError + heuristic,
+                distance,
+                distance);
+
+        return nodePool.construct(std::move(tempSuccessorNode));
     }
 
     void clearOpenList() {
@@ -314,10 +344,10 @@ private:
         return 0;
     }
 
-    static int hHatComparator(const Node& lhs, const Node& rhs) {
-        if (lhs.hHat < rhs.hHat)
+    static int hComparator(const Node& lhs, const Node& rhs) {
+        if (lhs.h < rhs.h)
             return -1;
-        if (lhs.hHat > rhs.hHat)
+        if (lhs.h > rhs.h)
             return 1;
         return 0;
     }
@@ -328,11 +358,11 @@ private:
     boost::object_pool<Node> nodePool{100000000, 100000000};
     unsigned int iterationCounter{0};
 
-    Cost heuristicError{0};
-    Cost distanceError{0};
+    double heuristicError{0};
+    double distanceError{0};
 
-    Cost nextHeuristicError{0};
-    Cost nextDistanceError{0};
+    double nextHeuristicError{0};
+    double nextDistanceError{0};
 };
 }
 
