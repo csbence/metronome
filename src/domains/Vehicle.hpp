@@ -19,10 +19,8 @@ public:
 
     class Action {
     public:
-        Action() : value(0) {
-        }
-        Action(unsigned int actionDuration) : value(actionDuration) {
-        }
+        Action() : value(0) {}
+        Action(unsigned int actionDuration) : value(actionDuration) {}
         constexpr char toChar() const {
             if (value == 1) {
                 return 'N';
@@ -32,6 +30,8 @@ public:
                 return 'S';
             } else if (value == 4) {
                 return 'W';
+            } else if (value == 5) {
+                return '0';
             } else {
                 return '~';
             }
@@ -48,9 +48,8 @@ public:
 
     class State {
     public:
-        State() : x(0), y(0), xVelocity(0), yVelocity(0), index(x + y) {
-        }
-        State(unsigned int x, unsigned int y) : x(x), y(y) {
+        State() : x(0), y(0), xVelocity(0), yVelocity(0), index(x + y) {}
+        State(const unsigned int x, const unsigned int y) : x(x), y(y) {
             if (randomSeedFlag) {
                 std::srand(randomSeed);
             } else {
@@ -73,21 +72,11 @@ public:
             return *this;
         }
 
-        unsigned int getX() const {
-            return x;
-        }
-        unsigned int getY() const {
-            return y;
-        }
-        int getXVelocity() const {
-            return xVelocity;
-        }
-        int getYVelocity() const {
-            return yVelocity;
-        }
-        std::size_t hash() const {
-            return x ^ y << 16 ^ y >> 16;
-        }
+        unsigned int getX() const { return x; }
+        unsigned int getY() const { return y; }
+        int getXVelocity() const { return xVelocity; }
+        int getYVelocity() const { return yVelocity; }
+        std::size_t hash() const { return x ^ y << 16 ^ y >> 16; }
         bool operator=(const State& state) const {
             return x == state.x && y == state.y && xVelocity == state.xVelocity && yVelocity == state.yVelocity;
         }
@@ -182,15 +171,68 @@ public:
         startLocation = tempStartState.get();
         startLocation = tempGoalState.get();
     }
+    const State transition(const State& state, const Action& action) {
+        moveObstacles();
 
+        if (action.toChar() == 'N') {
+            State newState = State(state.getX(), state.getY() - 1);
+            if (isLegalLocation(newState)) {
+                return newState;
+            }
+        } else if (action.toChar() == 'E') {
+            State newState = State(state.getX() + 1, state.getY());
+            if (isLegalLocation(newState)) {
+                return newState;
+            }
+        } else if (action.toChar() == 'S') {
+            State newState = State(state.getX(), state.getY() + 1);
+            if (isLegalLocation(newState)) {
+                return newState;
+            }
+        } else if (action.toChar() == 'W') {
+            State newState = State(state.getX() - 1, state.getY());
+            if (isLegalLocation(newState)) {
+                return newState;
+            }
+        } else if (action.toChar() == '0' && bunkers[state.getX()][state.getY()]) {
+            State newState = State(state.getX(), state.getY());
+            if (isLegalLocation(newState)) {
+                return newState;
+            }
+        }
+
+        return state;
+    }
+    const bool isObstacle(const State& location) const { return obstacles[location.getX()][location.getY()]; }
+    const bool isLegalLocation(const State& location) const {
+        return location.getX() < width && location.getY() < height && !isObstacle(location);
+    }
+    /*
+     * this needs to be fixed....
+     */
+    std::vector<SuccessorBundle<Vehicle>> successors(State state) {
+        std::vector<SuccessorBundle<Vehicle>> successors;
+
+        unsigned int actions[] = {5, 4, 3, 2, 1};
+
+        for (auto a : actions) {
+            State newState = transition(state, Action(a));
+            for (auto obstacleIndex : obstacleIndices) {
+                if (obstacleIndex.x == newState.getX() && obstacleIndex.y == newState.getY()) {
+                    successors.push_back(SuccessorBundle<Vehicle>{newState, a, deadCost});
+                } else {
+                    successors.push_back(SuccessorBundle<Vehicle>{newState, a, actionDuration});
+                }
+            }
+        }
+
+        return successors;
+    }
     //    const bool addDyanmicObject(const State& toAdd) {
     //        return this->addObstacle(toAdd);
     //    }
     //
-    //    const State transition(const State& state, const Action& action) {
-    //        moveObstacles();
-    //        return this->GridWorld::transition(state, action);
-    //    }
+    //
     //
     //    const State getStartLocation() {
     //        return GridWorld::getStartState();
@@ -207,31 +249,11 @@ public:
     //    const bool isStart(const State& state) {
     //        return GridWorld::isStart(state);
     //    }
-    //
-    //    std::vector<SuccessorBundle<Vehicle>> successors(State state) {
-    //        std::vector<SuccessorBundle<Vehicle>> successors;
-    //
-    //        unsigned int actions[] = {1, 2, 3, 4, 5};
-    //
-    //        for (auto a : actions) {
-    //            State newState = this->transition(state, Action(a));
-    //            for (auto it = obstaclesLocations.begin(); it != obstaclesLocations.end(); ++it) {
-    //                if (*it == newState) {
-    //                    successors.push_back(SuccessorBundle<Vehicle>{newState, a, this->deadCost});
-    //                } else {
-    //                    successors.push_back(SuccessorBundle<Vehicle>{newState, a, this->initialCost});
-    //                }
-    //            }
-    //        }
-    //
-    //        return successors;
-    //    }
-    //
 private:
     void moveObstacles() {
         for (auto obstacleIndex : obstacleIndices) {
-            int cur = 0;
             auto curState = generatedStates[obstacleIndex.x][obstacleIndex.y];
+            obstacles[obstacleIndex.x][obstacleIndex.y] = false;
             int modX = curState->getXVelocity();
             int modY = curState->getYVelocity();
 
@@ -241,16 +263,44 @@ private:
             if (obstacleIndex.y + modY > this->height || obstacleIndex.y + modY < 0) {
                 modY *= -1; // hit the wall of the grid bounce off
             }
-
             auto inObstacle = bunkers[obstacleIndex.x + modX][obstacleIndex.y + modY];
 
-            if (!inObstacle) {
-                curState = &State(curState->getX() + (modX * -1), curState->getY() + (modY * -1));
-            } else {
-                curState = &State(curState->getX() + modX, curState->getY() + modY);
+            if (!inObstacle) { // if it is hitting an obstacle bounce
+                obstacles[curState->getX() + (modX * -1)][curState->getY() + (modY * -1)] = true;
+                State newState = State(curState->getX() + (modX * -1), curState->getY() + (modY * -1));
+                curState = &newState;
+                generatedStates[obstacleIndex.x][obstacleIndex.y] = curState;
+                obstacleIndex.x = curState->getX() + (modX * -1);
+                obstacleIndex.y = curState->getY() + (modY * -1);
+                // need to update the new obstacleIndex don't know how
+            } else { // otherwise just move to the new location
+                obstacles[curState->getX() + modX][curState->getY() + modY] = true;
+                State newState = State(curState->getX() + modX, curState->getY() + modY);
+                curState = &newState;
+                generatedStates[obstacleIndex.x][obstacleIndex.y] = curState;
+                obstacleIndex.x = curState->getX() + modX;
+                obstacleIndex.y = curState->getY() + modY;
+                // need to update the new obstacleIndex don't know how
             }
         }
     }
+
+    /*
+     * randomSeedFlag <- notifies the ctor if we are using internal seed or user-defined
+     * randomSeed <- the seed we use for generating the velocities of the obstacles
+     * width <- how wide the world is
+     * height <- how tall the world is
+     * obstacleIndices <- where the obstacles are using direct addressing *NOTE: vector is a container for a
+     * bunkerIndices <- where the bunkers are using direct addressing      *NOTE: dynamic array!!!!!!!!!!!!!!
+     * obstacles <- bit vector using direct addressing of the obstacles
+     * bunkers <- bit vector using direct addressing of the bunkers ** NOTE: are these redundant?***
+     * startLocation <- where the agent starts
+     * goalLocation <- where the agent needs to go
+     * deadCost <- to calculate if we are in a dead state if the cost is twice the actionDuration then we pronounce
+     * it
+     * dead
+     * generatedStates <- our cache trick to insure velocity consistency when generating states
+     */
     static bool randomSeedFlag;
     static long randomSeed;
     unsigned int width;
