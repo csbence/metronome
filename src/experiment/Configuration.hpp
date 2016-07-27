@@ -18,6 +18,8 @@ static const std::string DOMAIN_VEHICLE{"VEHICLE"};
 
 static const std::string ALGORITHM_A_STAR{"A_STAR"};
 static const std::string ALGORITHM_LSS_LRTA_STAR{"LSS_LRTA_STAR"};
+static const std::string ALGORITHM_F_HAT{"F_HAT"};
+
 class Configuration {
 public:
     Configuration() : document{} {};

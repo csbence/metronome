@@ -4,14 +4,15 @@
 #include <easylogging++.h>
 #include <rapidjson/document.h>
 #include <MetronomeException.hpp>
-#include <algorithms/AStar.hpp>
-#include <algorithms/LssLrtaStar.hpp>
-#include <domains/GridWorld.hpp>
 #include <string>
 #include "Configuration.hpp"
 #include "OfflinePlanManager.hpp"
 #include "RealTimePlanManager.hpp"
 #include "Result.hpp"
+#include "algorithms/AStar.hpp"
+#include "algorithms/FHat.hpp"
+#include "algorithms/LssLrtaStar.hpp"
+#include "domains/GridWorld.hpp"
 namespace metronome {
 
 class ConfigurationExecutor {
@@ -36,7 +37,7 @@ public:
 
     template <typename Domain>
     static Domain extractDomain(const Configuration& configuration, const std::string& resourcesDir) {
-        return getDomain<Domain>(configuration,resourcesDir);
+        return getDomain<Domain>(configuration, resourcesDir);
     }
 
 private:
@@ -60,6 +61,8 @@ private:
             return executeOfflinePlanner<Domain, AStar<Domain>>(configuration, domain);
         } else if (algorithmName == ALGORITHM_LSS_LRTA_STAR) {
             return executeRealTimePlanner<Domain, LssLrtaStar<Domain>>(configuration, domain);
+        } else if (algorithmName == ALGORITHM_F_HAT) {
+            return executeRealTimePlanner<Domain, FHat<Domain>>(configuration, domain);
         } else {
             LOG(ERROR) << "Unknown algorithms name: " << algorithmName << std::endl;
             return Result(configuration, "Unknown: algorithmName");
