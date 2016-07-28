@@ -12,6 +12,7 @@
 #include "SuccessorBundle.hpp"
 
 namespace metronome {
+
 class Traffic {
 public:
     typedef long long int Cost;
@@ -50,19 +51,19 @@ public:
     public:
         Obstacle() : x(0), y(0), xVelocity(0), yVelocity(0) {}
         Obstacle(const unsigned x, const unsigned y) : x(x), y(y) {
-            if (randomSeedFlag) {
-                std::srand(randomSeed);
+            if (metronome::Traffic::randomSeedFlag) {
+                std::srand(metronome::Traffic::randomSeed);
             } else {
                 std::srand(std::time(0));
             }
 
-            if (generatedObstacles[x][y] != nullptr) {
+            if (metronome::Traffic::generatedObstacles[x][y] != nullptr) {
                 xVelocity = std::rand() % 3;
                 yVelocity = std::rand() % 3;
-                generatedObstacles[x][y] = this;
+                metronome::Traffic::generatedObstacles[x][y] = this;
             } else {
-                xVelocity = generatedObstacles[x][y]->getXVelocity();
-                yVelocity = generatedObstacles[x][y]->getYVelocity();
+                xVelocity = metronome::Traffic::generatedObstacles[x][y]->getXVelocity();
+                yVelocity = metronome::Traffic::generatedObstacles[x][y]->getYVelocity();
             }
         }
         Obstacle& operator=(Obstacle toCopy) {
@@ -74,7 +75,7 @@ public:
         std::size_t hash() const { return x ^ y << 16 ^ y >> 16; }
         int getXVelocity() const { return xVelocity; }
         int getYVelocity() const { return yVelocity; }
-        bool operator=(const Obstacle& obstacle) const {
+        bool operator==(const Obstacle& obstacle) const {
             return x == obstacle.x && y == obstacle.y && xVelocity == obstacle.xVelocity &&
                     yVelocity == obstacle.yVelocity;
         }
@@ -104,7 +105,7 @@ public:
         unsigned int getX() const { return x; }
         unsigned int getY() const { return y; }
         std::size_t hash() const { return x ^ y << 16 ^ y >> 16; }
-        bool operator=(const State& state) const { return x == state.x && y == state.y; }
+        bool operator==(const State& state) const { return x == state.x && y == state.y; }
         const std::string toString() const {
             std::string string("x: ");
             return string + std::to_string(x) + " y: " + std::to_string(y);
@@ -164,7 +165,7 @@ public:
                     tempGoalState = State(currentWidth, currentHeight);
                 } else if (*it == '#') { // store the objects
                     Obstacle newObstacle = Obstacle(currentWidth, currentHeight);
-                    generatedObstacles[currentWidth][currentHeight] = &newObstacle;
+                    metronome::Traffic::generatedObstacles[currentWidth][currentHeight] = &newObstacle;
                     obstacleIndices.push_back(metronome::Location2D(currentWidth, currentHeight));
                     obstacles[currentWidth][currentHeight] = true;
                 } else if (*it == '$') {
@@ -251,7 +252,7 @@ public:
         return successors;
     }
 
-    const State getStartLocation() { return startLocation; }
+    const State getStartLocation() const { return startLocation; }
 
     Cost heuristic(const State& state) { return heuristic(state); }
 
@@ -288,7 +289,7 @@ private:
             // update the obstacleIndices
             obstacleIndex.x = newXLocation;
             obstacleIndex.y = newYLocation;
-            // update the obstacle bit array
+            // update the obstacle bit
             obstacles[obstacleIndex.x][obstacleIndex.y] = false;
             obstacles[newXLocation][newYLocation] = true;
             // update the generatedObstacles
