@@ -59,15 +59,15 @@ int main(int argc, char** argv) {
     return 0;
 }
 void printSplashScreen() {
-    std::__1::cout << std::__1::endl;
-    std::__1::cout << " ___            ___     " << std::__1::endl;
-    std::__1::cout << "|###\\  ______  /###|   " << std::__1::endl;
-    std::__1::cout << "|#|\\#\\ \\    / /#/|#|   " << std::__1::endl;
-    std::__1::cout << "|#| \\#\\ \\  / /#/ |#|   " << std::__1::endl;
-    std::__1::cout << "|#|  \\#\\ \\/ /#/  |#|   " << std::__1::endl;
-    std::__1::cout << "|#|      /\\      |#|   " << std::__1::endl;
-    std::__1::cout << "|#|     /  \\     |#|   " << std::__1::endl;
-    std::__1::cout << "|#|    /____\\    |#|   " << std::__1::endl;
-    std::__1::cout << "---- Metronome  ----" << std::__1::endl;
-    std::__1::cout << " When time matters!" << std::__1::endl << std::__1::endl;
+    std::cout << std::endl;
+    std::cout << " ___            ___     " << std::endl;
+    std::cout << "|###\\  ______  /###|   " << std::endl;
+    std::cout << "|#|\\#\\ \\    / /#/|#|   " << std::endl;
+    std::cout << "|#| \\#\\ \\  / /#/ |#|   " << std::endl;
+    std::cout << "|#|  \\#\\ \\/ /#/  |#|   " << std::endl;
+    std::cout << "|#|      /\\      |#|   " << std::endl;
+    std::cout << "|#|     /  \\     |#|   " << std::endl;
+    std::cout << "|#|    /____\\    |#|   " << std::endl;
+    std::cout << "---- Metronome  ----" << std::endl;
+    std::cout << " When time matters!" << std::endl << std::endl;
 }
