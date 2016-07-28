@@ -64,7 +64,7 @@ private:
                 Cost g,
                 Cost h,
                 bool open,
-                Cost hHat,
+                Cost fHat,
                 Cost distance,
                 Cost distanceError,
                 unsigned int iteration = 0)
@@ -267,13 +267,13 @@ private:
             localDistanceError = (localDistanceError < 0.0) ? 0.0 : localDistanceError;
 
             // The next error values are the weighted average of the local error and the previous error
-            nextHeuristicError += (localHeuristicError - nextHeuristicError) / getExpandedNodeCount();
-            nextDistanceError += (localDistanceError - nextDistanceError) / getExpandedNodeCount();
+            nextHeuristicError += (localHeuristicError - nextHeuristicError) / Planner::getExpandedNodeCount();
+            nextDistanceError += (localDistanceError - nextDistanceError) / Planner::getExpandedNodeCount();
         }
     }
 
     Node* createNode(Node* sourceNode, SuccessorBundle<Domain> successor) {
-        incrementGeneratedNodeCount();
+        Planner::incrementGeneratedNodeCount();
 
         auto successorState = successor.state;
         auto distance = domain.distance(successorState);
@@ -333,9 +333,9 @@ private:
     }
 
     static int fHatComparator(const Node& lhs, const Node& rhs) {
-        if (lhs.fHat() < rhs.fHat())
+        if (lhs.fHat < rhs.fHat)
             return -1;
-        if (rhs.fHat() > rhs.fHat())
+        if (rhs.fHat > rhs.fHat)
             return 1;
         if (lhs.g > rhs.g)
             return -1;
