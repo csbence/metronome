@@ -46,27 +46,56 @@ public:
         unsigned int value;
     };
 
-    class State {
+    class Obstacle {
     public:
-        State() : x(0), y(0), xVelocity(0), yVelocity(0), index(x + y) {}
-        State(const unsigned int x, const unsigned int y) : x(x), y(y) {
+        Obstacle() : x(0), y(0), xVelocity(0), yVelocity(0) {}
+        Obstacle(const unsigned x, const unsigned y) : x(x), y(y) {
             if (randomSeedFlag) {
                 std::srand(randomSeed);
             } else {
                 std::srand(std::time(0));
             }
 
-            if (generatedStates[x][y] != nullptr) {
+            if (generatedObstacles[x][y] != nullptr) {
                 xVelocity = std::rand() % 3;
                 yVelocity = std::rand() % 3;
-                index = x + y;
-                generatedStates[x][y] = this;
+                generatedObstacles[x][y] = this;
             } else {
-                xVelocity = generatedStates[x][y]->getXVelocity();
-                yVelocity = generatedStates[x][y]->getYVelocity();
-                index = generatedStates[x][y]->index;
+                xVelocity = generatedObstacles[x][y]->getXVelocity();
+                yVelocity = generatedObstacles[x][y]->getYVelocity();
             }
         }
+        Obstacle& operator=(Obstacle toCopy) {
+            swap(*this, toCopy);
+            return *this;
+        }
+        unsigned int getX() const { return x; }
+        unsigned int getY() const { return y; }
+        std::size_t hash() const { return x ^ y << 16 ^ y >> 16; }
+        int getXVelocity() const { return xVelocity; }
+        int getYVelocity() const { return yVelocity; }
+        bool operator=(const Obstacle& obstacle) const {
+            return x == obstacle.x && y == obstacle.y && xVelocity == obstacle.xVelocity &&
+                    yVelocity == obstacle.yVelocity;
+        }
+
+    private:
+        unsigned int x;
+        unsigned int y;
+        int xVelocity;
+        int yVelocity;
+
+        friend void swap(Obstacle& first, Obstacle& second) {
+            using std::swap;
+            swap(first.x, second.x);
+            swap(first.y, second.y);
+        }
+    };
+
+    class State {
+    public:
+        State() : x(0), y(0) {}
+        State(const unsigned int x, const unsigned int y) : x(x), y(y) {}
         State& operator=(State toCopy) {
             swap(*this, toCopy);
             return *this;
@@ -74,12 +103,8 @@ public:
 
         unsigned int getX() const { return x; }
         unsigned int getY() const { return y; }
-        int getXVelocity() const { return xVelocity; }
-        int getYVelocity() const { return yVelocity; }
         std::size_t hash() const { return x ^ y << 16 ^ y >> 16; }
-        bool operator=(const State& state) const {
-            return x == state.x && y == state.y && xVelocity == state.xVelocity && yVelocity == state.yVelocity;
-        }
+        bool operator=(const State& state) const { return x == state.x && y == state.y; }
         const std::string toString() const {
             std::string string("x: ");
             return string + std::to_string(x) + " y: " + std::to_string(y);
@@ -88,16 +113,11 @@ public:
     private:
         unsigned int x;
         unsigned int y;
-        int xVelocity;
-        int yVelocity;
-        int index;
 
         friend void swap(State& first, State& second) {
             using std::swap;
             swap(first.x, second.x);
             swap(first.y, second.y);
-            swap(first.xVelocity, second.xVelocity);
-            swap(first.yVelocity, second.yVelocity);
         }
     };
 
@@ -106,6 +126,7 @@ public:
             throw MetronomeException("No value provided.");
         }
         actionDuration = configuration.getLong(ACTION_DURATION);
+        deadCost = actionDuration * 2;
         unsigned int currentHeight = 0;
         unsigned int currentWidth = 0;
         unsigned int currentIndex = 0;
@@ -142,10 +163,11 @@ public:
                 } else if (*it == '*') { // find the goal location
                     tempGoalState = State(currentWidth, currentHeight);
                 } else if (*it == '#') { // store the objects
+                    Obstacle newObstacle = Obstacle(currentWidth, currentHeight);
+                    generatedObstacles[currentWidth][currentHeight] = &newObstacle;
                     obstacleIndices.push_back(metronome::Location2D(currentWidth, currentHeight));
                     obstacles[currentWidth][currentHeight] = true;
                 } else if (*it == '$') {
-                    bunkerIndices.push_back(metronome::Location2D(currentWidth, currentHeight));
                     bunkers[currentWidth][currentHeight] = true;
                 } else {
                     // open cell!
@@ -154,7 +176,7 @@ public:
                 ++currentIndex;
             }
             if (currentWidth != width) {
-                throw MetronomeException("Traffic is not complete. Widthd doesn't match the input configuration.");
+                throw MetronomeException("Traffic is not complete. Width doesn't match the input configuration.");
             }
             currentWidth = 0;
             ++currentHeight;
@@ -228,60 +250,51 @@ public:
 
         return successors;
     }
-    //    const bool addDyanmicObject(const State& toAdd) {
-    //        return this->addObstacle(toAdd);
-    //    }
-    //
-    //
-    //
-    //    const State getStartLocation() {
-    //        return GridWorld::getStartState();
-    //    }
-    //
-    //    Cost heuristic(const State& state) {
-    //        return GridWorld::heuristic(state);
-    //    }
-    //
-    //    const bool isGoal(const State& location) {
-    //        return GridWorld::isGoal(location);
-    //    }
-    //
-    //    const bool isStart(const State& state) {
-    //        return GridWorld::isStart(state);
-    //    }
+
+    const State getStartLocation() { return startLocation; }
+
+    Cost heuristic(const State& state) { return heuristic(state); }
+
+    const bool isGoal(const State& location) {
+        return goalLocation.getX() == location.getX() && goalLocation.getY() == location.getY();
+    }
+
+    const bool isStart(const State& location) {
+        return startLocation.getX() == location.getX() && startLocation.getY() == location.getY();
+    }
+
 private:
     void moveObstacles() {
         for (auto obstacleIndex : obstacleIndices) {
-            auto curState = generatedStates[obstacleIndex.x][obstacleIndex.y];
+            Obstacle* curObstacle = generatedObstacles[obstacleIndex.x][obstacleIndex.y];
+            int xVelocity = curObstacle->getXVelocity();
+            int yVelocity = curObstacle->getYVelocity();
+
+            unsigned int newXLocation = curObstacle->getX() + xVelocity;
+            unsigned int newYLocation = curObstacle->getY() + yVelocity;
+
+            // make sure new location is on the grid otherwise bounce
+            if (newXLocation > width) {
+                newXLocation = curObstacle->getX() + (xVelocity * -1);
+            }
+            if (newYLocation > height) {
+                newYLocation = curObstacle->getY() + (yVelocity * -1);
+            }
+            // if the new location is a bunker bounce or in another obstacle
+            if (bunkers[newXLocation][newYLocation] || obstacles[newXLocation][newYLocation]) {
+                newXLocation = curObstacle->getX() + (xVelocity * -1);
+                newYLocation = curObstacle->getY() + (yVelocity * -1);
+            }
+            // update the obstacleIndices
+            obstacleIndex.x = newXLocation;
+            obstacleIndex.y = newYLocation;
+            // update the obstacle bit array
             obstacles[obstacleIndex.x][obstacleIndex.y] = false;
-            int modX = curState->getXVelocity();
-            int modY = curState->getYVelocity();
-
-            if (obstacleIndex.x + modX > this->width || obstacleIndex.x + modX < 0) {
-                modX *= -1; // hit the wall of the grid bounce off
-            }
-            if (obstacleIndex.y + modY > this->height || obstacleIndex.y + modY < 0) {
-                modY *= -1; // hit the wall of the grid bounce off
-            }
-            auto inObstacle = bunkers[obstacleIndex.x + modX][obstacleIndex.y + modY];
-
-            if (!inObstacle) { // if it is hitting an obstacle bounce
-                obstacles[curState->getX() + (modX * -1)][curState->getY() + (modY * -1)] = true;
-                State newState = State(curState->getX() + (modX * -1), curState->getY() + (modY * -1));
-                curState = &newState;
-                generatedStates[obstacleIndex.x][obstacleIndex.y] = curState;
-                obstacleIndex.x = curState->getX() + (modX * -1);
-                obstacleIndex.y = curState->getY() + (modY * -1);
-                // need to update the new obstacleIndex don't know how
-            } else { // otherwise just move to the new location
-                obstacles[curState->getX() + modX][curState->getY() + modY] = true;
-                State newState = State(curState->getX() + modX, curState->getY() + modY);
-                curState = &newState;
-                generatedStates[obstacleIndex.x][obstacleIndex.y] = curState;
-                obstacleIndex.x = curState->getX() + modX;
-                obstacleIndex.y = curState->getY() + modY;
-                // need to update the new obstacleIndex don't know how
-            }
+            obstacles[newXLocation][newYLocation] = true;
+            // update the generatedObstacles
+            generatedObstacles[obstacleIndex.x][obstacleIndex.y] = nullptr;
+            Obstacle newObstacle = Obstacle(newXLocation, newYLocation);
+            generatedObstacles[newXLocation][newYLocation] = &newObstacle;
         }
     }
 
@@ -299,21 +312,20 @@ private:
      * deadCost <- to calculate if we are in a dead state if the cost is twice the actionDuration then we pronounce
      * it
      * dead
-     * generatedStates <- our cache trick to insure velocity consistency when generating states
+     * generatedObstacles <- our cache trick to insure velocity consistency when generating obstacles
      */
     static bool randomSeedFlag;
-    static long randomSeed;
+    static unsigned int randomSeed;
     unsigned int width;
     unsigned int height;
     std::vector<metronome::Location2D> obstacleIndices;
-    std::vector<metronome::Location2D> bunkerIndices;
     std::vector<std::vector<bool>> obstacles;
     std::vector<std::vector<bool>> bunkers;
     State startLocation = State();
     State goalLocation = State();
     Cost actionDuration;
-    Cost deadCost = actionDuration * 2;
-    static std::vector<std::vector<State*>> generatedStates;
+    Cost deadCost;
+    static std::vector<std::vector<Obstacle*>> generatedObstacles;
 };
 }
 #endif // METRONOME_TRAFFIC_HPP

@@ -5,10 +5,10 @@
 #include "algorithms/AStarTest.hpp"
 #include "algorithms/LssLrtaStarTest.hpp"
 #include "easylogging++.h"
-#include "experiment/TimeTerminationCheckerTest.hpp"
+//#include "experiment/TimeTerminationCheckerTest.hpp"
 //#include "utils/PriorityQueueTest.hpp"
-#include "domains/GridWorldTest.hpp"
-//#include "domains/TrafficTest.hpp"
+//#include "domains/GridWorldTest.hpp"
+#include "domains/TrafficTest.hpp"
 INITIALIZE_EASYLOGGINGPP
 
 TEST_CASE("Main test", "[main]") {
