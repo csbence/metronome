@@ -26,22 +26,29 @@ public:
     Configuration(const Configuration&) = default;
     Configuration(Configuration&&) = default;
 
-    Configuration(rapidjson::Document document) : document{std::move(document)} {
-    }
+    Configuration(rapidjson::Document document) : document{std::move(document)} {}
 
-    Configuration(const std::string& json) : document{} {
-        document.Parse(json.c_str());
-    }
+    Configuration(const std::string& json) : document{} { document.Parse(json.c_str()); }
 
-    bool hasMember(const std::string& key) const {
-        return document.HasMember(key.c_str());
-    }
+    bool hasMember(const std::string& key) const { return document.HasMember(key.c_str()); }
 
-    std::string getString(const std::string& key) const {
+    std::string getString(const std::string& key) const { return std::string{document[key.c_str()].GetString()}; }
+
+    long long int getLong(const std::string& key) const { return document[key.c_str()].GetInt64(); }
+
+    std::string getStringOrThrow(const std::string& key) const {
+        if (!hasMember(key)) {
+            throw MetronomeException("Invalid key: " + key);
+        }
+
         return std::string{document[key.c_str()].GetString()};
     }
 
-    long long int getLong(const std::string& key) const {
+    long long int getLongOrThrow(const std::string& key) const {
+        if (!hasMember(key)) {
+            throw MetronomeException("Invalid key: " + key);
+        }
+
         return document[key.c_str()].GetInt64();
     }
 
