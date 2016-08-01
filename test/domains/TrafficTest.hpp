@@ -22,6 +22,7 @@ metronome::Traffic testGrid =
 
 TEST_CASE("Traffic basic creation test", "[Traffic]") {
     metronome::Traffic traffic = testGrid;
+        testGrid.print();
     REQUIRE(traffic.getStartLocation() == metronome::Traffic::State(6, 0));
 }
 TEST_CASE("Traffic object movements test", "[Traffic]") {

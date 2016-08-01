@@ -186,6 +186,24 @@ public:
         startLocation = tempStartState.get();
         startLocation = tempGoalState.get();
     }
+    void visualize(std::ostream& display) const {
+        for (auto i = 0; i < height; ++i) {
+            for (auto j = 0; j < width; ++j) {
+                if (startLocation.getX() == j && startLocation.getY() == i) {
+                    display << '@';
+                } else if (goalLocation.getX() == j && goalLocation.getY() == i) {
+                    display << '*';
+                } else if (isObstacle(State(j, i))) {
+                    display << '#';
+                } else {
+                    display << '_';
+                }
+            }
+            display << "\n";
+        }
+        display << "\n";
+    }
+
     void addObstacle(int x, int y) const {
         int xVelocity = 0;
         int yVelocity = 0;
