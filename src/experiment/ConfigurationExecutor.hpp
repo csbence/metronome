@@ -13,6 +13,8 @@
 #include "algorithms/FHat.hpp"
 #include "algorithms/LssLrtaStar.hpp"
 #include "domains/GridWorld.hpp"
+#include "domains/Traffic.hpp"
+
 namespace metronome {
 
 class ConfigurationExecutor {
@@ -29,6 +31,8 @@ public:
 
         if (domainName == DOMAIN_GRID_WORLD) {
             return executeDomain<GridWorld>(configuration, resourcesDir);
+        } else if (domainName == DOMAIN_TRAFFIC) {
+            return executeDomain<Traffic>(configuration, resourcesDir);
         } else {
             LOG(ERROR) << "Unknown domain name: " << domainName << std::endl;
             return Result(configuration, "Unknown: domainName");

@@ -2,6 +2,7 @@
 #define METRONOME_CONFIGURATION_HPP
 
 #include "rapidjson/document.h"
+#include "MetronomeException.hpp"
 namespace metronome {
 
 static const std::string RAW_DOMAIN{"rawDomain"};
@@ -38,7 +39,7 @@ public:
 
     std::string getStringOrThrow(const std::string& key) const {
         if (!hasMember(key)) {
-            throw MetronomeException("Invalid key: " + key);
+            throw metronome::MetronomeException("Invalid key: " + key);
         }
 
         return std::string{document[key.c_str()].GetString()};
@@ -46,7 +47,7 @@ public:
 
     long long int getLongOrThrow(const std::string& key) const {
         if (!hasMember(key)) {
-            throw MetronomeException("Invalid key: " + key);
+            throw metronome::MetronomeException("Invalid key: " + key);
         }
 
         return document[key.c_str()].GetInt64();
