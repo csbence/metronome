@@ -292,8 +292,8 @@ private:
             int xVelocity = curObstacle.getXVelocity();
             int yVelocity = curObstacle.getYVelocity();
 
-            unsigned int newXLocation = curObstacle.getX() + xVelocity;
-            unsigned int newYLocation = curObstacle.getY() + yVelocity;
+            int newXLocation = curObstacle.getX() + xVelocity;
+            int newYLocation = curObstacle.getY() + yVelocity;
 
             // make sure new location is on the grid otherwise bounce
             if (newXLocation > width) {
