@@ -49,6 +49,7 @@ public:
 
     class Obstacle {
     public:
+        Obstacle() : x(-1), y(-1), xVelocity(0), yVelocity(0) {}
         static Obstacle createObstacle(int x, int y, int xVelocity, int yVelocity) {
             return Obstacle(x, y, xVelocity, yVelocity);
         }
@@ -68,7 +69,6 @@ public:
 
     private:
         Obstacle(int x, int y, int xVelocity, int yVelocity) : x{x}, y{y}, xVelocity{xVelocity}, yVelocity{yVelocity} {}
-        Obstacle() : x(0), y(0), xVelocity(0), yVelocity(0) {}
         int x;
         int y;
         int xVelocity;
@@ -134,13 +134,17 @@ public:
         std::stringstream convertHeight(line);
         convertHeight >> height;
 
-        for (auto i = 0; i < width; ++i) {
-            for (auto j = 0; j < height; ++j) {
-                obstacles[i][j] = false;
-                bunkers[i][j] = false;
-                generatedObstacles[i][j] = Obstacle::createObstacle(-1, -1, 0, 0);
-            }
-        }
+        obstacles = std::vector<std::vector<bool>>{height, std::vector<bool>(width)};
+        bunkers = std::vector<std::vector<bool>>{height, std::vector<bool>(width)};
+        generatedObstacles = std::vector<std::vector<Obstacle>>{height, std::vector<Obstacle>(width)};
+
+//        for (auto i = 0; i < width; ++i) {
+//            for (auto j = 0; j < height; ++j) {
+//                obstacles[i][j] = false;
+//                bunkers[i][j] = false;
+//                generatedObstacles[i][j] = Obstacle::createObstacle(-1, -1, 0, 0);
+//            }
+//        }
 
         boost::optional<State> tempStartState;
         boost::optional<State> tempGoalState;
@@ -341,7 +345,7 @@ private:
     unsigned int width;
     unsigned int height;
     std::vector<metronome::Location2D> obstacleIndices;
-    std::vector<std::vector<bool>> obstacles;
+    mutable std::vector<std::vector<bool>> obstacles;
     std::vector<std::vector<bool>> bunkers;
     State startLocation = State();
     State goalLocation = State();
