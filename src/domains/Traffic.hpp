@@ -134,9 +134,9 @@ public:
         std::stringstream convertHeight(line);
         convertHeight >> height;
 
-        obstacles = std::vector<std::vector<bool>>{height, std::vector<bool>(width)};
-        bunkers = std::vector<std::vector<bool>>{height, std::vector<bool>(width)};
-        //generatedObstacles = std::vector<std::vector<Obstacle>>{height, std::vector<Obstacle>(width)};
+        obstacles = std::vector<std::vector<bool>>{width, std::vector<bool>(height)};
+        bunkers = std::vector<std::vector<bool>>{width, std::vector<bool>(height)};
+        generatedObstacles = std::vector<std::vector<Obstacle>>{width, std::vector<Obstacle>(height)};
 
 //        for (auto i = 0; i < width; ++i) {
 //            for (auto j = 0; j < height; ++j) {
@@ -157,9 +157,9 @@ public:
                 } else if (*it == '*') { // find the goal location
                     tempGoalState = State(currentWidth, currentHeight);
                 } else if (*it == '#') { // store the objects
-                    //addObstacle(currentWidth, currentHeight);
-                    //obstacleIndices.push_back(metronome::Location2D(currentWidth, currentHeight));
-                    //obstacles[currentWidth][currentHeight] = true;
+                    addObstacle(currentWidth, currentHeight);
+                    obstacleIndices.push_back(metronome::Location2D(currentWidth, currentHeight));
+                    obstacles[currentWidth][currentHeight] = true;
                 } else if (*it == '$') {
                     bunkers[currentWidth][currentHeight] = true;
                 } else {
