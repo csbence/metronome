@@ -187,6 +187,7 @@ public:
         goalLocation = tempGoalState.get();
     }
     void visualize(std::ostream& display) const {
+        display << "WORLD\n";
         for (auto i = 0; i < height; ++i) {
             for (auto j = 0; j < width; ++j) {
                 if (startLocation.getX() == j && startLocation.getY() == i) {
@@ -198,6 +199,14 @@ public:
                 } else {
                     display << '_';
                 }
+            }
+            display << "\n";
+        }
+        display << "\n";
+        display << "OBSTACLES:\n";
+        for (auto i = 0; i < height; ++i) {
+            for (auto j = 0; j < width; ++j) {
+                display << generatedObstacles[i][j];
             }
             display << "\n";
         }
@@ -378,6 +387,11 @@ std::ostream& operator<<(std::ostream& stream, const Traffic::Action& action) {
 
 std::ostream& operator<<(std::ostream& stream, const Traffic::State& state) {
     stream << "x: " << state.getX() << " y: " << state.getY();
+    return stream;
+}
+std::ostream& operator<<(std::ostream& stream, const Traffic::Obstacle& obstacle) {
+    stream << "x: " << obstacle.getX() << " y: " << obstacle.getY() << "\n";
+    stream << "xVelocity: " << obstacle.getXVelocity() << " yVelocity: " << obstacle.getXVelocity();
     return stream;
 }
 }
