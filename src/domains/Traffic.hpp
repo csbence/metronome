@@ -138,13 +138,13 @@ public:
         bunkers = std::vector<std::vector<bool>>{width, std::vector<bool>(height)};
         generatedObstacles = std::vector<std::vector<Obstacle>>{width, std::vector<Obstacle>(height)};
 
-//        for (auto i = 0; i < width; ++i) {
-//            for (auto j = 0; j < height; ++j) {
-//                obstacles[i][j] = false;
-//                bunkers[i][j] = false;
-//                generatedObstacles[i][j] = Obstacle::createObstacle(-1, -1, 0, 0);
-//            }
-//        }
+        //        for (auto i = 0; i < width; ++i) {
+        //            for (auto j = 0; j < height; ++j) {
+        //                obstacles[i][j] = false;
+        //                bunkers[i][j] = false;
+        //                generatedObstacles[i][j] = Obstacle::createObstacle(-1, -1, 0, 0);
+        //            }
+        //        }
 
         boost::optional<State> tempStartState;
         boost::optional<State> tempGoalState;
@@ -311,16 +311,15 @@ private:
                 newXLocation = curObstacle.getX() + (xVelocity * -1);
                 newYLocation = curObstacle.getY() + (yVelocity * -1);
             }
-           // update the obstacle bit
+            // update the obstacle bit
             obstacles[obstacleIndex.x][obstacleIndex.y] = false;
             obstacles[newXLocation][newYLocation] = true;
             // update the generatedObstacles
             generatedObstacles[obstacleIndex.x][obstacleIndex.y] = Obstacle::createObstacle(-1, -1, 0, 0);
-            addObstacle(newXLocation,newYLocation);
+            addObstacle(newXLocation, newYLocation);
             // update the obstacleIndices
             obstacleIndex.x = newXLocation;
             obstacleIndex.y = newYLocation;
-
         }
     }
 
@@ -353,5 +352,15 @@ private:
     Cost deadCost;
     mutable std::vector<std::vector<Obstacle>> generatedObstacles;
 };
+
+std::ostream& operator<<(std::ostream& stream, const GridWorld::Action& action) {
+    stream << "action: " << action.toChar();
+    return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const GridWorld::State& state) {
+    stream << "x: " << state.getX() << " y: " << state.getY();
+    return stream;
+}
 }
 #endif // METRONOME_TRAFFIC_HPP
