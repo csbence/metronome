@@ -353,12 +353,12 @@ private:
     mutable std::vector<std::vector<Obstacle>> generatedObstacles;
 };
 
-std::ostream& operator<<(std::ostream& stream, const GridWorld::Action& action) {
+std::ostream& operator<<(std::ostream& stream, const Traffic::Action& action) {
     stream << "action: " << action.toChar();
     return stream;
 }
 
-std::ostream& operator<<(std::ostream& stream, const GridWorld::State& state) {
+std::ostream& operator<<(std::ostream& stream, const Traffic::State& state) {
     stream << "x: " << state.getX() << " y: " << state.getY();
     return stream;
 }
