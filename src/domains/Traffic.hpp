@@ -138,7 +138,7 @@ public:
             for (auto j = 0; j < height; ++j) {
                 obstacles[i][j] = false;
                 bunkers[i][j] = false;
-                generatedObstacles[i][j] = Obstacle::createObstacle(-1,-1, 0, 0);
+                generatedObstacles[i][j] = Obstacle::createObstacle(-1, -1, 0, 0);
             }
         }
 
@@ -182,7 +182,7 @@ public:
         startLocation = tempStartState.get();
         startLocation = tempGoalState.get();
     }
-    void addObstacle(unsigned int x, unsigned int y) const {
+    void addObstacle(int x, int y) const {
         int xVelocity = 0;
         int yVelocity = 0;
 
@@ -192,7 +192,7 @@ public:
             std::srand(std::time(0));
         }
 
-        if (generatedObstacles[x][y] == Obstacle::createObstacle(-1,-1,0,0)) {
+        if (generatedObstacles[x][y] == Obstacle::createObstacle(-1, -1, 0, 0)) {
             xVelocity = std::rand() % 3;
             yVelocity = std::rand() % 3;
             Obstacle addObstacle = Obstacle::createObstacle(x, y, xVelocity, yVelocity);
@@ -307,15 +307,16 @@ private:
                 newXLocation = curObstacle.getX() + (xVelocity * -1);
                 newYLocation = curObstacle.getY() + (yVelocity * -1);
             }
-            // update the obstacleIndices
-            obstacleIndex.x = newXLocation;
-            obstacleIndex.y = newYLocation;
-            // update the obstacle bit
+           // update the obstacle bit
             obstacles[obstacleIndex.x][obstacleIndex.y] = false;
             obstacles[newXLocation][newYLocation] = true;
             // update the generatedObstacles
-            generatedObstacles[obstacleIndex.x][obstacleIndex.y] = Obstacle::createObstacle(-1,-1,0,0);
-            addObstacle(obstacleIndex.x, obstacleIndex.y);
+            generatedObstacles[obstacleIndex.x][obstacleIndex.y] = Obstacle::createObstacle(-1, -1, 0, 0);
+            addObstacle(newXLocation,newYLocation);
+            // update the obstacleIndices
+            obstacleIndex.x = newXLocation;
+            obstacleIndex.y = newYLocation;
+
         }
     }
 
