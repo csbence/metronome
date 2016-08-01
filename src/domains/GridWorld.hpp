@@ -82,11 +82,8 @@ public:
         }
     };
     /*Entry point for using this Domain*/
-    GridWorld(const Configuration& configuration, std::istream& input) {
-        if (!configuration.hasMember(ACTION_DURATION)) {
-            throw MetronomeException("No value provided.");
-        }
-        actionDuration = configuration.getLong(ACTION_DURATION);
+    GridWorld(const Configuration& configuration, std::istream& input)
+            : actionDuration(configuration.getLongOrThrow(ACTION_DURATION)) {
         obstacles = std::unordered_set<State, typename metronome::Hasher<State>>{};
         unsigned int currentHeight = 0;
         unsigned int currentWidth = 0;
@@ -267,9 +264,9 @@ private:
     unsigned int width;
     unsigned int height;
     std::unordered_set<State, typename metronome::Hasher<State>> obstacles;
-    State startLocation = State();
-    State goalLocation = State();
-    Cost actionDuration;
+    State startLocation{State()};
+    State goalLocation{State()};
+    const Cost actionDuration;
 };
 
 std::ostream& operator<<(std::ostream& stream, const GridWorld::Action& action) {
