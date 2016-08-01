@@ -184,7 +184,7 @@ public:
         }
 
         startLocation = tempStartState.get();
-        startLocation = tempGoalState.get();
+        goalLocation = tempGoalState.get();
     }
     void visualize(std::ostream& display) const {
         for (auto i = 0; i < height; ++i) {
