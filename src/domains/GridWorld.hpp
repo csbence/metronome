@@ -23,11 +23,7 @@ public:
     public:
         Action() : value{0} {}
 
-        Action(unsigned char value) : value(value) {}
-
-        Action(const Action&) = default;
-
-        Action& operator=(const Action&) = default;
+        Action(unsigned char value) : value{value} {}
 
         char toChar() const {
             if (value == 1) {
@@ -50,7 +46,7 @@ public:
         }
 
     private:
-        const unsigned char value;
+        unsigned char value;
     };
 
     class State {
