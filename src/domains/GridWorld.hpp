@@ -18,17 +18,18 @@ class GridWorld {
 public:
     typedef long long int Cost;
     static constexpr Cost COST_MAX = std::numeric_limits<Cost>::max();
-    /*
-     * State <- location of the agent as a pair
-     * Action <- value representing the action taken {N,S,E,W,V} = {0,1,2,3,4}
-     * Cost <- value for taking action from a state
-     */
+
     class Action {
     public:
-        Action() : value(0) {}
-        Action(unsigned int value) : value(value) {}
-        /*Character representation of the Action*/
-        constexpr char toChar() const {
+        Action() : value{0} {}
+
+        Action(unsigned char value) : value(value) {}
+
+        Action(const Action&) = default;
+
+        Action& operator=(const Action&) = default;
+
+        char toChar() const {
             if (value == 1) {
                 return 'N';
             } else if (value == 2) {
@@ -41,7 +42,7 @@ public:
                 return '~';
             }
         }
-        /*String representation of the Action*/
+
         const std::string toString() const {
             std::string s;
             s.push_back(toChar());
@@ -49,9 +50,9 @@ public:
         }
 
     private:
-        /*Internal cost of the Action*/
-        unsigned int value;
+        const unsigned char value;
     };
+
     class State {
     public:
         State() : x(0), y(0) {}
