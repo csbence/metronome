@@ -134,17 +134,17 @@ public:
         std::stringstream convertHeight(line);
         convertHeight >> height;
 
-        obstacles = std::vector<std::vector<bool>>{height, std::vector<bool>(width)};
-        bunkers = std::vector<std::vector<bool>>{height, std::vector<bool>(width)};
-        generatedObstacles = std::vector<std::vector<Obstacle>>{height, std::vector<Obstacle>(width)};
+        obstacles = std::vector<std::vector<bool>>{width, std::vector<bool>(height)};
+        bunkers = std::vector<std::vector<bool>>{width, std::vector<bool>(height)};
+        generatedObstacles = std::vector<std::vector<Obstacle>>{width, std::vector<Obstacle>(height)};
 
-//        for (auto i = 0; i < width; ++i) {
-//            for (auto j = 0; j < height; ++j) {
-//                obstacles[i][j] = false;
-//                bunkers[i][j] = false;
-//                generatedObstacles[i][j] = Obstacle::createObstacle(-1, -1, 0, 0);
-//            }
-//        }
+        //        for (auto i = 0; i < width; ++i) {
+        //            for (auto j = 0; j < height; ++j) {
+        //                obstacles[i][j] = false;
+        //                bunkers[i][j] = false;
+        //                generatedObstacles[i][j] = Obstacle::createObstacle(-1, -1, 0, 0);
+        //            }
+        //        }
 
         boost::optional<State> tempStartState;
         boost::optional<State> tempGoalState;
@@ -184,8 +184,35 @@ public:
         }
 
         startLocation = tempStartState.get();
-        startLocation = tempGoalState.get();
+        goalLocation = tempGoalState.get();
     }
+    void visualize(std::ostream& display) const {
+        display << "WORLD\n";
+        for (auto i = 0; i < height; ++i) {
+            for (auto j = 0; j < width; ++j) {
+                if (startLocation.getX() == j && startLocation.getY() == i) {
+                    display << '@';
+                } else if (goalLocation.getX() == j && goalLocation.getY() == i) {
+                    display << '*';
+                } else if (isObstacle(State(j, i))) {
+                    display << '#';
+                } else {
+                    display << '_';
+                }
+            }
+            display << "\n";
+        }
+        display << "\n";
+        display << "OBSTACLES:\n";
+        for (auto i = 0; i < height; ++i) {
+            for (auto j = 0; j < width; ++j) {
+                display << generatedObstacles[i][j];
+            }
+            display << "\n";
+        }
+        display << "\n";
+    }
+
     void addObstacle(int x, int y) const {
         int xVelocity = 0;
         int yVelocity = 0;
@@ -311,16 +338,15 @@ private:
                 newXLocation = curObstacle.getX() + (xVelocity * -1);
                 newYLocation = curObstacle.getY() + (yVelocity * -1);
             }
-           // update the obstacle bit
+            // update the obstacle bit
             obstacles[obstacleIndex.x][obstacleIndex.y] = false;
             obstacles[newXLocation][newYLocation] = true;
             // update the generatedObstacles
             generatedObstacles[obstacleIndex.x][obstacleIndex.y] = Obstacle::createObstacle(-1, -1, 0, 0);
-            addObstacle(newXLocation,newYLocation);
+            addObstacle(newXLocation, newYLocation);
             // update the obstacleIndices
             obstacleIndex.x = newXLocation;
             obstacleIndex.y = newYLocation;
-
         }
     }
 
@@ -353,5 +379,20 @@ private:
     Cost deadCost;
     mutable std::vector<std::vector<Obstacle>> generatedObstacles;
 };
+
+std::ostream& operator<<(std::ostream& stream, const Traffic::Action& action) {
+    stream << "action: " << action.toChar();
+    return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const Traffic::State& state) {
+    stream << "x: " << state.getX() << " y: " << state.getY();
+    return stream;
+}
+std::ostream& operator<<(std::ostream& stream, const Traffic::Obstacle& obstacle) {
+    stream << "x: " << obstacle.getX() << " y: " << obstacle.getY() << "\n";
+    stream << "xVelocity: " << obstacle.getXVelocity() << " yVelocity: " << obstacle.getXVelocity();
+    return stream;
+}
 }
 #endif // METRONOME_TRAFFIC_HPP
