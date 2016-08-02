@@ -43,7 +43,7 @@ public:
         }
 
         const Node localStartNode =
-                Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true, 0, 0, 0);
+                Node(nullptr, std::move(startState), Action(), 0, domain.heuristic(startState), true, 0, 0, 0);
 
         Planner::incrementGeneratedNodeCount();
         auto startNode = nodePool.construct(localStartNode);
@@ -335,7 +335,7 @@ private:
     static int fHatComparator(const Node& lhs, const Node& rhs) {
         if (lhs.fHat < rhs.fHat)
             return -1;
-        if (rhs.fHat > rhs.fHat)
+        if (lhs.fHat > rhs.fHat)
             return 1;
         if (lhs.g > rhs.g)
             return -1;

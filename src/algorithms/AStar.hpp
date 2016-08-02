@@ -106,7 +106,7 @@ private:
 
         std::string toString() const {
             std::ostringstream stream;
-            stream << "s: " << state << " f: " << f << " a: " << action << " p: ";
+            stream << "s: " << state << " g: " << g <<  " h: " << f - g << " f: " << f << " a: " << action << " p: ";
             if (parent == nullptr) {
                 stream << "None";
             } else {
