@@ -42,7 +42,7 @@ public:
         }
 
         const Node localStartNode =
-                Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true);
+                Node(nullptr, std::move(startState), Action(), 0, domain.heuristic(startState), true);
 
         Planner::incrementGeneratedNodeCount();
         auto startNode = nodePool.construct(localStartNode);
@@ -64,29 +64,23 @@ private:
                   g{g},
                   h{h},
                   open{open},
-                  iteration{iteration} {
-        }
+                  iteration{iteration} {}
 
-        Cost f() const {
-            return g + h;
-        }
+        Cost f() const { return g + h; }
 
-        unsigned long hash() const {
-            return state->hash();
-        }
+        unsigned long hash() const { return state->hash(); }
 
-        bool operator==(const Node& node) const {
-            return state == node.state;
-        }
+        bool operator==(const Node& node) const { return state == node.state; }
 
         std::string toString() const {
             std::ostringstream stream;
-            stream << "s: " << state << " g: " << g << " h: " << h << " a: " << action << " p: ";
+            stream << "s: " << state << " g: " << g << " h: " << h << " f: " << f() << " a: " << action << " p: ";
             if (parent == nullptr) {
                 stream << "None";
             } else {
                 stream << parent->state;
             }
+            stream << (open ? " Open" : " Not Open");
             return stream.str();
         }
 
@@ -113,8 +107,7 @@ private:
     class Edge {
     public:
         Edge(Node* predecessor, Action action, Cost actionCost)
-                : predecessor{predecessor}, action{action}, actionCost{actionCost} {
-        }
+                : predecessor{predecessor}, action{action}, actionCost{actionCost} {}
 
         Node* predecessor;
         const Action action;
@@ -278,7 +271,7 @@ private:
     static int fComparator(const Node& lhs, const Node& rhs) {
         if (lhs.f() < rhs.f())
             return -1;
-        if (rhs.f() > rhs.f())
+        if (lhs.f() > rhs.f())
             return 1;
         if (lhs.g > rhs.g)
             return -1;
