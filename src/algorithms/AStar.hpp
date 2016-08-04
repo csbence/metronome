@@ -20,7 +20,7 @@ class AStar final : public OfflinePlanner<Domain> {
     typedef typename Domain::Cost Cost;
 
 public:
-    AStar(const Domain& domain, const Configuration&) : domain(domain), openList(10000000, fValueComparator) {
+    AStar(const Domain& domain, const Configuration&) : domain(domain), openList(20000000, fValueComparator) {
         // Force the object pool to allocate memory
         State state;
         Node node = Node(nullptr, std::move(state), Action(), 0, 0);
@@ -32,6 +32,7 @@ public:
         Node localStartNode = Node(nullptr, startState, Action(), 0, heuristic);
 
         auto startNode = nodePool.construct(localStartNode);
+        Planner::incrementGeneratedNodeCount();
 
         nodes[localStartNode.state] = startNode;
 
@@ -40,12 +41,13 @@ public:
         while (!openList.isEmpty()) {
             Planner::incrementExpandedNodeCount();
             Node* currentNode = openList.pop();
+//            LOG_EVERY_N(100000, INFO) << "\nFrom: " << currentNode->toString();
 
             if (domain.isGoal(currentNode->state)) {
                 std::vector<Action> actions;
                 // Goal is reached
 
-                while (!domain.isStart(currentNode->state)) {
+                while (startState != currentNode->state) {
                     actions.push_back(currentNode->action);
                     currentNode = currentNode->parent;
                 }
@@ -54,18 +56,17 @@ public:
                 return actions;
             }
 
-            auto successors = domain.successors(currentNode->state);
-            for (auto successor : successors) {
-                //                if (successor.state == currentNode->state) {
-                //                    continue; // Skip parent TODO this might be unnecessary
-                //                }
-
-                Planner::incrementGeneratedNodeCount();
+            for (auto successor : domain.successors(currentNode->state)) {
+                if (successor.state == currentNode->state) {
+                    continue; // Skip parent TODO this might be unnecessary
+                }
 
                 auto& successorNode = nodes[successor.state];
                 auto newCost = successor.actionCost + currentNode->g;
 
                 if (successorNode == nullptr) {
+                    Planner::incrementGeneratedNodeCount();
+
                     // New state discovered
                     const Node tempSuccessorNode(currentNode,
                             successor.state,
@@ -83,10 +84,12 @@ public:
                     successorNode->g = newCost;
                     successorNode->f = newCost + domain.heuristic(successor.state);
 
-                    openList.update(*successorNode);
+                    openList.insertOrUpdate(*successorNode);
                 } else {
                     // The new path is not better than the existing
                 }
+
+//                LOG(INFO) << "\n\tSuccessor: " << successorNode->toString();
             }
         }
 
@@ -119,7 +122,7 @@ private:
             return state == node.state;
         }
 
-        mutable unsigned int index;
+        mutable unsigned int index{std::numeric_limits<unsigned int>::max()};
         Node* parent;
         const State state;
         Action action;
@@ -142,7 +145,7 @@ private:
     const Domain& domain;
     PriorityQueue<Node> openList;
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes;
-    boost::object_pool<Node> nodePool{1, 100000000};
+    boost::object_pool<Node> nodePool{1, 50000000};
 };
 }
 
