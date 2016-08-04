@@ -1,9 +1,9 @@
 {
   "timeLimit": 150000000000,
-  "domainPath": "/input/tiles/korf/4/all/3",
+  "domainPath": "/input/vacuum/dylan/uniform.vw",
   "domainInstanceName": "Manual test instance",
   "actionDuration": 6000000,
-  "domainName": "SLIDING_TILE_PUZZLE",
+  "domainName": "GRID_WORLD",
   "terminationType": "time",
-  "algorithmName": "A_STAR"
+  "algorithmName": "LSS_LRTA_STAR"
 }
