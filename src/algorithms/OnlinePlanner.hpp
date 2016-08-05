@@ -12,12 +12,7 @@ public:
     class ActionBundle final {
     public:
         ActionBundle(typename Domain::Action action, typename Domain::Cost actionDuration)
-                : action{action}, actionDuration{actionDuration} {
-        }
-
-        void swap(ActionBundle& other) {
-
-        }
+                : action{action}, actionDuration{actionDuration} {}
 
         typename Domain::Action action;
         typename Domain::Cost actionDuration;
@@ -28,9 +23,6 @@ public:
     virtual std::vector<ActionBundle> selectActions(const typename Domain::State& startState,
             const TimeTerminationChecker& terminationChecker) = 0;
 
-    void swap(ActionBundle& lhs, ActionBundle& rhs) {
-        lhs.swap(rhs);
-    }
 };
 }
 

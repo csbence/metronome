@@ -16,6 +16,7 @@ static const std::string TIME_LIMIT{"timeLimit"};
 
 static const std::string DOMAIN_GRID_WORLD{"GRID_WORLD"};
 static const std::string DOMAIN_TRAFFIC{"TRAFFIC"};
+static const std::string DOMAIN_TILES{"SLIDING_TILE_PUZZLE"};
 
 static const std::string ALGORITHM_A_STAR{"A_STAR"};
 static const std::string ALGORITHM_LSS_LRTA_STAR{"LSS_LRTA_STAR"};

@@ -13,7 +13,8 @@
 #include "algorithms/FHat.hpp"
 #include "algorithms/LssLrtaStar.hpp"
 #include "domains/GridWorld.hpp"
-#include "domains/Traffic.hpp"
+//#include "domains/Traffic.hpp"
+#include "domains/SlidingTilePuzzle.hpp"
 
 namespace metronome {
 
@@ -21,6 +22,8 @@ class ConfigurationExecutor {
 public:
     static Result executeConfiguration(const Configuration& configuration, const std::string& resourcesDir) {
         // todo validate configuration
+
+        LOG(INFO) << "Configuration started.";
 
         if (!configuration.hasMember(DOMAIN_NAME)) {
             LOG(ERROR) << "Domain name not found." << std::endl;
@@ -31,8 +34,10 @@ public:
 
         if (domainName == DOMAIN_GRID_WORLD) {
             return executeDomain<GridWorld>(configuration, resourcesDir);
-        } else if (domainName == DOMAIN_TRAFFIC) {
-            return executeDomain<Traffic>(configuration, resourcesDir);
+            //        } else if (domainName == DOMAIN_TRAFFIC) {
+            //            return executeDomain<Traffic>(configuration, resourcesDir);
+        } else if (domainName == DOMAIN_TILES) {
+            return executeDomain<SlidingTilePuzzle>(configuration, resourcesDir);
         } else {
             LOG(ERROR) << "Unknown domain name: " << domainName << std::endl;
             return Result(configuration, "Unknown: domainName");
@@ -100,6 +105,8 @@ private:
         Planner planner{domain, configuration};
 
         OfflinePlanManager<Domain, Planner> offlinePlanManager;
+
+        LOG(INFO) << "Configuration done.";
         return offlinePlanManager.plan(configuration, domain, planner);
     }
 
@@ -107,8 +114,10 @@ private:
     static Result executeRealTimePlanner(const Configuration& configuration, const Domain& domain) {
         Planner planner{domain, configuration};
 
-        RealTimePlanManager<Domain, Planner> offlinePlanManager;
-        return offlinePlanManager.plan(configuration, domain, planner);
+        RealTimePlanManager<Domain, Planner> realTimePlanManager;
+
+        LOG(INFO) << "Configuration done.";
+        return realTimePlanManager.plan(configuration, domain, planner);
     }
 };
 }
