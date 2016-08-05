@@ -25,6 +25,10 @@ public:
         State state;
         Node node = Node(nullptr, std::move(state), Action(), 0, 0);
         nodePool.destroy(nodePool.construct(node));
+
+        // Initialize hash table
+        nodes.max_load_factor(1);
+        nodes.reserve(100000000);
     }
 
     std::vector<Action> plan(const State& startState) override {
@@ -145,7 +149,7 @@ private:
     const Domain& domain;
     PriorityQueue<Node> openList;
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes;
-    boost::object_pool<Node> nodePool{1, 50000000};
+    boost::object_pool<Node> nodePool{1, 100000000};
 };
 }
 
