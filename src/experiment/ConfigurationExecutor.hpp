@@ -15,12 +15,27 @@
 #include "domains/GridWorld.hpp"
 //#include "domains/Traffic.hpp"
 #include "domains/SlidingTilePuzzle.hpp"
+#include "utils/File.hpp"
 
 namespace metronome {
 
 class ConfigurationExecutor {
 public:
     static Result executeConfiguration(const Configuration& configuration, const std::string& resourcesDir) {
+        try{
+            return unsafeExecuteConfiguration(configuration, resourcesDir);
+        } catch(MetronomeException exception){
+            return Result(configuration, exception.what());
+        }
+    }
+
+    template <typename Domain>
+    static Domain extractDomain(const Configuration& configuration, const std::string& resourcesDir) {
+        return getDomain<Domain>(configuration, resourcesDir);
+    }
+
+private:
+    static Result unsafeExecuteConfiguration(const Configuration& configuration, const std::string& resourcesDir) {
         // todo validate configuration
 
         LOG(INFO) << "Configuration started.";
@@ -44,12 +59,6 @@ public:
         }
     }
 
-    template <typename Domain>
-    static Domain extractDomain(const Configuration& configuration, const std::string& resourcesDir) {
-        return getDomain<Domain>(configuration, resourcesDir);
-    }
-
-private:
     template <typename Domain>
     static Result executeDomain(const Configuration& configuration, const std::string& resourcesDir) {
         if (!(configuration.hasMember(RAW_DOMAIN) || configuration.hasMember(DOMAIN_PATH))) {
@@ -88,8 +97,12 @@ private:
         } else if (configuration.hasMember(DOMAIN_PATH)) {
             std::string domainPath{resourcesDir + configuration.getString(DOMAIN_PATH)};
 
-            std::fstream fileInputStream;
+            // Check if file exists
+            if (!fileExists(domainPath)) {
+                throw MetronomeException{"Invalid domain file path: " + domainPath};
+            }
 
+            std::fstream fileInputStream;
             fileInputStream.open(domainPath, std::fstream::in);
             Domain domain{configuration, fileInputStream};
             fileInputStream.close();
