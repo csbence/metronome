@@ -50,7 +50,8 @@ public:
 
     class Obstacle {
     public:
-        Obstacle(int x, int y, int xVelocity, int yVelocity, int index) : x{x}, y{y}, xVelocity{xVelocity}, yVelocity{yVelocity}, index{index} {}
+        Obstacle(int x, int y, int xVelocity, int yVelocity, int index)
+                : x{x}, y{y}, xVelocity{xVelocity}, yVelocity{yVelocity}, index{index} {}
         Obstacle() : x{-1}, y{-1}, xVelocity{0}, yVelocity{0}, index{0} {}
         //        static Obstacle createObstacle(int x, int y, int xVelocity, int yVelocity) {
         //            return Obstacle(x, y, xVelocity, yVelocity);
@@ -60,20 +61,28 @@ public:
             return *this;
         }
         int getX() const { return x; }
+
         int getY() const { return y; }
+
         std::size_t hash() const { return static_cast<unsigned int>(x ^ y << 16 ^ y >> 16); }
+
         int getXVelocity() const { return xVelocity; }
+
         int getYVelocity() const { return yVelocity; }
+
         bool operator==(const Obstacle& obstacle) const {
             return x == obstacle.x && y == obstacle.y && xVelocity == obstacle.xVelocity &&
                     yVelocity == obstacle.yVelocity;
         }
+
         bool isEmpty() { return x == -1 && y == -1; }
+
         friend std::ostream& operator<<(std::ostream& stream, const Traffic::Obstacle& obstacle) {
             stream << "pos: (" << obstacle.getX() << " , " << obstacle.getY() << ")\t|";
             stream << "\tvel: (" << obstacle.getXVelocity() << " , " << obstacle.getYVelocity() << ")";
             return stream;
         }
+
         int getIndex() { return index; }
 
     private:
@@ -121,7 +130,8 @@ public:
         }
     };
 
-    Traffic(const Configuration& configuration, std::istream& input) {
+    Traffic(const Configuration& configuration, std::istream& input)
+            : actionDuration(configuration.getLongOrThrow(ACTION_DURATION)) {
         if (randomSeedFlag) {
             std::srand(randomSeed);
         } else {
@@ -131,6 +141,7 @@ public:
         if (!configuration.hasMember(ACTION_DURATION)) {
             throw MetronomeException("No value provided.");
         }
+
         actionDuration = configuration.getLong(ACTION_DURATION);
         deadCost = actionDuration * 2;
         unsigned int currentHeight = 0;
@@ -140,14 +151,18 @@ public:
         char* end;
         getline(input, line);
         std::stringstream convertWidth(line);
+
         if (std::strtol(line.c_str(), &end, 10) == 0) {
             throw MetronomeException("Traffic first line must be a number.");
         }
+
         convertWidth >> width;
         getline(input, line);
+
         if (std::strtol(line.c_str(), &end, 10) == 0) {
             throw MetronomeException("Traffic second line must be a number.");
         }
+
         std::stringstream convertHeight(line);
         convertHeight >> height;
 
@@ -176,7 +191,7 @@ public:
                 } else if (*it == '*') { // find the goal location
                     tempGoalState = State(currentWidth, currentHeight);
                 } else if (*it == '#') { // store the objects
-                    addObstacle(currentWidth, currentHeight,obstacleIndex);
+                    addObstacle(currentWidth, currentHeight, obstacleIndex);
                     obstacleIndices.push_back(metronome::Location2D(currentWidth, currentHeight));
                     obstacles[currentWidth][currentHeight] = true;
                     obstacleIndex++;
@@ -206,6 +221,7 @@ public:
         startLocation = tempStartState.get();
         goalLocation = tempGoalState.get();
     }
+
     void visualize(std::ostream& display) const {
         display << "WORLD\n";
         for (auto i = 0; i < height; ++i) {
@@ -216,7 +232,7 @@ public:
                     display << '*';
                 } else if (isObstacle(j, i)) {
                     display << '#';
-                } else if (isBunker(j,i)) {
+                } else if (isBunker(j, i)) {
                     display << '$';
                 } else {
                     display << '_';
@@ -236,17 +252,18 @@ public:
 
     void addObstacle(int x, int y, int index) const {
         if (generatedObstacles[x][y].isEmpty()) {
-            int xVelocity = 1;//std::rand() % MAX_VELOCITY;
-            int yVelocity = 1;//std::rand() % MAX_VELOCITY;
-            Obstacle addObstacle = Obstacle{x, y, xVelocity, yVelocity,index};
+            int xVelocity = 1; // std::rand() % MAX_VELOCITY;
+            int yVelocity = 1; // std::rand() % MAX_VELOCITY;
+            Obstacle addObstacle = Obstacle{x, y, xVelocity, yVelocity, index};
             generatedObstacles[x][y] = addObstacle;
         } else {
             int xVelocity = generatedObstacles[x][y].getXVelocity();
             int yVelocity = generatedObstacles[x][y].getYVelocity();
-            Obstacle addObstacle = Obstacle{x, y, xVelocity, yVelocity,index};
+            Obstacle addObstacle = Obstacle{x, y, xVelocity, yVelocity, index};
             generatedObstacles[x][y] = addObstacle;
         }
     }
+
     const State transition(const State& state, const Action& action) const {
         moveObstacles();
 
@@ -279,10 +296,12 @@ public:
 
         return state;
     }
+
     const bool isObstacle(int x, int y) const { return obstacles[x][y]; }
     const bool isBunker(int x, int y) const { return bunkers[x][y]; }
+
     const bool isLegalLocation(const State& location) const {
-        return location.getX() < width && location.getY() < height && !isObstacle(location.getX(),location.getY());
+        return location.getX() < width && location.getY() < height && !isObstacle(location.getX(), location.getY());
     }
     /*
      * this needs to be fixed....
@@ -344,13 +363,12 @@ private:
             int newXLocation = curObstacle.getX() + xVelocity;
             int newYLocation = curObstacle.getY() + yVelocity;
 
-
             // make sure new location is on the grid otherwise bounce
-            if (newXLocation-1 > width) {
+            if (newXLocation - 1 > width) {
                 xVelocity *= xVelocity;
                 newXLocation = curObstacle.getX() + xVelocity;
             }
-            if (newYLocation-1 > height) {
+            if (newYLocation - 1 > height) {
                 yVelocity *= yVelocity;
                 newYLocation = curObstacle.getY() + yVelocity;
             }
@@ -362,7 +380,6 @@ private:
                 newYLocation = curObstacle.getY() + yVelocity;
             }
 
-
             std::cout << "new loc: (" << newXLocation << "," << newYLocation << ")" << std::endl;
             // update the obstacle bit
             // old location off
@@ -373,22 +390,23 @@ private:
             // update the generatedObstacles
             // old location is now default Obstacle object
             generatedObstacles[curObstacle.getX()][curObstacle.getY()] = Obstacle{};
-            generatedObstacles[newXLocation][newYLocation] = Obstacle{newXLocation,newYLocation,xVelocity,yVelocity,index};
-//            addObstacle(newXLocation, newYLocation);
+            generatedObstacles[newXLocation][newYLocation] =
+                    Obstacle{newXLocation, newYLocation, xVelocity, yVelocity, index};
+            //            addObstacle(newXLocation, newYLocation);
             // update the obstacleIndices
-            newObstacleIndices.push_back(Location2D{newXLocation,newYLocation});
-//            obstacleIndex.x = newXLocation;
-//            obstacleIndex.y = newYLocation;
+            newObstacleIndices.push_back(Location2D{newXLocation, newYLocation});
+            //            obstacleIndex.x = newXLocation;
+            //            obstacleIndex.y = newYLocation;
         }
         obstacleIndices.clear();
 
-        for(auto a : newObstacleIndices) {
+        for (auto a : newObstacleIndices) {
             obstacleIndices.push_back(a);
-//            std::cout << a.x << "," <<a.y << std::endl;
+            //            std::cout << a.x << "," <<a.y << std::endl;
         }
-//        for(auto a : obstacleIndices) {
-//            std::cout << a.x << "," << a.y << std::endl;
-//        }
+        //        for(auto a : obstacleIndices) {
+        //            std::cout << a.x << "," << a.y << std::endl;
+        //        }
     }
 
     /*
@@ -407,6 +425,7 @@ private:
      * dead
      * generatedObstacles <- our cache trick to insure velocity consistency when generating obstacles
      */
+    const Cost actionDuration;
     bool randomSeedFlag{true};
     std::time_t randomSeed{1};
     unsigned int width;
@@ -416,7 +435,6 @@ private:
     std::vector<std::vector<bool>> bunkers;
     State startLocation{};
     State goalLocation{};
-    Cost actionDuration;
     Cost deadCost;
     mutable std::vector<std::vector<Obstacle>> generatedObstacles;
 };

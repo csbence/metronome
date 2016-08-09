@@ -31,7 +31,7 @@ public:
 
         char toChar() const { return label; }
 
-        std::string toString() const { return std::string{1, label}; }
+        std::string toString() const { return std::string{label}; }
 
         friend std::ostream& operator<<(std::ostream& os, const Action& action) {
             os << action.label;
@@ -46,7 +46,7 @@ public:
     class State {
     public:
         State() : x(0), y(0) {}
-        State(unsigned int x, unsigned int y) : x(x), y(y) {}
+        State(unsigned int x, unsigned int y) : x{x}, y{y} {}
         /*Standard getters for the State(x,y)*/
         unsigned int getX() const { return x; }
         unsigned int getY() const { return y; }
