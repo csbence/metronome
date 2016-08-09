@@ -2,6 +2,7 @@
 #define METRONOME_REALTIMEPLANMANAGER_HPP
 
 #include <chrono>
+#include <boost/optional.hpp>
 #include "MetronomeException.hpp"
 #include "experiment/termination/TimeTerminationChecker.hpp"
 #include "PlanManager.hpp"
@@ -21,7 +22,8 @@ public:
 
         TimeTerminationChecker terminationChecker;
 
-        unsigned long long int timeBound = static_cast<unsigned long long int>(actionDuration);
+        long long int timeBound = actionDuration;
+        long long int previousTimeBound;
 
         while (!domain.isGoal(currentState)) {
             auto planningIterationTime = measureNanoTime([&] {
@@ -29,16 +31,28 @@ public:
 
                 auto actionBundles{planner.selectActions(currentState, terminationChecker)};
 
-                LOG_N_TIMES(10, INFO) << "Actions to take: " << actionBundles.size();
-
+                previousTimeBound = timeBound;
                 timeBound = 0;
                 for (auto& actionBundle : actionBundles) {
-                    currentState = domain.transition(currentState, actionBundle.action);
+                    boost::optional<typename Domain::State> nextState = domain.transition(currentState, actionBundle
+                        .action);
+                    if (!nextState.is_initialized()) {
+                        throw MetronomeException("Invalid action. Partial plan is corrupt.");
+                    }
+                    currentState = nextState.get();
                     actions.emplace_back(actionBundle.action);
                     timeBound += actionBundle.actionDuration;
                 }
 
             });
+
+//            LOG(INFO) << planningIterationTime - previousTimeBound;
+
+//            if (planningIterationTime > previousTimeBound + 100000) {
+//                LOG(INFO) << "Time bount violated: " << planningIterationTime - previousTimeBound << " bound: " << previousTimeBound;
+//            } else {
+//                LOG(INFO) << "Fine";
+//            }
 
             // Increase the total planning time after each planning iteration
             planningTime += planningIterationTime;
