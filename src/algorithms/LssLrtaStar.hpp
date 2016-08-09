@@ -68,7 +68,7 @@ private:
 
         unsigned long hash() const { return state.hash(); }
 
-        bool operator==(const Node& node) const { LOG_EVERY_N(10, INFO) << "=="; return state == node.state; }
+        bool operator==(const Node& node) const { return state == node.state; }
 
         std::string toString() const {
             std::ostringstream stream;
@@ -112,7 +112,7 @@ private:
         const Cost actionCost;
     };
 
-    void learn(TimeTerminationChecker terminationChecker) {
+    void learn(const TimeTerminationChecker terminationChecker) {
         ++iterationCounter;
 
         // Reorder the open list based on the heuristic values
@@ -151,7 +151,7 @@ private:
         }
     }
 
-    Node* explore(const State& startState, TimeTerminationChecker terminationChecker) {
+    Node* explore(const State& startState, const TimeTerminationChecker terminationChecker) {
         ++iterationCounter;
         clearOpenList();
         openList.reorder(fComparator);
@@ -188,19 +188,9 @@ private:
             auto successorState = successor.state;
 
             Node*& successorNode = nodes[successorState];
-            //            LOG_EVERY_N(10000, INFO) << "1M successor";
 
             if (successorNode == nullptr) {
-                Planner::incrementGeneratedNodeCount();
-
-                const Node tempSuccessorNode(sourceNode,
-                        successor.state,
-                        successor.action,
-                        domain.COST_MAX,
-                        domain.heuristic(successor.state),
-                        true);
-
-                successorNode = nodePool.construct(std::move(tempSuccessorNode));
+                successorNode = createNode(sourceNode, successor);
             }
 
             // If the node is outdated it should be updated.
@@ -234,6 +224,16 @@ private:
                 }
             }
         }
+    }
+
+    Node* createNode(Node* sourceNode, SuccessorBundle<Domain> successor) {
+        Planner::incrementGeneratedNodeCount();
+        return nodePool.construct(Node{sourceNode,
+                successor.state,
+                successor.action,
+                domain.COST_MAX,
+                domain.heuristic(successor.state),
+                true});
     }
 
     void clearOpenList() {
