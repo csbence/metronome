@@ -60,11 +60,6 @@ public:
 
         //        resultDocument.AddMember("configuration", Value{configuration}, allocator);
 
-        GenericValue<ASCII<>> test;
-        std::string testString("asdf");
-        test.SetString(testString.c_str(), testString.size());
-        resultDocument.AddMember("test", test, allocator);
-
         GenericValue<ASCII<>> errorMessageValue;
         errorMessageValue.SetString(errorMessage.c_str(), errorMessage.size());
         resultDocument.AddMember("errorMessage", errorMessageValue, allocator);
