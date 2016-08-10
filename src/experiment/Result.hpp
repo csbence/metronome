@@ -53,25 +53,25 @@ public:
     std::string getJsonString() const {
         using namespace rapidjson;
 
-        GenericDocument<ASCII<>> resultDocument;
+        Document resultDocument;
         resultDocument.SetObject();
 
         auto& allocator = resultDocument.GetAllocator();
 
         //        resultDocument.AddMember("configuration", Value{configuration}, allocator);
 
-        GenericValue<ASCII<>> errorMessageValue;
+        Value errorMessageValue;
         errorMessageValue.SetString(errorMessage.c_str(), errorMessage.size());
         resultDocument.AddMember("errorMessage", errorMessageValue, allocator);
 
         resultDocument.AddMember("success", success, allocator);
-        resultDocument.AddMember("expandedNodes", expandedNodes, allocator);
-        resultDocument.AddMember("generatedNodes", generatedNodes, allocator);
-        resultDocument.AddMember("planningTime", planningTime, allocator);
-        resultDocument.AddMember("actionExecutionTime", actionExecutionTime, allocator);
-        resultDocument.AddMember("goalAchievementTime", goalAchievementTime, allocator);
-        resultDocument.AddMember("idlePlanningTime", idlePlanningTime, allocator);
-        resultDocument.AddMember("pathLength", pathLength, allocator);
+        resultDocument.AddMember("expandedNodes", Value{}.SetInt(expandedNodes), allocator);
+        resultDocument.AddMember("generatedNodes", Value{}.SetInt(generatedNodes), allocator);
+        resultDocument.AddMember("planningTime", Value{}.SetInt64(planningTime), allocator);
+        resultDocument.AddMember("actionExecutionTime", Value{}.SetInt64(actionExecutionTime), allocator);
+        resultDocument.AddMember("goalAchievementTime", Value{}.SetInt64(goalAchievementTime), allocator);
+        resultDocument.AddMember("idlePlanningTime", Value{}.SetInt64(idlePlanningTime), allocator);
+        resultDocument.AddMember("pathLength", Value{}.SetInt64(pathLength), allocator);
 
 //        GenericValue<ASCII<>> actionsArray{kArrayType};
 //        for (std::string action : actions) {
@@ -82,7 +82,7 @@ public:
         resultDocument.AddMember("timestamp", timestamp, allocator);
 
         StringBuffer buffer;
-        Writer<StringBuffer, Document::EncodingType, ASCII<>> writer(buffer);
+        Writer<StringBuffer> writer(buffer);
         resultDocument.Accept(writer);
         return buffer.GetString();
     }
