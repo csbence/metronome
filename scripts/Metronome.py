@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import json
 import subprocess
@@ -11,7 +11,7 @@ def execute_metronome(executable, resources, configuration, timeout):
 
     try:
         outs, errs = proc.communicate(input=configuration.encode(), timeout=timeout)
-    except TimeoutExpired:
+    except subprocess.TimeoutExpired:
         proc.kill()
         outs, errs = proc.communicate()
 
