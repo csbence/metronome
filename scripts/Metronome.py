@@ -2,6 +2,7 @@
 
 import json
 import subprocess
+import numpy as np
 from subprocess import Popen, PIPE
 
 
@@ -14,6 +15,8 @@ def execute_metronome(executable, resources, configuration, timeout):
     except subprocess.TimeoutExpired:
         proc.kill()
         outs, errs = proc.communicate()
+        print("Experiment timed out")
+        return 0
 
     print("Metronome output: ")
     print(outs.decode())
@@ -24,25 +27,35 @@ def execute_metronome(executable, resources, configuration, timeout):
 
     print("Parsed result: \n")
     print(result)
+    return result["goalAchievementTime"]
 
 
-def main():
-    print("Metronome python.")
-
+def run_experiments():
     path = "../build/release/Metronome"
     resources = "../resources"
-    configuration = """{
-"timeLimit": 150000000000,
-"domainPath": "/input/tiles/korf/4/all/3",
+    configuration = """{{
+"timeLimit": 6000000,
+"domainPath": "/input/tiles/korf/4/all/{}",
 "domainInstanceName": "Manual test instance",
 "actionDuration": 6000000,
 "domainName": "SLIDING_TILE_PUZZLE",
 "terminationType": "time",
 "algorithmName": "LSS_LRTA_STAR"
-}
+}}
 """
+    gat = []
+    for i in range(1, 100):
+        gat.append(execute_metronome(path, resources, configuration.format(i), timeout=60))
 
-    execute_metronome(path, resources, configuration, timeout=60)
+    print("GATs: " + str(gat))
+    print("Failed: {} Succeeded: {}".format(gat.count(0), 100 - gat.count(0)))
+    print("Avg of successful:{}".format(np.mean(gat.remove(0))))
+
+
+def main():
+    print("Metronome python.")
+
+    run_experiments()
 
     print("Done")
 
