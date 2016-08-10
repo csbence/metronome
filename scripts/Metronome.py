@@ -29,7 +29,7 @@ def execute_metronome(executable, resources, configuration, timeout):
 def main():
     print("Metronome python.")
 
-    path = "../build/release/metronome"
+    path = "../build/release/Metronome"
     resources = "../resources"
     configuration = """{
 "timeLimit": 150000000000,
