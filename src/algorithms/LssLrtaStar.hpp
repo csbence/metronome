@@ -2,6 +2,7 @@
 #define METRONOME_LSSLRTASTAR_HPP
 #include <fcntl.h>
 #include <boost/pool/object_pool.hpp>
+#include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
 #include <vector>
 #include "MetronomeException.hpp"

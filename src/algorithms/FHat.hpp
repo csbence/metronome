@@ -28,6 +28,10 @@ public:
         State state;
         Node node = Node(nullptr, std::move(state), Action(), 0, 0, true, 0, 0, 0);
         nodePool.destroy(nodePool.construct(node));
+
+        // Initialize hash table
+        nodes.max_load_factor(1);
+        nodes.reserve(100000000);
     }
 
     std::vector<ActionBundle> selectActions(const State& startState,
@@ -42,15 +46,9 @@ public:
             learn(terminationChecker);
         }
 
-        const Node localStartNode =
-                Node(nullptr, std::move(startState), Action(), 0, domain.heuristic(startState), true, 0, 0, 0);
+        auto bestNode = explore(startState, terminationChecker);
 
-        Planner::incrementGeneratedNodeCount();
-        auto startNode = nodePool.construct(localStartNode);
-
-        auto bestNode = explore(startNode, terminationChecker);
-
-        return extractPath(bestNode, startNode);
+        return extractPath(bestNode, nodes[startState]);
     }
 
 private:
@@ -89,12 +87,14 @@ private:
 
         std::string toString() const {
             std::ostringstream stream;
-            stream << "s: " << state << " g: " << g << " h: " << h << " a: " << action << " p: ";
+            stream << "s: " << state << " g: " << g << " h: " << h << " fhat: " << fHat << " a: " << action << " "
+                                                                                                               "p: ";
             if (parent == nullptr) {
                 stream << "None";
             } else {
                 stream << parent->state;
             }
+            stream << (open ? " Open" : " Not Open");
             return stream.str();
         }
 
@@ -178,15 +178,28 @@ private:
         }
     }
 
-    Node* explore(Node* startNode, TimeTerminationChecker terminationChecker) {
+    Node* explore(const State& startState, const TimeTerminationChecker terminationChecker) {
         ++iterationCounter;
         clearOpenList();
         openList.reorder(fHatComparator);
 
-        Node* currentNode = startNode;
+        Planner::incrementGeneratedNodeCount();
+        Node*& startNode = nodes[startState];
 
-        nodes[startNode->state] = startNode;
+        if (startNode == nullptr) {
+            startNode = nodePool.construct(
+                    Node{nullptr, startState, Action(), 0, domain.heuristic(startState), true, 0, 0, 0});
+        } else {
+            startNode->g = 0;
+            startNode->action = Action();
+            startNode->predecessors.clear();
+            startNode->parent = nullptr;
+        }
+
+        startNode->iteration = iterationCounter;
         addToOpenList(*startNode);
+
+        Node* currentNode = startNode;
 
         nextHeuristicError = 0;
         nextDistanceError = 0;
@@ -207,7 +220,6 @@ private:
 
         Node* bestChildNode{nullptr};
 
-        auto currentGValue = sourceNode->g;
         for (auto successor : domain.successors(sourceNode->state)) {
             auto successorState = successor.state;
 
@@ -230,12 +242,12 @@ private:
             successorNode->predecessors.emplace_back(sourceNode, successor.action, successor.actionCost);
 
             // Skip if we got back to the parent
-            if (sourceNode->parent != nullptr && successorState == sourceNode->parent->state) {
-                continue;
-            }
+            //            if (sourceNode->parent != nullptr && successorState == sourceNode->parent->state) {
+            //                continue;
+            //            }
 
             // only generate those state that are not visited yet or whose cost value are lower than this path
-            Cost successorGValueFromCurrent{currentGValue + successor.actionCost};
+            Cost successorGValueFromCurrent{sourceNode->g + successor.actionCost};
             if (successorNode->g > successorGValueFromCurrent) {
                 successorNode->g = successorGValueFromCurrent;
                 successorNode->parent = sourceNode;
@@ -259,7 +271,6 @@ private:
 
         if (bestChildNode != nullptr) {
             // Local error values (min 0.0)
-            double zero = 0.0;
             double localHeuristicError = bestChildNode->f() - sourceNode->f();
             double localDistanceError = bestChildNode->distance - sourceNode->distance + 1;
 
@@ -279,17 +290,15 @@ private:
         auto distance = domain.distance(successorState);
         auto heuristic = domain.heuristic(successorState);
 
-        const Node tempSuccessorNode(sourceNode,
+        return nodePool.construct(Node{sourceNode,
                 successorState,
                 successor.action,
                 domain.COST_MAX,
                 heuristic,
                 true,
-                distance * heuristicError + heuristic,
+                static_cast<Cost>(distance * heuristicError + heuristic),
                 distance,
-                distance);
-
-        return nodePool.construct(std::move(tempSuccessorNode));
+                distance});
     }
 
     void clearOpenList() {
@@ -324,7 +333,7 @@ private:
 
         while (currentNode != sourceNode) {
             // The g difference of the child and the parent gives the action cost from the parent
-            actionBundles.emplace_back(currentNode->action, currentNode->parent->g - currentNode->g);
+            actionBundles.emplace_back(currentNode->action, currentNode->g - currentNode->parent->g);
             currentNode = currentNode->parent;
         }
 
@@ -353,7 +362,7 @@ private:
     }
 
     const Domain& domain;
-    PriorityQueue<Node> openList{10000000, fHatComparator};
+    PriorityQueue<Node> openList{100000000, fHatComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
     boost::object_pool<Node> nodePool{100000000, 100000000};
     unsigned int iterationCounter{0};
