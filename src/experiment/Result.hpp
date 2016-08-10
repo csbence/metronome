@@ -79,7 +79,7 @@ public:
 //        }
 //
 //        resultDocument.AddMember("actions", actionsArray, allocator);
-        resultDocument.AddMember("timestamp", timestamp, allocator);
+        resultDocument.AddMember("timestamp", Value{}.SetInt64(timestamp), allocator);
 
         StringBuffer buffer;
         Writer<StringBuffer> writer(buffer);
