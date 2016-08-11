@@ -252,7 +252,7 @@ public:
 
     void addObstacle(int x, int y, int index) const {
         if (generatedObstacles[x][y].isEmpty()) {
-            int xVelocity = 0; // std::rand() % MAX_VELOCITY;
+            int xVelocity = 1; // std::rand() % MAX_VELOCITY;
             int yVelocity = 1; // std::rand() % MAX_VELOCITY;
             Obstacle addObstacle = Obstacle{x, y, xVelocity, yVelocity, index};
             generatedObstacles[x][y] = addObstacle;
@@ -354,6 +354,8 @@ private:
     void moveObstacles() const {
         std::vector<metronome::Location2D> newObstacleIndices;
         for (auto obstacleIndex : obstacleIndices) {
+            std::cout << "break?" << std::endl;
+            std::cout << obstacleIndex.x << "\t" << obstacleIndex.y << std::endl;
             Obstacle curObstacle = generatedObstacles[obstacleIndex.x][obstacleIndex.y];
             int xVelocity = curObstacle.getXVelocity();
             int yVelocity = curObstacle.getYVelocity();
@@ -364,20 +366,22 @@ private:
             int newYLocation = curObstacle.getY() + yVelocity;
 
             // make sure new location is on the grid otherwise bounce
-            if (newXLocation - 1 > width) {
+            if (newXLocation  > width - 1 ) {
                 xVelocity *= -1;
                 newXLocation = curObstacle.getX() + xVelocity;
             }
-            if (newYLocation - 1 > height) {
+            if (newYLocation  > height - 1) {
                 yVelocity *= -1;
                 newYLocation = curObstacle.getY() + yVelocity;
             }
             // if the new location is a bunker bounce or in another obstacle
+            std::cout << "new" << newXLocation << "\t" << newYLocation << std::endl;
             if (bunkers[newXLocation][newYLocation] || obstacles[newXLocation][newYLocation]) {
                 xVelocity *= -1;
                 yVelocity *= -1;
                 newXLocation = curObstacle.getX() + xVelocity;
                 newYLocation = curObstacle.getY() + yVelocity;
+                // add logic for obstacle presedence when obstacles[newXLocation][newYLocation] is true
             }
 
             std::cout << "new loc: (" << newXLocation << "," << newYLocation << ")" << std::endl;
