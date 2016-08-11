@@ -142,7 +142,7 @@ public:
             throw MetronomeException("No value provided.");
         }
 
-        actionDuration = configuration.getLong(ACTION_DURATION);
+        //actionDuration = configuration.getLong(ACTION_DURATION);
         deadCost = actionDuration * 2;
         unsigned int currentHeight = 0;
         unsigned int currentWidth = 0;
@@ -252,7 +252,7 @@ public:
 
     void addObstacle(int x, int y, int index) const {
         if (generatedObstacles[x][y].isEmpty()) {
-            int xVelocity = 1; // std::rand() % MAX_VELOCITY;
+            int xVelocity = 0; // std::rand() % MAX_VELOCITY;
             int yVelocity = 1; // std::rand() % MAX_VELOCITY;
             Obstacle addObstacle = Obstacle{x, y, xVelocity, yVelocity, index};
             generatedObstacles[x][y] = addObstacle;
@@ -365,17 +365,17 @@ private:
 
             // make sure new location is on the grid otherwise bounce
             if (newXLocation - 1 > width) {
-                xVelocity *= xVelocity;
+                xVelocity *= -1;
                 newXLocation = curObstacle.getX() + xVelocity;
             }
             if (newYLocation - 1 > height) {
-                yVelocity *= yVelocity;
+                yVelocity *= -1;
                 newYLocation = curObstacle.getY() + yVelocity;
             }
             // if the new location is a bunker bounce or in another obstacle
             if (bunkers[newXLocation][newYLocation] || obstacles[newXLocation][newYLocation]) {
-                xVelocity *= xVelocity;
-                yVelocity *= yVelocity;
+                xVelocity *= -1;
+                yVelocity *= -1;
                 newXLocation = curObstacle.getX() + xVelocity;
                 newYLocation = curObstacle.getY() + yVelocity;
             }

@@ -26,8 +26,7 @@ TEST_CASE("Traffic basic creation test", "[Traffic]") {
     testGrid.testMove();
     testGrid.visualize(std::cout);
     testGrid.testMove();
-
-//    testGrid.visualize(std::cout);
+    testGrid.visualize(std::cout);
 
     // REQUIRE(traffic.getStartLocation() == metronome::Traffic::State(6, 0));
 }
