@@ -142,7 +142,7 @@ public:
             throw MetronomeException("No value provided.");
         }
 
-        //actionDuration = configuration.getLong(ACTION_DURATION);
+        // actionDuration = configuration.getLong(ACTION_DURATION);
         deadCost = actionDuration * 2;
         unsigned int currentHeight = 0;
         unsigned int currentWidth = 0;
@@ -366,51 +366,106 @@ private:
             int newYLocation = curObstacle.getY() + yVelocity;
 
             // make sure new location is on the grid otherwise bounce
-            if (newXLocation  > width - 1 ) {
+            if (newXLocation > width - 1) {
                 xVelocity *= -1;
+                std::cout << curObstacle.getX() << "|" << xVelocity << std::endl;
                 newXLocation = curObstacle.getX() + xVelocity;
             }
-            if (newYLocation  > height - 1) {
+            if (newYLocation > height - 1) {
                 yVelocity *= -1;
+                std::cout << curObstacle.getY() << "|" << yVelocity << std::endl;
                 newYLocation = curObstacle.getY() + yVelocity;
             }
+
+            if (newXLocation == -1 || newYLocation == -1) {
+                throw MetronomeException("Obstacle data structure corrupted...");
+            }
+
             // if the new location is a bunker bounce or in another obstacle
             std::cout << "new" << newXLocation << "\t" << newYLocation << std::endl;
-            if (bunkers[newXLocation][newYLocation] || obstacles[newXLocation][newYLocation]) {
+            if (bunkers[newXLocation][newYLocation] /*|| obstacles[newXLocation][newYLocation]*/) {
                 xVelocity *= -1;
                 yVelocity *= -1;
                 newXLocation = curObstacle.getX() + xVelocity;
                 newYLocation = curObstacle.getY() + yVelocity;
+
                 // add logic for obstacle presedence when obstacles[newXLocation][newYLocation] is true
+            }
+            //            if (obstacles[newXLocation][newYLocation]) {
+            //                if (newXLocation < width - 1) {
+            //                    if (!obstacles[newXLocation + 1][newYLocation]) {
+            //                        newXLocation += 1;
+            //                    }
+            //                } else if (newXLocation > 0) {
+            //                    if (!obstacles[newXLocation - 1][newYLocation]) {
+            //                        newXLocation -= 1;
+            //                    }
+            //                } else if (newYLocation < height - 1) {
+            //                    if (!obstacles[newXLocation][newYLocation + 1]) {
+            //                        newYLocation += 1;
+            //                    }
+            //                } else if (newYLocation > 0) {
+            //                    if (!obstacles[newXLocation][newYLocation - 1]) {
+            //                        newYLocation -= 1;
+            //                    }
+            //                } else {
+            //                     can not move this block set velocity to zero?
+            //                     or just place it back where it came from
+            //                    newXLocation = curObstacle.getX();
+            //                    newYLocation = curObstacle.getY();
+            //                }
+            //            }
+
+            if (newXLocation > width - 1) {
+                xVelocity *= -1;
+                newXLocation = curObstacle.getX() + xVelocity;
+            }
+            if (newYLocation > height - 1) {
+                yVelocity *= -1;
+                newYLocation = curObstacle.getY() + yVelocity;
             }
 
             std::cout << "new loc: (" << newXLocation << "," << newYLocation << ")" << std::endl;
             // update the obstacle bit
             // old location off
+            //            bool stillMoreObstacles = false;
+            //
+            //            for(auto a : obstacleIndices) {
+            //                int counts = 0;
+            //                if(curObstacle.getX() == a.x && curObstacle.getY() == a.y) {
+            //                   ++counts;
+            //                }
+            //                if(counts > 2) {
+            //                    stillMoreObstacles = true;
+            //                }
+            //            }
+
+            //            if (!stillMoreObstacles) {
             obstacles[curObstacle.getX()][curObstacle.getY()] = false;
             // new location on
+            //            }
+            std::cout << "?" << std::endl;
             obstacles[newXLocation][newYLocation] = true;
 
+            std::cout << "?" << std::endl;
             // update the generatedObstacles
             // old location is now default Obstacle object
+            //            if(!stillMoreObstacles) {
             generatedObstacles[curObstacle.getX()][curObstacle.getY()] = Obstacle{};
+            //            }
             generatedObstacles[newXLocation][newYLocation] =
                     Obstacle{newXLocation, newYLocation, xVelocity, yVelocity, index};
-            //            addObstacle(newXLocation, newYLocation);
             // update the obstacleIndices
+
+            std::cout << "?" << std::endl;
             newObstacleIndices.push_back(Location2D{newXLocation, newYLocation});
-            //            obstacleIndex.x = newXLocation;
-            //            obstacleIndex.y = newYLocation;
         }
         obstacleIndices.clear();
 
+        // populate the new locations
         for (auto a : newObstacleIndices) {
             obstacleIndices.push_back(a);
-            //            std::cout << a.x << "," <<a.y << std::endl;
         }
-        //        for(auto a : obstacleIndices) {
-        //            std::cout << a.x << "," << a.y << std::endl;
-        //        }
     }
 
     /*
