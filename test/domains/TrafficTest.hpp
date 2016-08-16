@@ -22,6 +22,13 @@ metronome::Traffic testGrid =
 
 TEST_CASE("Traffic basic creation test", "[Traffic]") {
     metronome::Traffic traffic = testGrid;
+
+    int count = 0;
+    while (count != 44) {
+        testGrid.visualize(std::cout);
+        testGrid.testMove();
+        ++count;
+    }
     traffic.visualize(std::cout);
     testGrid.testMove();
     testGrid.visualize(std::cout);
