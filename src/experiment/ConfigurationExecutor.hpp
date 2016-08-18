@@ -4,6 +4,7 @@
 #include <easylogging++.h>
 #include <rapidjson/document.h>
 #include <MetronomeException.hpp>
+#include <domains/Traffic.hpp>
 #include <string>
 #include "Configuration.hpp"
 #include "OfflinePlanManager.hpp"
@@ -22,9 +23,9 @@ namespace metronome {
 class ConfigurationExecutor {
 public:
     static Result executeConfiguration(const Configuration& configuration, const std::string& resourcesDir) {
-        try{
+        try {
             return unsafeExecuteConfiguration(configuration, resourcesDir);
-        } catch(MetronomeException exception){
+        } catch (MetronomeException exception) {
             return Result(configuration, exception.what());
         }
     }
@@ -49,8 +50,8 @@ private:
 
         if (domainName == DOMAIN_GRID_WORLD) {
             return executeDomain<GridWorld>(configuration, resourcesDir);
-            //        } else if (domainName == DOMAIN_TRAFFIC) {
-            //            return executeDomain<Traffic>(configuration, resourcesDir);
+        } else if (domainName == DOMAIN_TRAFFIC) {
+            return executeDomain<Traffic>(configuration, resourcesDir);
         } else if (domainName == DOMAIN_TILES) {
             return executeDomain<SlidingTilePuzzle>(configuration, resourcesDir);
         } else {

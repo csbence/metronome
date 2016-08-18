@@ -119,6 +119,8 @@ public:
             return string + std::to_string(x) + " y: " + std::to_string(y);
         }
 
+        bool operator!=(const State& state) const { return x != state.x || y != state.y; }
+
     private:
         unsigned int x;
         unsigned int y;
@@ -254,8 +256,8 @@ public:
         if (generatedObstacles[x][y].isEmpty()) {
             int flip = (std::rand() % 2) + 1;
             flip = 0;
-            int xVelocity = 0;
-            int yVelocity = 1;
+            int xVelocity = -1;
+            int yVelocity = 0;
             if (flip == 1) {
                 xVelocity = 0; // std::rand() % MAX_VELOCITY;
                 yVelocity = 1; // std::rand() % MAX_VELOCITY;
@@ -360,7 +362,7 @@ private:
     void moveObstacles() const {
         std::vector<metronome::Location2D> newObstacleIndices;
         for (auto obstacleIndex : obstacleIndices) {
-//                        std::cout << "break?" << std::endl;
+            //                        std::cout << "break?" << std::endl;
             //            std::cout << obstacleIndex.x << "\t" << obstacleIndex.y << std::endl;
             Obstacle curObstacle = generatedObstacles[obstacleIndex.x][obstacleIndex.y];
             int xVelocity = curObstacle.getXVelocity();
@@ -370,11 +372,11 @@ private:
 
             int newXLocation = curObstacle.getX() + xVelocity;
             int newYLocation = curObstacle.getY() + yVelocity;
-//            std::cout << newXLocation << "." << newYLocation << std::endl;
+            //            std::cout << newXLocation << "." << newYLocation << std::endl;
             // make sure new location is on the grid otherwise bounce
             if (newXLocation > width - 1) {
                 xVelocity *= -1;
-                std::cout << curObstacle.getX() << "|" << xVelocity << std::endl;
+//                std::cout << curObstacle.getX() << "|" << xVelocity << std::endl;
                 newXLocation = curObstacle.getX(); // + xVelocity;
             }
             if (newYLocation > height - 1) {
@@ -382,26 +384,28 @@ private:
                 //                std::cout << curObstacle.getY() << "|" << yVelocity << std::endl;
                 newYLocation = curObstacle.getY(); // + yVelocity;
             }
-//            std::cout << newXLocation << "." << newYLocation << ":" << xVelocity << "." << yVelocity << std::endl;
+            //            std::cout << newXLocation << "." << newYLocation << ":" << xVelocity << "." << yVelocity <<
+            //            std::endl;
             if (newXLocation == -1 || newYLocation == -1) {
                 throw MetronomeException("Obstacle data structure corrupted...");
             }
-//            std::cout << newXLocation << "." << newYLocation << std::endl;
+            //            std::cout << newXLocation << "." << newYLocation << std::endl;
             // if the new location is a bunker bounce or in another obstacle
             //            std::cout << "new" << newXLocation << "\t" << newYLocation << std::endl;
             if (newXLocation != curObstacle.getX() || newYLocation != curObstacle.getY()) {
-//                std::cout << "IT IN A NEW LOCAITON" << std::endl;
+                //                std::cout << "IT IN A NEW LOCAITON" << std::endl;
                 if (bunkers[newXLocation][newYLocation] || obstacles[newXLocation][newYLocation]) {
                     xVelocity *= -1;
                     yVelocity *= -1;
                     newXLocation = curObstacle.getX(); // + xVelocity;
                     newYLocation = curObstacle.getY(); // + yVelocity;
-//                    std::cout << "ITS COLLIDED WITH SOMETHING" << std::endl;
+                    //                    std::cout << "ITS COLLIDED WITH SOMETHING" << std::endl;
 
                     // add logic for obstacle precedence when obstacles[newXLocation][newYLocation] is true
                 }
             }
-//            std::cout << newXLocation << "." << newYLocation << ":" << xVelocity << "." << yVelocity << std::endl;
+            //            std::cout << newXLocation << "." << newYLocation << ":" << xVelocity << "." << yVelocity <<
+            //            std::endl;
             //            if (obstacles[newXLocation][newYLocation]) {
             //                if (newXLocation < width - 1) {
             //                    if (!obstacles[newXLocation + 1][newYLocation]) {
@@ -464,7 +468,8 @@ private:
             //            if(!stillMoreObstacles) {
             generatedObstacles[curObstacle.getX()][curObstacle.getY()] = Obstacle{};
             //            }
-//            std::cout << newXLocation << "." << newYLocation << ":" << xVelocity << "." << yVelocity << std::endl;
+            //            std::cout << newXLocation << "." << newYLocation << ":" << xVelocity << "." << yVelocity <<
+            //            std::endl;
             generatedObstacles[newXLocation][newYLocation] =
                     Obstacle{newXLocation, newYLocation, xVelocity, yVelocity, index};
             // update the obstacleIndices

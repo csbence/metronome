@@ -1,9 +1,9 @@
 {
   "timeLimit": 150000000000,
-  "domainPath": "/input/vacuum/swall.vw",
+  "domainPath": "/input/vacuum/smallwall.vw",
   "domainInstanceName": "Manual test instance",
   "actionDuration": 6000000,
   "domainName": "TRAFFIC",
   "terminationType": "time",
-  "algorithmName": "LSS_LRTA_STAR"
+  "algorithmName": "A_STAR"
 }

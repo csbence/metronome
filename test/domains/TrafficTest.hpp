@@ -6,7 +6,7 @@
 namespace {
 const char* json = "{\"timeLimit\" : 150000000000,\n"
                    "\"domainPath\" : "
-                   "\"/input/vacuum/swall2.vw\",\n"
+                   "\"/input/vacuum/smallwall.vw\",\n"
                    "\"domainInstanceName\" : \"Manual test instance\",\n"
                    "\"actionDuration\" : 6000000,\n"
                    "\"domainName\" : \"TRAFFIC\",\n"

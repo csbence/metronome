@@ -1,9 +1,14 @@
-{
-  "timeLimit": 150000000000,
-  "domainPath": "/input/vacuum/dylan/uniform.vw",
-  "domainInstanceName": "Manual test instance",
-  "actionDuration": 6000000,
-  "domainName": "GRID_WORLD",
-  "terminationType": "time",
-  "algorithmName": "LSS_LRTA_STAR"
-}
+
+ ___            ___     
+|###\  ______  /###|   
+|#|\#\ \    / /#/|#|   
+|#| \#\ \  / /#/ |#|   
+|#|  \#\ \/ /#/  |#|   
+|#|      /\      |#|   
+|#|     /  \     |#|   
+|#|    /____\    |#|   
+---- Metronome  ----
+ When time matters!
+
+2016-08-18 12:54:10,692 FATAL [default] CRASH HANDLED; Application has crashed due to [SIGINT] signal
+2016-08-18 12:54:10,692 WARN  [default] Aborting application. Reason: Fatal log at [/home/aifs2/doylew/Public/metronome/dependencies/easylogging++.h:5583]
