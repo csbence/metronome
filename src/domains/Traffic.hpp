@@ -360,7 +360,7 @@ private:
     void moveObstacles() const {
         std::vector<metronome::Location2D> newObstacleIndices;
         for (auto obstacleIndex : obstacleIndices) {
-            //            std::cout << "break?" << std::endl;
+                        std::cout << "break?" << std::endl;
             //            std::cout << obstacleIndex.x << "\t" << obstacleIndex.y << std::endl;
             Obstacle curObstacle = generatedObstacles[obstacleIndex.x][obstacleIndex.y];
             int xVelocity = curObstacle.getXVelocity();
@@ -386,15 +386,17 @@ private:
             if (newXLocation == -1 || newYLocation == -1) {
                 throw MetronomeException("Obstacle data structure corrupted...");
             }
-
+            std::cout << newXLocation << "." << newYLocation << std::endl;
             // if the new location is a bunker bounce or in another obstacle
             //            std::cout << "new" << newXLocation << "\t" << newYLocation << std::endl;
-            if (newXLocation != curObstacle.getX() && newYLocation != curObstacle.getY()) {
+            if (newXLocation != curObstacle.getX() || newYLocation != curObstacle.getY()) {
+                std::cout << "IT IN A NEW LOCAITON" << std::endl;
                 if (bunkers[newXLocation][newYLocation] || obstacles[newXLocation][newYLocation]) {
                     xVelocity *= -1;
                     yVelocity *= -1;
                     newXLocation = curObstacle.getX(); // + xVelocity;
                     newYLocation = curObstacle.getY(); // + yVelocity;
+//                    std::cout << "ITS COLLIDED WITH SOMETHING" << std::endl;
 
                     // add logic for obstacle precedence when obstacles[newXLocation][newYLocation] is true
                 }
