@@ -23,27 +23,16 @@ metronome::Traffic testGrid =
 TEST_CASE("Traffic basic creation test", "[Traffic]") {
     metronome::Traffic traffic = testGrid;
 
+    std::cout << testGrid.getStartLocation().getX() << "," << testGrid.getStartLocation().getY() << std::endl;
+    std::cout << testGrid.getGoalState().getX() << "," << testGrid.getGoalState().getY() << std::endl;
+    std::cout << testGrid.isGoal(testGrid.getStartLocation()) << std::endl;
+    std::cout << testGrid.isGoal(testGrid.getGoalState()) << std::endl;
     int count = 0;
-    while (count != 44) {
+    while (count != 9) {
         testGrid.visualize(std::cout);
         testGrid.testMove();
         ++count;
     }
-    traffic.visualize(std::cout);
-    testGrid.testMove();
-    testGrid.visualize(std::cout);
-    testGrid.testMove();
-    testGrid.visualize(std::cout);
-    testGrid.testMove();
-    testGrid.visualize(std::cout);
-    testGrid.testMove();
-    testGrid.visualize(std::cout);
-
-    testGrid.testMove();
-    testGrid.visualize(std::cout);
-
-    testGrid.testMove();
-    testGrid.visualize(std::cout);
 
     // REQUIRE(traffic.getStartLocation() == metronome::Traffic::State(6, 0));
 }
