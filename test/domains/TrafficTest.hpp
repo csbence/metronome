@@ -22,16 +22,18 @@ metronome::Traffic testGrid =
 
 TEST_CASE("Traffic basic creation test", "[Traffic]") {
     metronome::Traffic traffic = testGrid;
-
     std::cout << testGrid.getStartLocation().getX() << "," << testGrid.getStartLocation().getY() << std::endl;
     std::cout << testGrid.getGoalState().getX() << "," << testGrid.getGoalState().getY() << std::endl;
     std::cout << testGrid.isGoal(testGrid.getStartLocation()) << std::endl;
     std::cout << testGrid.isGoal(testGrid.getGoalState()) << std::endl;
-    int count = 0;
-    while (count != 9) {
-        testGrid.visualize(std::cout);
-        testGrid.testMove();
-        ++count;
+
+    testGrid.visualize(std::cout, testGrid.getStartLocation(), metronome::Traffic::Action(5));
+
+    std::vector<SuccessorBundle<metronome::Traffic>> test = testGrid.successors(testGrid.getStartLocation());
+
+    std::cout << "SUCCESSORS: \n" << std::endl;
+    for (auto bundle : test) {
+        testGrid.visualize(std::cout, bundle.state, bundle.action);
     }
 
     // REQUIRE(traffic.getStartLocation() == metronome::Traffic::State(6, 0));
