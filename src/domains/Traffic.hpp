@@ -551,7 +551,6 @@ private:
     std::vector<std::vector<bool>> bunkers;
     State startLocation{};
     State goalLocation{};
-    Cost deadCost;
     //    mutable std::vector<std::vector<Obstacle>> generatedObstacles;
 };
 
