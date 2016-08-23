@@ -3,6 +3,7 @@
 template <typename Domain>
 class SuccessorBundle {
 public:
+
     typedef typename Domain::State State;
     typedef typename Domain::Action Action;
     typedef typename Domain::Cost Cost;

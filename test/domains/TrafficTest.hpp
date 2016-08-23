@@ -32,9 +32,28 @@ TEST_CASE("Traffic basic creation test", "[Traffic]") {
     std::vector<SuccessorBundle<metronome::Traffic>> test = testGrid.successors(testGrid.getStartLocation());
 
     std::cout << "SUCCESSORS: \n" << std::endl;
-    for (auto bundle : test) {
+    for (SuccessorBundle<metronome::Traffic> bundle : test) {
         testGrid.visualize(std::cout, bundle.state, bundle.action);
+        std::cout << "SUCCESSORS OF SUCCESSORS" << std::endl;
+        std::vector<SuccessorBundle<metronome::Traffic>> test1 = testGrid.successors(bundle.state);
+        for(SuccessorBundle<metronome::Traffic> bundle1 : test1) {
+            testGrid.visualize(std::cout, bundle1.state, bundle1.action);
+            std::cout << "SUCCESSORS OF SUCCESSORS SUCCESSORS" << std::endl;
+            std::vector<SuccessorBundle<metronome::Traffic>> test2 = testGrid.successors(bundle.state);
+            for(SuccessorBundle<metronome::Traffic> bundle2 : test2) {
+                testGrid.visualize(std::cout, bundle2.state, bundle2.action);
+                std::cout << "SUCCESSORS OF SUCCESSORS SUCCESSORS of successors" << std::endl;
+                std::vector<SuccessorBundle<metronome::Traffic>> test2 = testGrid.successors(bundle.state);
+                for(SuccessorBundle<metronome::Traffic> bundle2 : test2) {
+                    testGrid.visualize(std::cout, bundle2.state, bundle2.action);
+                }
+                std::cout << "END S-S-S-s" << std::endl;
+            }
+            std::cout << "END S-S-S" << std::endl;
+        }
+        std::cout << "LOOP FOR" << std::endl;
     }
+
 
     // REQUIRE(traffic.getStartLocation() == metronome::Traffic::State(6, 0));
 }
