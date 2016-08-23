@@ -549,7 +549,7 @@ private:
     unsigned int height;
     //    mutable std::vector<metronome::Location2D> obstacleIndices;
 
-    mutable std::vector<std::vector<bool>> obstacles;
+//    mutable std::vector<std::vector<bool>> obstacles;
     std::vector<std::vector<bool>> bunkers;
     State startLocation{};
     State goalLocation{};
