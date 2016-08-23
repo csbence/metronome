@@ -53,7 +53,10 @@ public:
         std::size_t hash() const { return x ^ y << 16 ^     y >> 16; }
         bool operator==(const State& state) const { return x == state.x && y == state.y; }
         bool operator!=(const State& state) const { return x != state.x || y != state.y; }
-
+        State& operator=(State toCopy) {
+            swap(*this, toCopy);
+            return *this;
+        }
         std::string toString() {
             std::string string{"x: "};
             return string + std::to_string(x) + " y: " + std::to_string(y);
@@ -275,8 +278,8 @@ private:
     unsigned int width;
     unsigned int height;
     std::unordered_set<State, typename metronome::Hasher<State>> obstacles;
-    State startLocation{State()};
-    State goalLocation{State()};
+    State startLocation{};
+    State goalLocation{};
     const Cost actionDuration;
 };
 }

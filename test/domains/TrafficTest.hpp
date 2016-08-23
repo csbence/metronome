@@ -36,16 +36,19 @@ TEST_CASE("Traffic basic creation test", "[Traffic]") {
         testGrid.visualize(std::cout, bundle.state, bundle.action);
         std::cout << "SUCCESSORS OF SUCCESSORS" << std::endl;
         std::vector<SuccessorBundle<metronome::Traffic>> test1 = testGrid.successors(bundle.state);
+
         for(SuccessorBundle<metronome::Traffic> bundle1 : test1) {
             testGrid.visualize(std::cout, bundle1.state, bundle1.action);
             std::cout << "SUCCESSORS OF SUCCESSORS SUCCESSORS" << std::endl;
-            std::vector<SuccessorBundle<metronome::Traffic>> test2 = testGrid.successors(bundle.state);
+            std::vector<SuccessorBundle<metronome::Traffic>> test2 = testGrid.successors(bundle1.state);
+
             for(SuccessorBundle<metronome::Traffic> bundle2 : test2) {
                 testGrid.visualize(std::cout, bundle2.state, bundle2.action);
                 std::cout << "SUCCESSORS OF SUCCESSORS SUCCESSORS of successors" << std::endl;
-                std::vector<SuccessorBundle<metronome::Traffic>> test2 = testGrid.successors(bundle.state);
-                for(SuccessorBundle<metronome::Traffic> bundle2 : test2) {
-                    testGrid.visualize(std::cout, bundle2.state, bundle2.action);
+                std::vector<SuccessorBundle<metronome::Traffic>> test3 = testGrid.successors(bundle2.state);
+
+                for(SuccessorBundle<metronome::Traffic> bundle3 : test3) {
+                    testGrid.visualize(std::cout, bundle3.state, bundle3.action);
                 }
                 std::cout << "END S-S-S-s" << std::endl;
             }
