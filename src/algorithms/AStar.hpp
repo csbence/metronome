@@ -54,7 +54,7 @@ public:
                 std::vector<Action> actions;
                 // Goal is reached
 
-                while (startState != currentNode->state) {
+                while (startState != currentNode->state ) {
                     actions.push_back(currentNode->action);
                     currentNode = currentNode->parent;
                 }
@@ -83,7 +83,7 @@ public:
                             newCost + domain.heuristic(successor.state));
 
                     successorNode = nodePool.construct(std::move(tempSuccessorNode));
-                            LOG(INFO) << "addToOpen(NEW): " + successorNode->toString();
+//                            LOG(INFO) << "addToOpen(NEW): " + successorNode->toString();
                     openList.push(*successorNode);
                 } else if (successorNode->g > newCost) {
                     // Better path found to an existing state
