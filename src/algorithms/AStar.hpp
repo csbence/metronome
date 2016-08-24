@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <utils/PriorityQueue.hpp>
 #include <vector>
+#include <easylogging++.h>
 #include "OfflinePlanner.hpp"
 #include "Planner.hpp"
 #include "experiment/Configuration.hpp"
@@ -61,6 +62,7 @@ public:
             }
 
             for (auto successor : domain.successors(currentNode->state)) {
+//                LOG(INFO) << "successor" << successor << std::endl;
                 if (successor.state == currentNode->state) {
                     continue; // Skip parent TODO this might be unnecessary
                 }
@@ -79,7 +81,7 @@ public:
                             newCost + domain.heuristic(successor.state));
 
                     successorNode = nodePool.construct(std::move(tempSuccessorNode));
-                    //                    LOG(INFO) << "addToOpen(NEW): " + successorNode->toString();
+                                        LOG(INFO) << "addToOpen(NEW): " + successorNode->toString();
                     openList.push(*successorNode);
                 } else if (successorNode->g > newCost) {
                     // Better path found to an existing state

@@ -111,7 +111,17 @@ public:
         unsigned int getY() const { return y; }
         void remapObstacles(std::vector<Obstacle> toMap) { obstacleMap = toMap; }
         std::vector<metronome::Traffic::Obstacle> getObstacleMap() const { return obstacleMap; }
-        std::size_t hash() const { return x ^ y << 16 ^ y >> 16; }
+
+        std::size_t obstacleHash() const {
+            std::size_t seed = obstacleMap.size();
+            for (auto& i : obstacleMap) {
+                seed ^= (i.getX() + i.getY() + i.getXVelocity() + i.getYVelocity()) + 0x9e3779b9 + (seed << 6) +
+                        (seed >> 2);
+            }
+            return seed;
+        }
+
+        std::size_t hash() const { return x ^ y ^ obstacleHash() << 16 ^ y ^ obstacleHash() >> 16; }
         bool operator==(const State& state) const { return x == state.x && y == state.y; }
         const std::string toString() const {
             std::string string("x: ");
@@ -411,9 +421,9 @@ private:
 
             int newXLocation = curObstacle.getX() + xVelocity;
             int newYLocation = curObstacle.getY() + yVelocity;
-            std::cout << "getX: " << curObstacle.getX() << " xVel: " << xVelocity << std::endl;
-            std::cout << "getY: " << curObstacle.getY() << " yVel: " << yVelocity << std::endl;
-            std::cout << "newXYLocation: (" << newXLocation << "," << newYLocation << ")" << std::endl;
+            //            std::cout << "getX: " << curObstacle.getX() << " xVel: " << xVelocity << std::endl;
+            //            std::cout << "getY: " << curObstacle.getY() << " yVel: " << yVelocity << std::endl;
+            //            std::cout << "newXYLocation: (" << newXLocation << "," << newYLocation << ")" << std::endl;
 
             if (newXLocation > width - 1 || newXLocation < 0) {
                 xVelocity *= -1;
@@ -429,7 +439,7 @@ private:
             }
 
             if (newXLocation != curObstacle.getX() || newYLocation != curObstacle.getY()) {
-                std::cout << "IT IN A NEW LOCAITON" << std::endl;
+                //                std::cout << "IT IN A NEW LOCAITON" << std::endl;
                 // check if any current obstacles have moved there
                 bool prevObstacles = false;
                 for (auto obstacle : newObstacles) {
@@ -549,7 +559,7 @@ private:
     unsigned int height;
     //    mutable std::vector<metronome::Location2D> obstacleIndices;
 
-//    mutable std::vector<std::vector<bool>> obstacles;
+    //    mutable std::vector<std::vector<bool>> obstacles;
     std::vector<std::vector<bool>> bunkers;
     State startLocation{};
     State goalLocation{};
