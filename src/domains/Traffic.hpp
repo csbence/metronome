@@ -126,23 +126,7 @@ public:
         std::size_t hash() const { return x ^ y ^ obstacleHash() << 16 ^ y ^ obstacleHash() >> 16; }
 
         bool operator==(const State& state) const {
-            bool found = false;
-            bool obstacles = true;
-            for (Obstacle obstacle : state.obstacleMap) {
-                for (Obstacle otherObstacle : obstacleMap) {
-                    if (obstacle == otherObstacle) {
-                        found = true;
-                    }
-                    if (found) {
-                        found = false;
-                        break;
-                    }
-                    if (obstacle != otherObstacle) {
-                        obstacles = false;
-                    }
-                }
-            }
-            return x == state.x && y == state.y && obstacles;
+            return x == state.x && y == state.y && obstacleMap == state.getObstacleMap();
         }
 
         const std::string toString() const {
@@ -201,17 +185,11 @@ public:
         std::stringstream convertHeight(line);
         convertHeight >> height;
 
-        //        obstacles = std::vector<std::vector<bool>>{width, std::vector<bool>(height)};
         bunkers = std::vector<std::vector<bool>>{width, std::vector<bool>(height)};
-        //        originalObstacles = std::vector<std::vector<bool>>{width, std::vector<bool>(height)};
-        //        generatedObstacles = std::vector<std::vector<Obstacle>>{width, std::vector<Obstacle>(height)};
 
         for (auto i = 0; i < width; ++i) {
             for (auto j = 0; j < height; ++j) {
-                //                obstacles[i][j] = false;
                 bunkers[i][j] = false;
-                //                originalObstacles[i][j] = false;
-                //                generatedObstacles[i][j] = Obstacle::createObstacle(-1, -1, 0, 0);
             }
         }
 
@@ -230,12 +208,6 @@ public:
                 } else if (*it == '*') { // find the goal location
                     tempGoalState = State(currentWidth, currentHeight, std::vector<Obstacle>{});
                 } else if (*it == '#') { // store the objects
-                    //                    addObstacle(currentWidth, currentHeight, obstacleIndex);
-                    //                    obstacleIndices.push_back(metronome::Location2D(currentWidth, currentHeight));
-                    //                    originalObstacleIndices.push_back(metronome::Location2D(currentWidth,
-                    //                    currentHeight));
-                    //                    originalObstacles[currentWidth][currentHeight] = true;
-                    //                    obstacles[currentWidth][currentHeight] = true;
                     startObstacles.push_back(Obstacle(currentWidth, currentHeight, 1, 0));
                     obstacleIndex++;
                 } else if (*it == '$') {
@@ -293,26 +265,6 @@ public:
         }
         display << "\n";
     }
-    //
-    //    void addObstacle(int x, int y, int index) const {
-    //        if (generatedObstacles[x][y].isEmpty()) {
-    //            int flip = (std::rand() % 2) + 1;
-    //            flip = 0;
-    //            int xVelocity = -1;
-    //            int yVelocity = 0;
-    //            if (flip == 1) {
-    //                xVelocity = 0; // std::rand() % MAX_VELOCITY;
-    //                yVelocity = 1; // std::rand() % MAX_VELOCITY;
-    //            }
-    //            Obstacle addObstacle = Obstacle{x, y, xVelocity, yVelocity, index};
-    //            generatedObstacles[x][y] = addObstacle;
-    //        } else {
-    //            int xVelocity = generatedObstacles[x][y].getXVelocity();
-    //            int yVelocity = generatedObstacles[x][y].getYVelocity();
-    //            Obstacle addObstacle = Obstacle{x, y, xVelocity, yVelocity, index};
-    //            generatedObstacles[x][y] = addObstacle;
-    //        }
-    //    }
 
     boost::optional<State> transition(const State& state, const Action& action) const {
         std::vector<metronome::Traffic::Obstacle> obstacleMap = moveObstacles(state);
@@ -363,29 +315,12 @@ public:
     }
 
     std::vector<SuccessorBundle<Traffic>> successors(State state) const {
-        // load in the current state of the obstacles
-        //        obstacles.clear();
-        //        for (auto obstacle : state.getObstacleMap()) {
-        //            obstacles[obstacle.getX()][obstacle.getY()] = true;
-        //        }
-        // now we are using the correct obstacle locations for the
-        // current state we need to expand
-
-        // generate successors as normal
         std::vector<SuccessorBundle<Traffic>> successors;
 
         unsigned int actions[] = {5, 4, 3, 2, 1};
 
         for (auto a : actions) {
             boost::optional<State> newState = transition(state, Action(a));
-            //            std::cout << "newState: " << newState.getX() << "," << newState.getY() << std::endl;
-            //            std::cout << obstacles[newState.getX()][newState.getY()] << std::endl;
-            //            for (int i = 0; i < width; ++i) {
-            //                for (int j = 0; j < height; ++j) {
-            //                    std::cout << obstacles[i][j] << "\t";
-            //                }
-            //                std::cout << std::endl;
-            //            }
             if (newState.is_initialized()) {
                 if (!isObstacle(newState.get(), newState.get().getX(), newState.get().getY())) {
                     successors.push_back(SuccessorBundle<Traffic>{newState.get(), a, actionDuration});
@@ -394,13 +329,6 @@ public:
                 //
             }
         }
-        //        visualize(std::cout);
-        //        std::cout << "successor bundle:\n" << std::endl;
-        //        for (auto state : successors) {
-        //            std::cout << "\tstate: " << state.state.getX() << "," << state.state.getY() << std::endl;
-        //            std::cout << "\taction: " << state.action.toChar() << std::endl;
-        //            std::cout << "\tcost: " << state.actionCost << std::endl;
-        //        }
         return successors;
     }
 
@@ -430,11 +358,6 @@ public:
 
 private:
     std::vector<metronome::Traffic::Obstacle> moveObstacles(const State& toMove) const {
-        // load the current state of the obstacles
-        //        obstacles.clear();
-        //        for (auto obstacle : toMove.getObstacleMap()) {
-        //            obstacles[obstacle.getX()][obstacle.getY()] = true;
-        //        }
         // calculate where the new obstacles are going
         std::vector<metronome::Traffic::Obstacle> newObstacles;
         for (metronome::Traffic::Obstacle curObstacle : toMove.getObstacleMap()) {
@@ -443,9 +366,6 @@ private:
 
             int newXLocation = curObstacle.getX() + xVelocity;
             int newYLocation = curObstacle.getY() + yVelocity;
-            //            std::cout << "getX: " << curObstacle.getX() << " xVel: " << xVelocity << std::endl;
-            //            std::cout << "getY: " << curObstacle.getY() << " yVel: " << yVelocity << std::endl;
-            //            std::cout << "newXYLocation: (" << newXLocation << "," << newYLocation << ")" << std::endl;
 
             if (newXLocation > width - 1 || newXLocation < 0) {
                 xVelocity *= -1;
@@ -461,7 +381,6 @@ private:
             }
 
             if (newXLocation != curObstacle.getX() || newYLocation != curObstacle.getY()) {
-                //                std::cout << "IT IN A NEW LOCAITON" << std::endl;
                 // check if any current obstacles have moved there
                 bool prevObstacles = false;
                 for (auto obstacle : newObstacles) {
@@ -475,83 +394,12 @@ private:
                     yVelocity *= -1;
                     newXLocation = curObstacle.getX(); // + xVelocity;
                     newYLocation = curObstacle.getY(); // + yVelocity;
-                    //                    std::cout << "ITS COLLIDED WITH SOMETHING" << std::endl;
 
-                    // add logic for obstacle precedence when obstacles[newXLocation][newYLocation] is true
                 }
             }
 
             Obstacle newObstacle = Obstacle{newXLocation, newYLocation, xVelocity, yVelocity};
             newObstacles.push_back(newObstacle);
-            //            std::cout << newXLocation << "." << newYLocation << ":" << xVelocity << "." << yVelocity <<
-            //            std::endl;
-            //            if (obstacles[newXLocation][newYLocation]) {
-            //                if (newXLocation < width - 1) {
-            //                    if (!obstacles[newXLocation + 1][newYLocation]) {
-            //                        newXLocation += 1;
-            //                    }
-            //                } else if (newXLocation > 0) {
-            //                    if (!obstacles[newXLocation - 1][newYLocation]) {
-            //                        newXLocation -= 1;
-            //                    }
-            //                } else if (newYLocation < height - 1) {
-            //                    if (!obstacles[newXLocation][newYLocation + 1]) {
-            //                        newYLocation += 1;
-            //                    }
-            //                } else if (newYLocation > 0) {
-            //                    if (!obstacles[newXLocation][newYLocation - 1]) {
-            //                        newYLocation -= 1;
-            //                    }
-            //                } else {
-            //                     can not move this block set velocity to zero?
-            //                     or just place it back where it came from
-            //                    newXLocation = curObstacle.getX();
-            //                    newYLocation = curObstacle.getY();
-            //                }
-            //            }
-
-            //            if (newXLocation > width - 1) {
-            //                xVelocity *= -1;
-            //                newXLocation = curObstacle.getX(); // + xVelocity;
-            //            }
-            //            if (newYLocation > height - 1) {
-            //                yVelocity *= -1;
-            //                newYLocation = curObstacle.getY(); // + yVelocity;
-            //            }
-
-            //            std::cout << "new loc: (" << newXLocation << "," << newYLocation << ")" << std::endl;
-            // update the obstacle bit
-            // old location off
-            //            bool stillMoreObstacles = false;
-            //
-            //            for(auto a : obstacleIndices) {
-            //                int counts = 0;
-            //                if(curObstacle.getX() == a.x && curObstacle.getY() == a.y) {
-            //                   ++counts;
-            //                }
-            //                if(counts > 2) {
-            //                    stillMoreObstacles = true;
-            //                }
-            //            }
-
-            //            if (!stillMoreObstacles) {
-            //            obstacles[curObstacle.getX()][curObstacle.getY()] = false;
-            // new location on
-            //            }
-            //            std::cout << "?" << std::endl;
-            //            obstacles[newXLocation][newYLocation] = true;
-
-            //            std::cout << "?" << std::endl;
-            // update the generatedObstacles
-            // old location is now default Obstacle object
-            //            if(!stillMoreObstacles) {
-            //            generatedObstacles[curObstacle.getX()][curObstacle.getY()] = Obstacle{};
-            //            }
-            //            std::cout << "(X,Y): (" << newXLocation << "," << newYLocation << ") (xV,yV): (" << xVelocity
-            //            << ","
-            //                      << yVelocity << ")" << std::endl;
-            //            generatedObstacles[newXLocation][newYLocation] =
-            //                    Obstacle{newXLocation, newYLocation, xVelocity, yVelocity, index};
         }
 
         return newObstacles;
@@ -579,13 +427,9 @@ private:
     std::time_t randomSeed{1};
     unsigned int width;
     unsigned int height;
-    //    mutable std::vector<metronome::Location2D> obstacleIndices;
-
-    //    mutable std::vector<std::vector<bool>> obstacles;
     std::vector<std::vector<bool>> bunkers;
     State startLocation{};
     State goalLocation{};
-    //    mutable std::vector<std::vector<Obstacle>> generatedObstacles;
 };
 
 std::ostream& operator<<(std::ostream& stream, const Traffic::Action& action) {
