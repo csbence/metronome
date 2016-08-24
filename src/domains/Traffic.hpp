@@ -74,6 +74,10 @@ public:
                     yVelocity == obstacle.yVelocity;
         }
 
+        bool operator!=(const Obstacle& obstacle) const {
+            return !(*this == obstacle);
+        }
+
         bool isEmpty() { return x == -1 && y == -1; }
 
         friend std::ostream& operator<<(std::ostream& stream, const Traffic::Obstacle& obstacle) {
@@ -122,13 +126,23 @@ public:
         }
 
         std::size_t hash() const { return x ^ y ^ obstacleHash() << 16 ^ y ^ obstacleHash() >> 16; }
-        bool operator==(const State& state) const { return x == state.x && y == state.y; }
+
+        bool operator==(const State& state) const {
+            bool obstacles = true;
+            for(Obstacle obstacle : state.obstacleMap) {
+                for(Obstacle otherObstacle : obstacleMap) {
+                    if(obstacle != otherObstacle) { obstacles = false; }
+                }
+            }
+            return x == state.x && y == state.y && obstacles;
+        }
+        
         const std::string toString() const {
             std::string string("x: ");
             return string + std::to_string(x) + " y: " + std::to_string(y);
         }
 
-        bool operator!=(const State& state) const { return x != state.x || y != state.y; }
+        bool operator!=(const State& state) const { return !(*this == state); }
 
     private:
         unsigned int x;
