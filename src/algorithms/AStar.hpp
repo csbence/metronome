@@ -2,9 +2,12 @@
 #define METRONOME_ASTAR_HPP
 #define BOOST_POOL_NO_MT
 
+#include <easylogging++.h>
 #include <boost/pool/object_pool.hpp>
+#include <domains/Traffic.hpp>
 #include <unordered_map>
 #include <utils/PriorityQueue.hpp>
+#include <utils/Visualizer.hpp>
 #include <vector>
 #include "OfflinePlanner.hpp"
 #include "Planner.hpp"
@@ -45,13 +48,13 @@ public:
         while (!openList.isEmpty()) {
             Planner::incrementExpandedNodeCount();
             Node* currentNode = openList.pop();
-//            LOG_EVERY_N(100000, INFO) << "\nFrom: " << currentNode->toString();
+            //            LOG_EVERY_N(100000, INFO) << "\nFrom: " << currentNode->toString();
 
             if (domain.isGoal(currentNode->state)) {
                 std::vector<Action> actions;
                 // Goal is reached
 
-                while (startState != currentNode->state) {
+                while (startState != currentNode->state ) {
                     actions.push_back(currentNode->action);
                     currentNode = currentNode->parent;
                 }
@@ -61,6 +64,7 @@ public:
             }
 
             for (auto successor : domain.successors(currentNode->state)) {
+                //                LOG(INFO) << "successor" << successor << std::endl;
                 if (successor.state == currentNode->state) {
                     continue; // Skip parent TODO this might be unnecessary
                 }
@@ -79,7 +83,7 @@ public:
                             newCost + domain.heuristic(successor.state));
 
                     successorNode = nodePool.construct(std::move(tempSuccessorNode));
-                    //                    LOG(INFO) << "addToOpen(NEW): " + successorNode->toString();
+//                            LOG(INFO) << "addToOpen(NEW): " + successorNode->toString();
                     openList.push(*successorNode);
                 } else if (successorNode->g > newCost) {
                     // Better path found to an existing state
@@ -93,7 +97,7 @@ public:
                     // The new path is not better than the existing
                 }
 
-//                LOG(INFO) << "\n\tSuccessor: " << successorNode->toString();
+                //                LOG(INFO) << "\n\tSuccessor: " << successorNode->toString();
             }
         }
 
@@ -104,16 +108,13 @@ private:
     class Node {
     public:
         Node(Node* parent, const State state, Action action, Cost g, Cost f)
-                : parent{parent}, state{state}, action{std::move(action)}, g{g}, f{f} {
-        }
+                : parent{parent}, state{state}, action{std::move(action)}, g{g}, f{f} {}
 
-        unsigned long hash() const {
-            return state->hash();
-        }
+        unsigned long hash() const { return state->hash(); }
 
         std::string toString() const {
             std::ostringstream stream;
-            stream << "s: " << state << " g: " << g <<  " h: " << f - g << " f: " << f << " a: " << action << " p: ";
+            stream << "s: " << state << " g: " << g << " h: " << f - g << " f: " << f << " a: " << action << " p: ";
             if (parent == nullptr) {
                 stream << "None";
             } else {
@@ -122,9 +123,7 @@ private:
             return stream.str();
         }
 
-        bool operator==(const Node& node) const {
-            return state == node.state;
-        }
+        bool operator==(const Node& node) const { return state == node.state; }
 
         mutable unsigned int index{std::numeric_limits<unsigned int>::max()};
         Node* parent;
