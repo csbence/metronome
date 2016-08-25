@@ -5,6 +5,8 @@ import subprocess
 import numpy as np
 from subprocess import Popen, PIPE
 
+import sys
+
 
 def execute_metronome(executable, resources, configuration, timeout):
     nice = "nice -n 20"
@@ -29,6 +31,8 @@ def execute_metronome(executable, resources, configuration, timeout):
 
     print("Parsed result: \n")
     print(result)
+
+    sys.stdout.flush()
     return result["goalAchievementTime"]
 
 
