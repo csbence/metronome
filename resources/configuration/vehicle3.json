@@ -1,0 +1,9 @@
+{
+  "timeLimit": 150000000000,
+  "domainPath": "/input/vacuum/larges.vw",
+  "domainInstanceName": "Manual test instance",
+  "actionDuration": 6000000,
+  "domainName": "TRAFFIC",
+  "terminationType": "time",
+  "algorithmName": "A_STAR"
+}

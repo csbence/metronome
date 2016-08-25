@@ -22,15 +22,15 @@ public:
 
         for (auto& action : actions) {
             actionStrings.emplace_back(action.toString());
-//            auto candidateState = domain.transition(currentState, action);
-//            if(!candidateState.is_initialized()){
-//                throw MetronomeException("Invalid path.");
-//            }
-//            currentState = candidateState.get();
+            auto candidateState = domain.transition(currentState, action);
+            if(!candidateState.is_initialized()){
+                throw MetronomeException("Invalid path.");
+            }
+            currentState = candidateState.get();
         }
-//        if (!domain.isGoal(currentState)) {
-//            throw MetronomeException("Goal is not reached!");
-//        }
+        if (!domain.isGoal(currentState)) {
+            throw MetronomeException("Goal is not reached!");
+        }
         return Result(configuration,
                 planner.getExpandedNodeCount(),
                 planner.getGeneratedNodeCount(),

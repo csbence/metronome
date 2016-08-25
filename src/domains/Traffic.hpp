@@ -289,7 +289,7 @@ public:
             if (isLegalLocation(newState)) {
                 return boost::make_optional(newState);
             }
-        } else if (action.toChar() == '0' && bunkers[state.getX()][state.getY()]) {
+        } else if (action.toChar() == '0' /*&& bunkers[state.getX()][state.getY()]*/) {
             State newState = State(state.getX(), state.getY(), obstacleMap);
             if (isLegalLocation(newState)) {
                 return boost::make_optional(newState);
