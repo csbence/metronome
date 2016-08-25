@@ -5,30 +5,39 @@ import subprocess
 import numpy as np
 from subprocess import Popen, PIPE
 
+import sys
+
 
 def execute_metronome(executable, resources, configuration, timeout):
     nice = "nice -n 20"
-    proc = Popen(" ".join([nice, executable, resources]), stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
+    # proc = Popen(" ".join([nice, executable, resources]), stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
+
 
     try:
-        outs, errs = proc.communicate(input=configuration.encode(), timeout=timeout)
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        outs, errs = proc.communicate()
+        print("Start to execute metronome.")
+        result = subprocess.run(" ".join([nice, executable, resources]), input=configuration.encode(),
+                                timeout=timeout, check=False, stdout=PIPE, stderr=PIPE, shell=True)
+
+        stdout, stderr = result.stdout, result.stderr
+        print("Metronome output: ")
+        print(result.stdout.decode())
+        print(result.stderr.decode())
+        print("Finish execution")
+        sys.stdout.flush()
+    except subprocess.TimeoutExpired as e:
+        # stdout, stderr = e.stdout, result.stderr
         print("Experiment timed out")
+        sys.stdout.flush()
         return 0
 
-    print("Metronome output: ")
-    print(outs.decode())
-    print(errs.decode())
-
-    raw_result = outs.decode().split("Result:", 2)[1]
+    raw_result = stdout.decode().split("Result:", 2)[1]
     result = json.loads(raw_result)
 
     print("Parsed result: \n")
     print(result)
-    return result["goalAchievementTime"]
 
+    sys.stdout.flush()
+    return result["goalAchievementTime"]
 
 def run_experiments():
     path = "../build/release/Metronome"
@@ -47,13 +56,23 @@ def run_experiments():
     for i in range(1, 10):
         gat.append(execute_metronome(path, resources, configuration.format(i), timeout=60))
 
+        successful = [x for x in gat if x != 0]
+        failed_count = len(gat) - len(successful)
+        succeeded_count = len(successful)
+
+        print("Iteration: " + str(i))
+        print("GATs: " + str(gat))
+        print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
+        print("Avg of successful:{}".format(np.mean(successful) / 1000000000))
+
     successful = [x for x in gat if x != 0]
     failed_count = len(gat) - len(successful)
     succeeded_count = len(successful)
 
+    print("Experiment completed!")
     print("GATs: " + str(gat))
     print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
-    print("Avg of successful:{}".format(np.mean(successful)) / 1000000000)
+    print("Avg of successful:{}".format(np.mean(successful) / 1000000000))
 
 
 def main():
