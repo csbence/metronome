@@ -53,10 +53,20 @@ def run_experiments():
     for i in range(1, 10):
         gat.append(execute_metronome(path, resources, configuration.format(i), timeout=60))
 
+        successful = [x for x in gat if x != 0]
+        failed_count = len(gat) - len(successful)
+        succeeded_count = len(successful)
+
+        print("Iteration: " + i)
+        print("GATs: " + str(gat))
+        print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
+        print("Avg of successful:{}".format(np.mean(successful) / 1000000000))
+
     successful = [x for x in gat if x != 0]
     failed_count = len(gat) - len(successful)
     succeeded_count = len(successful)
 
+    print("Experiment completed!")
     print("GATs: " + str(gat))
     print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
     print("Avg of successful:{}".format(np.mean(successful) / 1000000000))
