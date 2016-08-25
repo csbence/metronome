@@ -11,11 +11,13 @@ def execute_metronome(executable, resources, configuration, timeout):
     proc = Popen(" ".join([nice, executable, resources]), stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
 
     try:
+        print("Start to communication with Metronome.")
         outs, errs = proc.communicate(input=configuration.encode(), timeout=timeout)
+        print("Stop to communication with Metronome.")
     except subprocess.TimeoutExpired:
+        print("Experiment timed out")
         proc.kill()
         outs, errs = proc.communicate()
-        print("Experiment timed out")
         return 0
 
     print("Metronome output: ")
