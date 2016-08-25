@@ -245,9 +245,8 @@ private:
     }
 
     Node* popOpenList() {
-        // TODO check if open is empty end throw goal not reachable if yes
         if (openList.isEmpty()) {
-            throw MetronomeException("Open list was empty.");
+            throw MetronomeException("Open list was empty, goal not reachable.");
         }
 
         Node* node = openList.pop();
