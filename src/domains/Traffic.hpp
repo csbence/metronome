@@ -38,6 +38,15 @@ public:
                 return '~';
             }
         }
+
+        static unsigned int toValue(const char* action) {
+            if(*action == 'N') { return 1;}
+            else if(*action == 'E') { return 2;}
+            else if(*action == 'S') { return 3;}
+            else if(*action == 'W') { return 4;}
+            else if(*action == '0') {return 5;}
+            else {return 0;}
+        }
         const std::string toString() const {
             std::string s;
             s.push_back(toChar());
@@ -52,9 +61,7 @@ public:
     public:
         Obstacle(int x, int y, int xVelocity, int yVelocity) : x{x}, y{y}, xVelocity{xVelocity}, yVelocity{yVelocity} {}
         Obstacle() : x{-1}, y{-1}, xVelocity{0}, yVelocity{0} {}
-        //        static Obstacle createObstacle(int x, int y, int xVelocity, int yVelocity) {
-        //            return Obstacle(x, y, xVelocity, yVelocity);
-        //        }
+        Obstacle(int x, int y) : x{x}, y{y}, xVelocity{0}, yVelocity{0} {}
         Obstacle& operator=(Obstacle toCopy) {
             swap(*this, toCopy);
             return *this;
@@ -73,7 +80,10 @@ public:
             return x == obstacle.x && y == obstacle.y && xVelocity == obstacle.xVelocity &&
                     yVelocity == obstacle.yVelocity;
         }
-
+        void setVelocity(int newXVelocity, int newYVelocity) {
+            xVelocity = newXVelocity;
+            yVelocity = newYVelocity;
+        }
         bool operator!=(const Obstacle& obstacle) const { return !(*this == obstacle); }
 
         bool isEmpty() { return x == -1 && y == -1; }
@@ -208,7 +218,19 @@ public:
                 } else if (*it == '*') { // find the goal location
                     tempGoalState = State(currentWidth, currentHeight, std::vector<Obstacle>{});
                 } else if (*it == '#') { // store the objects
-                    startObstacles.push_back(Obstacle(currentWidth, currentHeight, 1, 0));
+                    int flip = std::rand() % 4;
+                    Obstacle candidateObstacle(currentWidth, currentHeight);
+                    if (flip == 0) {
+                        candidateObstacle.setVelocity(1, 0);
+                    } else if (flip == 1) {
+                        candidateObstacle.setVelocity(0, 1);
+                    } else if (flip == 2) {
+                        candidateObstacle.setVelocity(-1, 0);
+                    } else {
+                        candidateObstacle.setVelocity(0, -1);
+                    }
+                    //                    startObstacles.push_back(Obstacle(currentWidth, currentHeight, 1, 0));
+                    startObstacles.push_back(candidateObstacle);
                     obstacleIndex++;
                 } else if (*it == '$') {
                     bunkers[currentWidth][currentHeight] = true;
@@ -344,7 +366,13 @@ public:
 
     const State& getStartState() const { return startLocation; }
     const State& getGoalState() const { return goalLocation; }
-    const State& getStartLocation() const { return startLocation; }
+
+    bool safetyPredicate(const State& state) {
+        if (bunkers[state.getX()][state.getY()]) {
+            return true;
+        }
+        return false;
+    }
 
     Cost heuristic(const State& state) const { return distance(state) * actionDuration; }
 
@@ -394,7 +422,6 @@ private:
                     yVelocity *= -1;
                     newXLocation = curObstacle.getX(); // + xVelocity;
                     newYLocation = curObstacle.getY(); // + yVelocity;
-
                 }
             }
 
