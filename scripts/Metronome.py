@@ -55,7 +55,7 @@ def run_experiments():
 
     print("GATs: " + str(gat))
     print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
-    print("Avg of successful:{}".format(np.mean(successful)) / 1000000000)
+    print("Avg of successful:{}".format(np.mean(successful) / 1000000000))
 
 
 def main():
