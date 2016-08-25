@@ -2,9 +2,9 @@
 #include "rapidjson/document.h"
 //#include "rapidjson/stringbuffer.h"
 //#include "rapidjson/writer.h"
-#include "rapidjson/istreamwrapper.h"
 #include "experiment/ConfigurationExecutor.hpp"
 #include "rapidjson/filereadstream.h"
+#include "rapidjson/istreamwrapper.h"
 #include "utils/File.hpp"
 
 //#include <iostream>
@@ -55,20 +55,17 @@ int main(int argc, char** argv) {
         document.ParseStream(streamWrapper);
     }
 
-
     //    getchar(); // Wait for keypress
 
-    const Result result =
-            ConfigurationExecutor::executeConfiguration(Configuration(std::move(document)), resourceDir);
+    const Result result = ConfigurationExecutor::executeConfiguration(Configuration(std::move(document)), resourceDir);
 
     LOG(INFO) << "Execution completed in " << result.planningTime / 1000000 << "ms";
     LOG(INFO) << "Path length: " << result.pathLength;
     LOG(INFO) << "Nodes :: expanded: " << result.expandedNodes << " generated: " << result.generatedNodes;
 
-            for (auto action : result.actions) {
-                LOG(INFO) << action;
-            }
-
+    //            for (auto action : result.actions) {
+    //                LOG(INFO) << action;
+    //            }
 
     std::cout << "\n\nResult:" << std::endl;
     std::cout << result.getJsonString();
@@ -90,4 +87,3 @@ void printSplashScreen() {
     std::cout << "---- Metronome  ----" << std::endl;
     std::cout << " When time matters!" << std::endl << std::endl;
 }
-

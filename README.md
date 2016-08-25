@@ -2,6 +2,13 @@
 
 Real time search library implemented in C++
 
+# Requirements
+
+* Clang 3.8
+* Cmake
+* Python 3.5 + NumPy
+
+
 # features
 
 Search domains including VaccumWorld, Traffic, TestDomain
