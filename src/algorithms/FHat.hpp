@@ -8,20 +8,19 @@
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
 #include "experiment/Configuration.hpp"
-#include "experiment/termination/TimeTerminationChecker.hpp"
 #include "utils/Hasher.hpp"
 #include "utils/PriorityQueue.hpp"
 #define BOOST_POOL_NO_MT
 
 namespace metronome {
 
-template <typename Domain>
-class FHat final : public OnlinePlanner<Domain> {
+template <typename Domain, typename TerminationChecker>
+class FHat final : public OnlinePlanner<Domain, TerminationChecker> {
 public:
     typedef typename Domain::State State;
     typedef typename Domain::Action Action;
     typedef typename Domain::Cost Cost;
-    typedef typename OnlinePlanner<Domain>::ActionBundle ActionBundle;
+    typedef typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle ActionBundle;
 
     FHat(const Domain& domain, const Configuration&) : domain{domain} {
         // Force the object pool to allocate memory
@@ -34,8 +33,7 @@ public:
         nodes.reserve(100000000);
     }
 
-    std::vector<ActionBundle> selectActions(const State& startState,
-            const TimeTerminationChecker& terminationChecker) override {
+    std::vector<ActionBundle> selectActions(const State& startState, TerminationChecker& terminationChecker) override {
         if (domain.isGoal(startState)) {
             // Goal is already reached
             return std::vector<ActionBundle>();
@@ -136,7 +134,7 @@ private:
         const Cost actionCost;
     };
 
-    void learn(TimeTerminationChecker terminationChecker) {
+    void learn(TerminationChecker& terminationChecker) {
         ++iterationCounter;
 
         // Reorder the open list based on the heuristic values
@@ -178,7 +176,7 @@ private:
         }
     }
 
-    Node* explore(const State& startState, const TimeTerminationChecker terminationChecker) {
+    Node* explore(const State& startState, TerminationChecker& terminationChecker) {
         ++iterationCounter;
         clearOpenList();
         openList.reorder(fHatComparator);
@@ -205,6 +203,7 @@ private:
         nextDistanceError = 0;
 
         while (!terminationChecker.reachedTermination() && !domain.isGoal(currentNode->state)) {
+            terminationChecker.notifyExpansion();
             currentNode = popOpenList();
             expandNode(currentNode);
         }
@@ -242,9 +241,9 @@ private:
             successorNode->predecessors.emplace_back(sourceNode, successor.action, successor.actionCost);
 
             // Skip if we got back to the parent
-            //            if (sourceNode->parent != nullptr && successorState == sourceNode->parent->state) {
-            //                continue;
-            //            }
+            if (sourceNode->parent != nullptr && successorState == sourceNode->parent->state) {
+                continue;
+            }
 
             // only generate those state that are not visited yet or whose cost value are lower than this path
             Cost successorGValueFromCurrent{sourceNode->g + successor.actionCost};

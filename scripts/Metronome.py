@@ -39,6 +39,7 @@ def execute_metronome(executable, resources, configuration, timeout):
     sys.stdout.flush()
     return result["goalAchievementTime"]
 
+
 def run_experiments():
     path = "../build/release/Metronome"
     resources = "../resources"

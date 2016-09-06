@@ -31,7 +31,8 @@ set(SOURCE_FILES
         src/experiment/Result.hpp
         src/experiment/ConfigurationExecutor.hpp
         src/MetronomeException.hpp
-        src/utils/File.hpp)
+        src/utils/File.hpp
+        src/experiment/termination/ExpansionTerminationChecker.hpp)
 
 set(TEST_FILES
         test/test.cpp

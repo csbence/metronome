@@ -7,23 +7,31 @@ namespace metronome {
 
 class TimeTerminationChecker {
 public:
-    void resetTo(std::chrono::nanoseconds timeLimit) {
-        this->timeLimit = timeLimit;
+    void resetTo(long long timeLimit) {
+        this->timeLimit = static_cast<std::chrono::nanoseconds>(timeLimit);
         startTime = std::chrono::high_resolution_clock::now();
+        expansionCount = 0;
     }
 
-    bool reachedTermination() const {
+    bool reachedTermination() const { return getEllapsedTime() >= timeLimit; };
+
+    void notifyExpansion() { ++expansionCount; }
+
+    unsigned int expansionsPerAction(unsigned long long actionDuration) {
+        return static_cast<unsigned int>(expansionCount * actionDuration / getEllapsedTime().count());
+    }
+
+private:
+    std::chrono::nanoseconds getEllapsedTime() const {
         std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::nanoseconds> currentTime =
                 std::chrono::high_resolution_clock::now();
 
-        std::chrono::nanoseconds ellapsedTime = currentTime - startTime;
-
-        return ellapsedTime >= timeLimit;
+        return currentTime - startTime;
     };
 
-private:
     std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::nanoseconds> startTime;
     std::chrono::nanoseconds timeLimit{0};
+    unsigned int expansionCount{0};
 };
 }
 

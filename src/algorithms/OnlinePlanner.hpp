@@ -6,7 +6,7 @@
 #include "experiment/termination/TimeTerminationChecker.hpp"
 namespace metronome {
 
-template <typename Domain>
+template <typename Domain, typename TerminationChecker>
 class OnlinePlanner : public Planner {
 public:
     class ActionBundle final {
@@ -21,7 +21,7 @@ public:
     virtual ~OnlinePlanner() = default;
 
     virtual std::vector<ActionBundle> selectActions(const typename Domain::State& startState,
-            const TimeTerminationChecker& terminationChecker) = 0;
+            TerminationChecker& terminationChecker) = 0;
 
 };
 }

@@ -4,12 +4,11 @@
 #include <chrono>
 #include <boost/optional.hpp>
 #include "MetronomeException.hpp"
-#include "experiment/termination/TimeTerminationChecker.hpp"
 #include "PlanManager.hpp"
 #include "utils/TimeMeasurement.hpp"
 
 namespace metronome {
-template <typename Domain, typename Planner>
+template <typename Domain, typename Planner, typename TerminationChecker>
 class RealTimePlanManager : PlanManager<Domain, Planner> {
 public:
     Result plan(const Configuration& configuration, const Domain& domain, Planner& planner) {
@@ -20,14 +19,14 @@ public:
         const auto actionDuration = configuration.getLong(ACTION_DURATION);
         auto currentState = domain.getStartState();
 
-        TimeTerminationChecker terminationChecker;
+        TerminationChecker terminationChecker;
 
         long long int timeBound = actionDuration;
         long long int previousTimeBound;
 
         while (!domain.isGoal(currentState)) {
             auto planningIterationTime = measureNanoTime([&] {
-                terminationChecker.resetTo(nanoseconds(static_cast<nanoseconds>(timeBound)));
+                terminationChecker.resetTo(timeBound);
 
                 auto actionBundles{planner.selectActions(currentState, terminationChecker)};
 

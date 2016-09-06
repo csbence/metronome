@@ -10,7 +10,7 @@ static const std::string DOMAIN_NAME{"domainName"};
 static const std::string DOMAIN_PATH{"domainPath"};
 static const std::string DOMAIN_INSTANCE{"domainInstanceName"};
 static const std::string ALGORITHM_NAME{"algorithmName"};
-static const std::string TERMINATION_CHECKER_TYPE{"terminationCheckerType"};
+static const std::string TERMINATION_CHECKER_TYPE{"terminationType"};
 static const std::string ACTION_DURATION{"actionDuration"};
 static const std::string TIME_LIMIT{"timeLimit"};
 
@@ -21,6 +21,9 @@ static const std::string DOMAIN_TILES{"SLIDING_TILE_PUZZLE"};
 static const std::string ALGORITHM_A_STAR{"A_STAR"};
 static const std::string ALGORITHM_LSS_LRTA_STAR{"LSS_LRTA_STAR"};
 static const std::string ALGORITHM_F_HAT{"F_HAT"};
+static const std::string ALGORITHM_MO_RTS{"MO_RTS"};
+static const std::string TERMINATION_CHECKER_TIME{"TIME"};
+static const std::string TERMINATION_CHECKER_EXPANSION{"EXPANSION"};
 
 class Configuration {
 public:
