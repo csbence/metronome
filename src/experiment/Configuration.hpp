@@ -1,8 +1,8 @@
 #ifndef METRONOME_CONFIGURATION_HPP
 #define METRONOME_CONFIGURATION_HPP
 
-#include "rapidjson/document.h"
 #include "MetronomeException.hpp"
+#include "rapidjson/document.h"
 namespace metronome {
 
 static const std::string RAW_DOMAIN{"rawDomain"};
@@ -22,6 +22,7 @@ static const std::string ALGORITHM_A_STAR{"A_STAR"};
 static const std::string ALGORITHM_LSS_LRTA_STAR{"LSS_LRTA_STAR"};
 static const std::string ALGORITHM_F_HAT{"F_HAT"};
 static const std::string ALGORITHM_MO_RTS{"MO_RTS"};
+static const std::string ALGOIRHTM_SLSS_LRTA_STAR{"SLSS_LRTA_STAR"};
 static const std::string TERMINATION_CHECKER_TIME{"TIME"};
 static const std::string TERMINATION_CHECKER_EXPANSION{"EXPANSION"};
 

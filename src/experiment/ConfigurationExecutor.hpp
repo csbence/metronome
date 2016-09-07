@@ -5,8 +5,8 @@
 #include <rapidjson/document.h>
 #include <MetronomeException.hpp>
 #include <domains/Traffic.hpp>
-#include <string>
 #include <experiment/termination/ExpansionTerminationChecker.hpp>
+#include <string>
 #include "Configuration.hpp"
 #include "OfflinePlanManager.hpp"
 #include "RealTimePlanManager.hpp"
@@ -14,7 +14,8 @@
 #include "algorithms/AStar.hpp"
 #include "algorithms/FHat.hpp"
 #include "algorithms/LssLrtaStar.hpp"
-#include "algorithms/MoRts.hpp"
+#include "algorithms/SLssLrtaStar.hpp"
+//#include "algorithms/MoRts.hpp"
 #include "domains/GridWorld.hpp"
 //#include "domains/Traffic.hpp"
 #include "domains/SlidingTilePuzzle.hpp"
@@ -32,7 +33,7 @@ public:
         }
     }
 
-    template<typename Domain>
+    template <typename Domain>
     static Domain extractDomain(const Configuration& configuration, const std::string& resourcesDir) {
         return getDomain<Domain>(configuration, resourcesDir);
     }
@@ -62,9 +63,8 @@ private:
         }
     }
 
-    template<typename Domain>
+    template <typename Domain>
     static Result executeDomain(const Configuration& configuration, const std::string& resourcesDir) {
-
         if (!configuration.hasMember(DOMAIN_NAME)) {
             LOG(ERROR) << "Termination checker not found." << std::endl;
             return Result(configuration, "Missing: terminationCheckerType");
@@ -81,7 +81,7 @@ private:
         }
     }
 
-    template<typename Domain, typename TerminationChecker>
+    template <typename Domain, typename TerminationChecker>
     static Result executeDomain(const Configuration& configuration, const std::string& resourcesDir) {
         if (!(configuration.hasMember(RAW_DOMAIN) || configuration.hasMember(DOMAIN_PATH))) {
             LOG(ERROR) << "Domain not found. Raw domain or domain path must be provided." << std::endl;
@@ -101,21 +101,24 @@ private:
             return executeOfflinePlanner<Domain, AStar<Domain>>(configuration, domain);
         } else if (algorithmName == ALGORITHM_LSS_LRTA_STAR) {
             return executeRealTimePlanner<Domain, LssLrtaStar<Domain, TerminationChecker>, TerminationChecker>(
-                configuration,
-                domain);
+                    configuration, domain);
         } else if (algorithmName == ALGORITHM_F_HAT) {
-            return executeRealTimePlanner<Domain, FHat<Domain, TerminationChecker>, TerminationChecker>(configuration,
-                                                                                                        domain);
-        } else if (algorithmName == ALGORITHM_MO_RTS) {
-            return executeRealTimePlanner<Domain, MoRts<Domain, TerminationChecker>, TerminationChecker>(configuration,
-                                                                                                         domain);
+            return executeRealTimePlanner<Domain, FHat<Domain, TerminationChecker>, TerminationChecker>(
+                    configuration, domain);
+            //        } else if (algorithmName == ALGORITHM_MO_RTS) {
+            //            return executeRealTimePlanner<Domain, MoRts<Domain, TerminationChecker>,
+            //            TerminationChecker>(configuration,
+            //                                                                                                         domain);
+        } else if (algorithmName == ALGORITHM_LSS_LRTA_STAR) {
+            return executeRealTimePlanner<Domain, SLssLrtaStar<Domain, TerminationChecker>, ExpansionTerminationChecker>(
+                    configuration, domain);
         } else {
             LOG(ERROR) << "Unknown algorithms name: " << algorithmName << std::endl;
             return Result(configuration, "Unknown: algorithmName");
         }
     }
 
-    template<typename Domain>
+    template <typename Domain>
     static Domain getDomain(const Configuration& configuration, const std::string& resourcesDir) {
         if (configuration.hasMember(RAW_DOMAIN)) {
             std::string rawDomain{configuration.getString(RAW_DOMAIN)};
@@ -141,7 +144,7 @@ private:
         }
     }
 
-    template<typename Domain, typename Planner>
+    template <typename Domain, typename Planner>
     static Result executeOfflinePlanner(const Configuration& configuration, const Domain& domain) {
         Planner planner{domain, configuration};
 
@@ -151,7 +154,7 @@ private:
         return offlinePlanManager.plan(configuration, domain, planner);
     }
 
-    template<typename Domain, typename Planner, typename TerminationChecker>
+    template <typename Domain, typename Planner, typename TerminationChecker>
     static Result executeRealTimePlanner(const Configuration& configuration, const Domain& domain) {
         Planner planner{domain, configuration};
 

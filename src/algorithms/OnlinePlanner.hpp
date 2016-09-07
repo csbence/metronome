@@ -22,7 +22,8 @@ public:
 
     virtual std::vector<ActionBundle> selectActions(const typename Domain::State& startState,
             TerminationChecker& terminationChecker) = 0;
-
+    //virtual std::vector<ActionBundle> selectAction(const typename Domain::State& startState,
+    //        ExpansionTerminationChecker& terminationChecker) = 0;
 };
 }
 

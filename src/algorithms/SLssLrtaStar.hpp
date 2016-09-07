@@ -15,13 +15,13 @@
 
 namespace metronome {
 
-template <typename Domain>
-class SLssLrtaStar final : public OnlinePlanner<Domain> {
+template <typename Domain, typename TerminationChecker>
+class SLssLrtaStar final : public OnlinePlanner<Domain, TerminationChecker> {
 public:
     typedef typename Domain::State State;
     typedef typename Domain::Action Action;
     typedef typename Domain::Cost Cost;
-    typedef typename OnlinePlanner<Domain>::ActionBundle ActionBundle;
+    typedef typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle ActionBundle;
 
     SLssLrtaStar(const Domain& domain, const Configuration&) : domain{domain} {
         // Force the object pool to allocate memory
@@ -186,6 +186,7 @@ private:
 
     void expandNode(Node* sourceNode) {
         Planner::incrementExpandedNodeCount();
+
 
         for (auto successor : domain.successors(sourceNode->state)) {
             auto successorState = successor.state;
