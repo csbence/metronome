@@ -39,6 +39,14 @@ public:
             }
         }
 
+        bool operator==(const Action &rhs) const {
+            return value == rhs.value;
+        }
+
+        bool operator!=(const Action &rhs) const {
+            return !(rhs == *this);
+        }
+
         static unsigned int toValue(const char* action) {
             if(*action == 'N') { return 1;}
             else if(*action == 'E') { return 2;}
