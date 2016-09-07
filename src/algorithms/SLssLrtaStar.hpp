@@ -298,6 +298,7 @@ private:
         return 0;
     }
 
+    std::vector<Node*> safeNodes{100000000};
     const Domain& domain;
     PriorityQueue<Node> openList{100000000, fComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};

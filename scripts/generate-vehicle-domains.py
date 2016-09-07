@@ -8,6 +8,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("height", help="the height of the Vehicle world")
 parser.add_argument("width", help="the width of the Vehicle world")
+parser.add_argument("-p", "--path", help="path to save the worlds")
 parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
 parser.add_argument("-n", "--number", help="number of worlds to generate")
 
@@ -28,7 +29,10 @@ startY = 1
 endX = width
 endY = height
 
-path = "../resources/input/vehicle"
+path = args.path
+
+if type(path) == type(None):
+  path = "../resources/input/vehicle"
 
 for iteration in range(0,number):
 
@@ -54,6 +58,9 @@ for iteration in range(0,number):
       else:
         world += "_"
     world += "\n"
+
+  if args.verbose:
+    print(world)
     
   aFile.write(preamble + world)
 
