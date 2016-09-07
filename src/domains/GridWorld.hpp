@@ -29,6 +29,10 @@ public:
             return actions;
         }
 
+        bool operator==(const Action& rhs) const { return label == rhs.label; }
+
+        bool operator!=(const Action& rhs) const { return !(rhs == *this); }
+
         char toChar() const { return label; }
 
         std::string toString() const { return std::string{label}; }
@@ -50,7 +54,7 @@ public:
         /*Standard getters for the State(x,y)*/
         unsigned int getX() const { return x; }
         unsigned int getY() const { return y; }
-        std::size_t hash() const { return x ^ y << 16 ^     y >> 16; }
+        std::size_t hash() const { return x ^ y << 16 ^ y >> 16; }
         bool operator==(const State& state) const { return x == state.x && y == state.y; }
         bool operator!=(const State& state) const { return x != state.x || y != state.y; }
         State& operator=(State toCopy) {
@@ -239,9 +243,9 @@ public:
         display << "\n";
     }
 
-//    void animate(std::ostream& display, std::vector<Action> actions) const {
-//        // TODO
-//    }
+    //    void animate(std::ostream& display, std::vector<Action> actions) const {
+    //        // TODO
+    //    }
 
 private:
     void addValidSuccessor(std::vector<SuccessorBundle<GridWorld>>& successors,

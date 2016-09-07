@@ -17,7 +17,7 @@ public:
 
     void notifyExpansion() { ++expansionCount; }
 
-    unsigned int expansionsPerAction(unsigned long long actionDuration) {
+    unsigned int expansionsPerAction(unsigned long long actionDuration) const {
         return static_cast<unsigned int>(expansionCount * actionDuration / getEllapsedTime().count());
     }
 

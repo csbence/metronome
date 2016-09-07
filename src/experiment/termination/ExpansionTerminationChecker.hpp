@@ -21,7 +21,7 @@ public:
         ++expansionCount;
     }
 
-    unsigned int expansionsPerAction(unsigned long long actionDuration) {
+    unsigned int expansionsPerAction(unsigned long long actionDuration) const {
         return static_cast<unsigned int>(actionDuration);
     }
 

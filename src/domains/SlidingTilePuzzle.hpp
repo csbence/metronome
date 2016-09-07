@@ -30,6 +30,14 @@ public:
             return actions;
         }
 
+        bool operator==(const Action& rhs) const {
+            return label == rhs.label;
+        }
+        
+        bool operator!=(const Action& rhs) const {
+            return !(rhs == *this);
+        }
+
         char toChar() const { return label; }
 
         std::string toString() const { return std::string{1, label}; }

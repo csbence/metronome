@@ -44,7 +44,7 @@ public:
             learn(terminationChecker);
         }
 
-        auto bestNode = explore(startState, terminationChecker);
+        const auto bestNode = explore(startState, terminationChecker);
 
         return extractPath(bestNode, nodes[startState]);
     }
@@ -150,7 +150,7 @@ private:
         }
     }
 
-    Node* explore(const State& startState, TerminationChecker terminationChecker) {
+    const Node* explore(const State& startState, TerminationChecker terminationChecker) {
         ++iterationCounter;
         clearOpenList();
         openList.reorder(fComparator);
@@ -170,15 +170,18 @@ private:
         startNode->iteration = iterationCounter;
         addToOpenList(*startNode);
 
-        Node* currentNode = startNode;
+        while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
+            Node* const currentNode = popOpenList();
 
-        while (!terminationChecker.reachedTermination() && !domain.isGoal(currentNode->state)) {
+            if (domain.isGoal(currentNode->state)) {
+                return currentNode;
+            }
+
             terminationChecker.notifyExpansion();
-            currentNode = popOpenList();
             expandNode(currentNode);
         }
 
-        return currentNode; // todo this might be one step behind the best
+        return openList.top();
     }
 
     void expandNode(Node* sourceNode) {

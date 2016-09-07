@@ -10,6 +10,7 @@ set(SOURCE_FILES
         src/algorithms/AStar.hpp
         src/algorithms/LssLrtaStar.hpp
         src/algorithms/FHat.hpp
+        src/algorithms/MoRts.hpp
         src/algorithms/OfflinePlanner.hpp
         src/algorithms/OnlinePlanner.hpp
         src/algorithms/Planner.hpp
