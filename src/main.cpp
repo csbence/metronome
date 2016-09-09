@@ -9,6 +9,7 @@
 
 //#include <iostream>
 #include <cstdio>
+#include <utils/statistic.hpp>
 #define NDEBUG
 
 INITIALIZE_EASYLOGGINGPP
@@ -18,6 +19,8 @@ void printSplashScreen();
 int main(int argc, char** argv) {
     using namespace metronome;
     printSplashScreen();
+
+    Statistic::initialize();
 
     if (argc == 1) {
         std::cerr << "Resource path is not provided. :: arg: " << argv[0] << std::endl;
@@ -55,7 +58,7 @@ int main(int argc, char** argv) {
         document.ParseStream(streamWrapper);
     }
 
-    //    getchar(); // Wait for keypress
+//        getchar(); // Wait for keypress
 
     const Result result = ConfigurationExecutor::executeConfiguration(Configuration(std::move(document)), resourceDir);
 

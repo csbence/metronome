@@ -1,10 +1,13 @@
 #ifndef METRONOME_MO_RTS_HPP
 #define METRONOME_MO_RTS_HPP
 #include <fcntl.h>
+#include <stdlib.h>
+#include <algorithm>
 #include <boost/pool/object_pool.hpp>
 #include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
 #include <vector>
+#include <utils/statistic.hpp>
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
 #include "experiment/Configuration.hpp"
@@ -12,7 +15,7 @@
 #include "utils/PriorityQueue.hpp"
 #define BOOST_POOL_NO_MT
 
-#define PI 3.141592653589793
+//#define PI 3.141592653589793
 
 namespace metronome {
 
@@ -55,7 +58,17 @@ public:
         const auto bestNode = explore(startState, terminationChecker);
 
         // Apply meta-reasoning
-        identityIndicator = isBenefitialToSearch(bestNode, terminationChecker);
+
+        auto nano = measureNanoTime(
+                [&]() { identityIndicator = isBenefitialToSearch(nodes[startState], terminationChecker); });
+        static double avg{-1};
+        if (avg < 0) {
+            avg = nano;
+        } else {
+            avg = avg * 0.9 + nano * 0.1;
+        }
+
+        LOG_EVERY_N(1, INFO) << "Nano time: " << nano << " exp avg: " << avg;
 
         // Update error counters if the exploration step is done
         if (!identityIndicator) {
@@ -392,14 +405,12 @@ private:
             return false;
         }
 
-        // Todo get identity action duration
-
         // Calculate the expansion advance
-        unsigned int expectedExpansions = terminationChecker.expansionsPerAction();
+        unsigned int expectedExpansions = terminationChecker.expansionsPerAction(domain.getActionDuration());
 
         // Calculate the benefit
-        computeBenefit(sourceNode, alphaTargetNode, betaTargetNode, expectedExpansions);
-        //
+        double benefit = computeBenefit(sourceNode, alphaTargetNode, betaTargetNode, expectedExpansions);
+        //        LOG(INFO) << "Benefit: " << benefit;
 
         return false;
     }
@@ -408,7 +419,8 @@ private:
         long delay{1 + expansionCounter - target->generation};
         int count = 1;
 
-        for (Node* current = target->parent; current->generation > 0 && target != source; current = current->parent) {
+        for (Node* current = target->parent; current != nullptr && current->generation > 0 && target != source;
+                current = current->parent) {
             ++count;
             delay += current->expansion - current->generation;
         }
@@ -428,54 +440,77 @@ private:
         // Variance belief (eq. 2)
         // f difference between current and frontier node is the total error on the path divided by the length of the
         // path gives the per step error
-        double bvariance_alpha =
-                pow((source->f() - alpha->f()) / std::abs(alpha->depth - source->depth) * alpha->distance, 2);
-        double bvariance_beta =
-                pow((source->f() - beta->f()) / std::abs(beta->depth - source->depth) * beta->distance, 2);
+        double bvarianceAlpha = pow((source->f() - alpha->f()) / (alpha->depth - source->depth) * alpha->distance, 2);
+        double bvarianceBeta = pow((source->f() - beta->f()) / (beta->depth - source->depth) * beta->distance, 2);
 
         // Mean
-        double mu_alpha = alpha->f() + sqrt(bvariance_alpha);
-        double mu_beta = beta->f() + sqrt(bvariance_beta);
+        double mu_alpha = alpha->f() + sqrt(bvarianceAlpha);
+        double mu_beta = beta->f() + sqrt(bvarianceBeta);
 
         // Number of expansion predicted on the alpha/beta path towards the goal
-        double expansionAdvanceOnAlpha = std::min(alpha->distance, expansionAdvance / alphaDelay);
-        double expansionAdvanceOnBeta = std::min(beta->distance, expansionAdvance / betaDelay);
+        double expansionAdvanceOnAlpha = std::min((double)alpha->distance, expansionAdvance / alphaDelay);
+        double expansionAdvanceOnBeta = std::min((double)beta->distance, expansionAdvance / betaDelay);
 
         // Variance' (eq. 3)
-        double variance_alpha = bvariance_alpha * (expansionAdvanceOnAlpha / alpha->distance);
-        double variance_beta = bvariance_beta * (expansionAdvanceOnBeta / beta->distance);
+        double varianceAlpha = bvarianceAlpha * (expansionAdvanceOnAlpha / alpha->distance);
+        double varianceBeta = bvarianceBeta * (expansionAdvanceOnBeta / beta->distance);
 
-        double start_alpha = mu_alpha - 2.0 * sqrt(variance_alpha);
-        double start_beta = mu_beta - 2.0 * sqrt(variance_beta);
+        const double alphaStandardDeviation = sqrt(varianceAlpha);
+        const double betaStandardDeviation = sqrt(varianceBeta);
 
-        double endAlpha = mu_alpha + 2.0 * sqrt(variance_alpha);
-        double endBeta = mu_alpha + 2.0 * sqrt(variance_beta);
+        double startAlpha = mu_alpha - 3.0 * alphaStandardDeviation;
+        double startBeta = mu_beta - 3.0 * betaStandardDeviation;
+
+        double endAlpha = mu_alpha + 3.0 * alphaStandardDeviation;
+        double endBeta = mu_beta + 3.0 * betaStandardDeviation;
+
+        if (endAlpha < startBeta) {
+            // Not overlapping intervals
+            //            LOG(INFO) << "Not overlapping intervals";
+            return 0;
+        }
 
         // Integration step
         double benefit = 0.0;
-        double alphaStep = (endAlpha - start_alpha) / 100.0;
-        double betaStep = (endBeta - start_beta) / 100.0;
+        double alphaStep = (endAlpha - startAlpha) / 100.0;
+        double betaStep = (endBeta - startBeta) / 100.0;
 
-        for (double a = start_alpha; a <= endAlpha; a += alphaStep) {
-            double sum = 0.0;
-
-            for (double b = std::max(a, start_beta); b <= endBeta; b += betaStep) {
-                // PDF of normal distribution
-                sum += (a - b) * normalPDF(mu_beta, variance_beta, b);
-            }
-
-            sum *= betaStep;
-
-            benefit += sum * normalPDF(mu_alpha, variance_alpha, a);
+        if (std::abs(alphaStep) < 0.00001 && std::abs(betaStep) < 0.00001) {
+            // Zero variance
+            return 0;
         }
 
-        benefit *= alphaStep;
+        LOG(INFO) << measureNanoTime([&]() {
+
+            int alphaIndex{0};
+            for (double a = startAlpha; a < endAlpha; a += alphaStep) {
+                double sum = 0.0;
+
+                int betaIndex{0};
+                for (double b = startBeta; b < endBeta; b += betaStep) {
+                    if (a < b) {
+                        break;
+                    }
+
+                    // PDF of normal distribution
+                    sum += (a - b) * Statistic::standardNormalTable100(betaIndex);
+
+                    ++betaIndex;
+                }
+
+                benefit += sum * Statistic::standardNormalTable100(alphaIndex);
+                ++alphaIndex;
+            }
+
+        });
 
         return benefit;
     }
 
+
+
     double normalPDF(double mean, double variance, double variable) const {
-        return std::exp(-pow(variable - mean, 2) / (2 * variance)) / (sqrt(2 * PI * variance));
+        return std::exp(-pow(variable - mean, 2) / (2 * variance)) / (sqrt(2 * 3.1415 * variance));
     }
 
     Node* createNode(Node* sourceNode, SuccessorBundle<Domain> successor) {
