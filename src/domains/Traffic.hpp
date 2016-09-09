@@ -39,11 +39,11 @@ public:
             }
         }
 
-        bool operator==(const Action& rhs) const {
+        bool operator==(const Action &rhs) const {
             return value == rhs.value;
         }
 
-        bool operator!=(const Action& rhs) const {
+        bool operator!=(const Action &rhs) const {
             return !(rhs == *this);
         }
 
@@ -446,7 +446,7 @@ private:
      * width <- how wide the world is
      * height <- how tall the world is
      * obstacleIndices <- where the obstacles are using direct addressing *NOTE: vector is a container for a
-     * bunkerIndices <- where the bunkers are using direct addressing      *NOTE: dynamic table!!!!!!!!!!!!!!
+     * bunkerIndices <- where the bunkers are using direct addressing      *NOTE: dynamic array!!!!!!!!!!!!!!
      * obstacles <- bit vector using direct addressing of the obstacles
      * bunkers <- bit vector using direct addressing of the bunkers ** NOTE: are these redundant?***
      * startLocation <- where the agent starts
