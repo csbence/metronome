@@ -243,9 +243,9 @@ public:
         display << "\n";
     }
 
-    //    void animate(std::ostream& display, std::vector<Action> actions) const {
-    //        // TODO
-    //    }
+    Cost getActionDuration() const {
+        return actionDuration;
+    }
 
 private:
     void addValidSuccessor(std::vector<SuccessorBundle<GridWorld>>& successors,

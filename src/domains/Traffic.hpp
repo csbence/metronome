@@ -39,6 +39,14 @@ public:
             }
         }
 
+        bool operator==(const Action& rhs) const {
+            return value == rhs.value;
+        }
+
+        bool operator!=(const Action& rhs) const {
+            return !(rhs == *this);
+        }
+
         static unsigned int toValue(const char* action) {
             if(*action == 'N') { return 1;}
             else if(*action == 'E') { return 2;}
@@ -380,8 +388,8 @@ public:
         return goalLocation.getX() == location.getX() && goalLocation.getY() == location.getY();
     }
 
-    const bool isStart(const State& location) const {
-        return startLocation.getX() == location.getX() && startLocation.getY() == location.getY();
+    Cost getActionDuration() const {
+        return actionDuration;
     }
 
 private:
@@ -438,7 +446,7 @@ private:
      * width <- how wide the world is
      * height <- how tall the world is
      * obstacleIndices <- where the obstacles are using direct addressing *NOTE: vector is a container for a
-     * bunkerIndices <- where the bunkers are using direct addressing      *NOTE: dynamic array!!!!!!!!!!!!!!
+     * bunkerIndices <- where the bunkers are using direct addressing      *NOTE: dynamic table!!!!!!!!!!!!!!
      * obstacles <- bit vector using direct addressing of the obstacles
      * bunkers <- bit vector using direct addressing of the bunkers ** NOTE: are these redundant?***
      * startLocation <- where the agent starts

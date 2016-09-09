@@ -33,7 +33,7 @@ public:
         bool operator==(const Action& rhs) const {
             return label == rhs.label;
         }
-        
+
         bool operator!=(const Action& rhs) const {
             return !(rhs == *this);
         }
@@ -196,6 +196,10 @@ public:
     }
 
     const State getStartState() const { return startState; }
+
+    Cost getActionDuration() const {
+        return actionDuration;
+    }
 
 private:
     static signed char getIndex(signed char x, signed char y) { return size * y + x; }
