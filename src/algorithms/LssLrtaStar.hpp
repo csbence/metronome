@@ -5,6 +5,7 @@
 #include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
 #include <vector>
+#include <MemoryConfiguration.hpp>
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
 #include "experiment/Configuration.hpp"
@@ -30,7 +31,7 @@ public:
 
         // Initialize hash table
         nodes.max_load_factor(1);
-        nodes.reserve(100000000);
+        nodes.reserve(Memory::NODE_LIMIT);
     }
 
     std::vector<ActionBundle> selectActions(const State& startState, TerminationChecker& terminationChecker) override {
@@ -299,9 +300,9 @@ private:
     }
 
     const Domain& domain;
-    PriorityQueue<Node> openList{100000000, fComparator};
+    PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
-    boost::object_pool<Node> nodePool{100000000, 100000000};
+    boost::object_pool<Node> nodePool{Memory::NODE_LIMIT, Memory::NODE_LIMIT};
     unsigned int iterationCounter{0};
 };
 }
