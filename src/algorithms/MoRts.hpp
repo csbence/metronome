@@ -25,11 +25,6 @@ public:
     typedef typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle ActionBundle;
 
     MoRts(const Domain& domain, const Configuration&) : domain{domain} {
-        // Force the object pool to allocate memory
-        //        State state;
-        //        Node node = Node(nullptr, std::move(state), Action(), 0, 0, true, 0, 0, 0);
-        //        nodePool.destroy(nodePool.construct(node));
-
         // Initialize hash table
         nodes.max_load_factor(1);
         nodes.reserve(Memory::NODE_LIMIT);
@@ -226,7 +221,7 @@ private:
             Node*& startNode = nodes[startState];
 
             if (startNode == nullptr) {
-                startNode = nodePool.construct(
+                startNode = nodePool->construct(
                         nullptr, startState, Action(), 0, domain.heuristic(startState), true, 0, 0, 0);
             } else {
                 startNode->g = 0;
@@ -520,10 +515,12 @@ private:
         auto distance = domain.distance(successorState);
         auto heuristic = domain.heuristic(successorState);
 
-        return nodePool.construct(sourceNode,
+        auto costMax = Domain::COST_MAX;
+
+        return nodePool->construct(sourceNode,
                 successorState,
                 successor.action,
-                Domain::COST_MAX,
+                costMax,
                 heuristic,
                 true,
                 static_cast<Cost>(distance * heuristicError + heuristic),
@@ -593,7 +590,7 @@ private:
     const Domain& domain;
     PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fHatComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
-    StaticVector<Node, Memory::NODE_LIMIT> nodePool{};
+    std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
 
     unsigned int iterationCounter{0};
     unsigned int expansionCounter{0};

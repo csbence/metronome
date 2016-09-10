@@ -20,28 +20,7 @@ int main(int argc, char** argv) {
     using namespace metronome;
     printSplashScreen();
 
-    StaticVector<long long int, 10000000> pool;
-    pool.construct(1);
-
-    return 0;
     Statistic::initialize();
-//    boost::object_pool<int> nodePool{Memory::NODE_LIMIT, Memory::NODE_LIMIT};
-
-//    int* a = nodePool.construct(1);
-//
-//    a = nodePool.construct(1);
-//    a = nodePool.construct(2);
-//    a = nodePool.construct(3);
-//    a = nodePool.construct(4);
-//    a = nodePool.construct(5);
-//    a = nodePool.construct(6);
-//    a = nodePool.construct(7);
-//    a = nodePool.construct(8);
-//    a = nodePool.construct(9);
-//    a = nodePool.construct(10);
-//    a = nodePool.construct(11);
-//
-//    return *a;
     if (argc == 1) {
         std::cerr << "Resource path is not provided. :: arg: " << argv[0] << std::endl;
         return 1;
