@@ -25,6 +25,7 @@ public:
               idlePlanningTime{0},
               pathLength{0},
               actions{std::vector<std::string>()},
+              identityActions{0},
               timestamp{currentNanoTime()} {};
 
     Result(const Configuration& configuration,
@@ -36,6 +37,7 @@ public:
             const long long idlePlanningTime,
             const long long pathLength,
             const std::vector<std::string> actions,
+            const int identityActions = 0,
             const long long timestamp = currentNanoTime())
             : configuration{configuration},
               errorMessage{""},
@@ -48,6 +50,7 @@ public:
               idlePlanningTime{idlePlanningTime},
               pathLength{pathLength},
               actions{actions},
+              identityActions{identityActions},
               timestamp{timestamp} {};
 
     std::string getJsonString() const {
@@ -73,12 +76,14 @@ public:
         resultDocument.AddMember("idlePlanningTime", Value{}.SetInt64(idlePlanningTime), allocator);
         resultDocument.AddMember("pathLength", Value{}.SetInt64(pathLength), allocator);
 
-//        GenericValue<ASCII<>> actionsArray{kArrayType};
-//        for (std::string action : actions) {
-//            actionsArray.PushBack(GenericValue<ASCII<>>{}.SetString(action.c_str(), action.size(), allocator), allocator);
-//        }
-//
-//        resultDocument.AddMember("actions", actionsArray, allocator);
+        //        GenericValue<ASCII<>> actionsArray{kArrayType};
+        //        for (std::string action : actions) {
+        //            actionsArray.PushBack(GenericValue<ASCII<>>{}.SetString(action.c_str(), action.size(), allocator),
+        //            allocator);
+        //        }
+        //
+        //        resultDocument.AddMember("actions", actionsArray, allocator);
+        resultDocument.AddMember("identityActions", Value{}.SetInt(identityActions), allocator);
         resultDocument.AddMember("timestamp", Value{}.SetInt64(timestamp), allocator);
 
         StringBuffer buffer;
@@ -98,6 +103,7 @@ public:
     const long long idlePlanningTime;
     const long long pathLength;
     const std::vector<std::string> actions;
+    const int identityActions;
     const long long timestamp;
 };
 }

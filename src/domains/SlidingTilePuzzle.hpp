@@ -40,6 +40,10 @@ public:
 
         char toChar() const { return label; }
 
+        static Action getIdentity() {
+            return Action('0');
+        }
+
         std::string toString() const { return std::string{1, label}; }
 
         friend std::ostream& operator<<(std::ostream& os, const Action& action) {
@@ -158,6 +162,8 @@ public:
             return getSuccessor(state, -1, 0);
         case 'S':
             return getSuccessor(state, 0, 1);
+        case '0':
+            return boost::make_optional(state);
         default:
             return boost::none;
         }

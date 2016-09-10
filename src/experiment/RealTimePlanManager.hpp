@@ -1,8 +1,8 @@
 #ifndef METRONOME_REALTIMEPLANMANAGER_HPP
 #define METRONOME_REALTIMEPLANMANAGER_HPP
 
-#include <chrono>
 #include <boost/optional.hpp>
+#include <chrono>
 #include "MetronomeException.hpp"
 #include "PlanManager.hpp"
 #include "utils/TimeMeasurement.hpp"
@@ -33,8 +33,8 @@ public:
                 previousTimeBound = timeBound;
                 timeBound = 0;
                 for (auto& actionBundle : actionBundles) {
-                    boost::optional<typename Domain::State> nextState = domain.transition(currentState, actionBundle
-                        .action);
+                    boost::optional<typename Domain::State> nextState =
+                            domain.transition(currentState, actionBundle.action);
                     if (!nextState.is_initialized()) {
                         throw MetronomeException("Invalid action. Partial plan is corrupt.");
                     }
@@ -45,13 +45,14 @@ public:
 
             });
 
-//            LOG(INFO) << planningIterationTime - previousTimeBound;
+            //            LOG(INFO) << planningIterationTime - previousTimeBound;
 
-//            if (planningIterationTime > previousTimeBound + 100000) {
-//                LOG(INFO) << "Time bount violated: " << planningIterationTime - previousTimeBound << " bound: " << previousTimeBound;
-//            } else {
-//                LOG(INFO) << "Fine";
-//            }
+            //            if (planningIterationTime > previousTimeBound + 100000) {
+            //                LOG(INFO) << "Time bount violated: " << planningIterationTime - previousTimeBound << "
+            //                bound: " << previousTimeBound;
+            //            } else {
+            //                LOG(INFO) << "Fine";
+            //            }
 
             // Increase the total planning time after each planning iteration
             planningTime += planningIterationTime;
@@ -70,15 +71,15 @@ public:
         return Result(configuration,
                 planner.getExpandedNodeCount(),
                 planner.getGeneratedNodeCount(),
-                planningTime,
-                pathLength * configuration.getLong("actionDuration"),
-                planningTime + pathLength * configuration.getLong("actionDuration"),
-                planningTime,
-                pathLength,
-                actionStrings);
+                planningTime, // Planning time
+                pathLength * configuration.getLong("actionDuration"), // Execution time
+                domain.getActionDuration() + pathLength * configuration.getLong("actionDuration"), // GAT
+                domain.getActionDuration(), // Idle planning time
+                pathLength, // Path length
+                actionStrings,
+                planner.getIdentityActionCount());
     }
 };
-
 }
 
 #endif // METRONOME_REALTIMEPLANMANAGER_HPP

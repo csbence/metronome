@@ -58,7 +58,6 @@ public:
         const auto bestNode = explore(startState, terminationChecker);
 
         // Apply meta-reasoning
-
         auto nano = measureNanoTime(
                 [&]() { identityIndicator = isBenefitialToSearch(nodes[startState], terminationChecker); });
         static double avg{-1};
@@ -68,14 +67,19 @@ public:
             avg = avg * 0.9 + nano * 0.1;
         }
 
-        LOG_EVERY_N(1, INFO) << "Nano time: " << nano << " exp avg: " << avg;
+//        LOG_EVERY_N(1, INFO) << "Nano time: " << nano << " exp avg: " << avg;
 
         // Update error counters if the exploration step is done
         if (!identityIndicator) {
             distanceError = nextDistanceError;
             heuristicError = nextHeuristicError;
+
+            return extractPath(bestNode, nodes[startState]);
+        } else {
+            // Select identity action
+            this->incrementIdentityActionCount();
+            return std::vector<ActionBundle>{ActionBundle{Action::getIdentity(), domain.getActionDuration()}};
         }
-        return extractPath(bestNode, nodes[startState]);
     }
 
 private:
@@ -386,7 +390,7 @@ private:
 
     bool isBenefitialToSearch(const Node* sourceNode, const TerminationChecker& terminationChecker) {
         if (openList.getSize() <= 1) {
-            return false;
+            return false; // No alternative actions
         }
 
         // Find best two actions
@@ -410,9 +414,10 @@ private:
 
         // Calculate the benefit
         double benefit = computeBenefit(sourceNode, alphaTargetNode, betaTargetNode, expectedExpansions);
-        //        LOG(INFO) << "Benefit: " << benefit;
 
-        return false;
+        Cost actionCost = domain.getActionDuration(); // Reconsider for identity actions
+
+        return benefit > actionCost;
     }
 
     double expansionDelay(const Node* source, const Node* target) const {
@@ -480,7 +485,7 @@ private:
             return 0;
         }
 
-        LOG(INFO) << measureNanoTime([&]() {
+         measureNanoTime([&]() {
 
             int alphaIndex{0};
             for (double a = startAlpha; a < endAlpha; a += alphaStep) {
@@ -591,9 +596,9 @@ private:
     }
 
     const Domain& domain;
-    PriorityQueue<Node> openList{100000000, fHatComparator};
+    PriorityQueue<Node> openList{30000000, fHatComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
-    boost::object_pool<Node> nodePool{100000000, 100000000};
+    boost::object_pool<Node> nodePool{30000000, 30000000};
 
     unsigned int iterationCounter{0};
     unsigned int expansionCounter{0};

@@ -25,7 +25,7 @@ public:
         Action() : label{'~'} {};
 
         static std::vector<Action>& getActions() {
-            static std::vector<Action> actions{Action('N'), Action('E'), Action('W'), Action('S')};
+            static std::vector<Action> actions{Action('N'), Action('S'), Action('W'), Action('E')};
             return actions;
         }
 
@@ -34,6 +34,10 @@ public:
         bool operator!=(const Action& rhs) const { return !(rhs == *this); }
 
         char toChar() const { return label; }
+
+        static Action getIdentity() {
+            return Action('0');
+        }
 
         std::string toString() const { return std::string{label}; }
 
@@ -106,7 +110,7 @@ public:
         boost::optional<State> tempStarState;
         boost::optional<State> tempGoalState;
 
-        while (getline(input, line)) {
+        while (getline(input, line) && currentHeight < height) {
             for (auto it = line.cbegin(); it != line.cend(); ++it) {
                 if (*it == '@') { // find the start location
                     tempStarState = State(currentWidth, currentHeight);
@@ -168,6 +172,8 @@ public:
             if (isLegalLocation(newState)) {
                 targetState = newState;
             }
+        } else if (action.toChar() == '0') {
+            return boost::make_optional(sourceState);
         }
 
         return targetState;
@@ -218,9 +224,9 @@ public:
         std::vector<SuccessorBundle<GridWorld>> successors;
 
         addValidSuccessor(successors, state, 0, -1, Action::getActions()[0]);
-        addValidSuccessor(successors, state, 1, 0, Action::getActions()[1]);
+        addValidSuccessor(successors, state, 0, 1, Action::getActions()[1]);
         addValidSuccessor(successors, state, -1, 0, Action::getActions()[2]);
-        addValidSuccessor(successors, state, 0, 1, Action::getActions()[3]);
+        addValidSuccessor(successors, state, 1, 0, Action::getActions()[3]);
 
         return successors;
     }
