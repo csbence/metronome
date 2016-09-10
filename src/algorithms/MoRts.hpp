@@ -3,19 +3,16 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <algorithm>
-#include <boost/pool/object_pool.hpp>
 #include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
-#include <vector>
+#include <utils/LinearMemoryPool.hpp>
 #include <utils/statistic.hpp>
+#include <vector>
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
 #include "experiment/Configuration.hpp"
 #include "utils/Hasher.hpp"
 #include "utils/PriorityQueue.hpp"
-#define BOOST_POOL_NO_MT
-
-//#define PI 3.141592653589793
 
 namespace metronome {
 
@@ -29,9 +26,9 @@ public:
 
     MoRts(const Domain& domain, const Configuration&) : domain{domain} {
         // Force the object pool to allocate memory
-        State state;
-        Node node = Node(nullptr, std::move(state), Action(), 0, 0, true, 0, 0, 0);
-        nodePool.destroy(nodePool.construct(node));
+        //        State state;
+        //        Node node = Node(nullptr, std::move(state), Action(), 0, 0, true, 0, 0, 0);
+        //        nodePool.destroy(nodePool.construct(node));
 
         // Initialize hash table
         nodes.max_load_factor(1);
@@ -67,7 +64,7 @@ public:
             avg = avg * 0.9 + nano * 0.1;
         }
 
-//        LOG_EVERY_N(1, INFO) << "Nano time: " << nano << " exp avg: " << avg;
+        //        LOG_EVERY_N(1, INFO) << "Nano time: " << nano << " exp avg: " << avg;
 
         // Update error counters if the exploration step is done
         if (!identityIndicator) {
@@ -230,7 +227,7 @@ private:
 
             if (startNode == nullptr) {
                 startNode = nodePool.construct(
-                        Node{nullptr, startState, Action(), 0, domain.heuristic(startState), true, 0, 0, 0});
+                        nullptr, startState, Action(), 0, domain.heuristic(startState), true, 0, 0, 0);
             } else {
                 startNode->g = 0;
                 startNode->action = Action();
@@ -326,7 +323,7 @@ private:
             if (successorNode->iteration != iterationCounter) {
                 successorNode->iteration = iterationCounter;
                 successorNode->predecessors.clear();
-                successorNode->g = domain.COST_MAX;
+                successorNode->g = Domain::COST_MAX;
                 successorNode->open = false; // It is not on the open list yet, but it will be
                 successorNode->generation = expansionCounter;
                 // parent, action, and actionCost is outdated too, but not relevant.
@@ -485,7 +482,7 @@ private:
             return 0;
         }
 
-         measureNanoTime([&]() {
+        measureNanoTime([&]() {
 
             int alphaIndex{0};
             for (double a = startAlpha; a < endAlpha; a += alphaStep) {
@@ -512,8 +509,6 @@ private:
         return benefit;
     }
 
-
-
     double normalPDF(double mean, double variance, double variable) const {
         return std::exp(-pow(variable - mean, 2) / (2 * variance)) / (sqrt(2 * 3.1415 * variance));
     }
@@ -525,15 +520,15 @@ private:
         auto distance = domain.distance(successorState);
         auto heuristic = domain.heuristic(successorState);
 
-        return nodePool.construct(Node{sourceNode,
+        return nodePool.construct(sourceNode,
                 successorState,
                 successor.action,
-                domain.COST_MAX,
+                Domain::COST_MAX,
                 heuristic,
                 true,
                 static_cast<Cost>(distance * heuristicError + heuristic),
                 distance,
-                distance});
+                distance);
     }
 
     void clearOpenList() {
@@ -598,7 +593,7 @@ private:
     const Domain& domain;
     PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fHatComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
-    boost::object_pool<Node> nodePool{Memory::NODE_LIMIT, Memory::NODE_LIMIT};
+    StaticVector<Node, Memory::NODE_LIMIT> nodePool{};
 
     unsigned int iterationCounter{0};
     unsigned int expansionCounter{0};
