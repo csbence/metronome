@@ -1,18 +1,18 @@
 #ifndef METRONOME_MO_RTS_HPP
 #define METRONOME_MO_RTS_HPP
 #include <fcntl.h>
-#include <boost/pool/object_pool.hpp>
+#include <stdlib.h>
+#include <algorithm>
 #include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
+#include <utils/LinearMemoryPool.hpp>
+#include <utils/statistic.hpp>
 #include <vector>
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
 #include "experiment/Configuration.hpp"
 #include "utils/Hasher.hpp"
 #include "utils/PriorityQueue.hpp"
-#define BOOST_POOL_NO_MT
-
-#define PI 3.141592653589793
 
 namespace metronome {
 
@@ -25,14 +25,9 @@ public:
     typedef typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle ActionBundle;
 
     MoRts(const Domain& domain, const Configuration&) : domain{domain} {
-        // Force the object pool to allocate memory
-        State state;
-        Node node = Node(nullptr, std::move(state), Action(), 0, 0, true, 0, 0, 0);
-        nodePool.destroy(nodePool.construct(node));
-
         // Initialize hash table
         nodes.max_load_factor(1);
-        nodes.reserve(100000000);
+        nodes.reserve(Memory::NODE_LIMIT);
     }
 
     std::vector<ActionBundle> selectActions(const State& startState, TerminationChecker& terminationChecker) override {
@@ -55,14 +50,28 @@ public:
         const auto bestNode = explore(startState, terminationChecker);
 
         // Apply meta-reasoning
-        identityIndicator = isBenefitialToSearch(bestNode, terminationChecker);
+        auto nano = measureNanoTime(
+                [&]() { identityIndicator = isBenefitialToSearch(nodes[startState], terminationChecker); });
+        static double avg{-1};
+        if (avg < 0) {
+            avg = nano;
+        } else {
+            avg = avg * 0.9 + nano * 0.1;
+        }
+
+        //        LOG_EVERY_N(1, INFO) << "Nano time: " << nano << " exp avg: " << avg;
 
         // Update error counters if the exploration step is done
         if (!identityIndicator) {
             distanceError = nextDistanceError;
             heuristicError = nextHeuristicError;
+
+            return extractPath(bestNode, nodes[startState]);
+        } else {
+            // Select identity action
+            this->incrementIdentityActionCount();
+            return std::vector<ActionBundle>{ActionBundle{Action::getIdentity(), domain.getActionDuration()}};
         }
-        return extractPath(bestNode, nodes[startState]);
     }
 
 private:
@@ -212,8 +221,8 @@ private:
             Node*& startNode = nodes[startState];
 
             if (startNode == nullptr) {
-                startNode = nodePool.construct(
-                        Node{nullptr, startState, Action(), 0, domain.heuristic(startState), true, 0, 0, 0});
+                startNode = nodePool->construct(
+                        nullptr, startState, Action(), 0, domain.heuristic(startState), true, 0, 0, 0);
             } else {
                 startNode->g = 0;
                 startNode->action = Action();
@@ -309,7 +318,7 @@ private:
             if (successorNode->iteration != iterationCounter) {
                 successorNode->iteration = iterationCounter;
                 successorNode->predecessors.clear();
-                successorNode->g = domain.COST_MAX;
+                successorNode->g = Domain::COST_MAX;
                 successorNode->open = false; // It is not on the open list yet, but it will be
                 successorNode->generation = expansionCounter;
                 // parent, action, and actionCost is outdated too, but not relevant.
@@ -373,7 +382,7 @@ private:
 
     bool isBenefitialToSearch(const Node* sourceNode, const TerminationChecker& terminationChecker) {
         if (openList.getSize() <= 1) {
-            return false;
+            return false; // No alternative actions
         }
 
         // Find best two actions
@@ -392,23 +401,23 @@ private:
             return false;
         }
 
-        // Todo get identity action duration
-
         // Calculate the expansion advance
-        unsigned int expectedExpansions = terminationChecker.expansionsPerAction();
+        unsigned int expectedExpansions = terminationChecker.expansionsPerAction(domain.getActionDuration());
 
         // Calculate the benefit
-        computeBenefit(sourceNode, alphaTargetNode, betaTargetNode, expectedExpansions);
-        //
+        double benefit = computeBenefit(sourceNode, alphaTargetNode, betaTargetNode, expectedExpansions);
 
-        return false;
+        Cost actionCost = domain.getActionDuration(); // Reconsider for identity actions
+
+        return benefit > actionCost;
     }
 
     double expansionDelay(const Node* source, const Node* target) const {
         long delay{1 + expansionCounter - target->generation};
         int count = 1;
 
-        for (Node* current = target->parent; current->generation > 0 && target != source; current = current->parent) {
+        for (Node* current = target->parent; current != nullptr && current->generation > 0 && target != source;
+                current = current->parent) {
             ++count;
             delay += current->expansion - current->generation;
         }
@@ -428,54 +437,75 @@ private:
         // Variance belief (eq. 2)
         // f difference between current and frontier node is the total error on the path divided by the length of the
         // path gives the per step error
-        double bvariance_alpha =
-                pow((source->f() - alpha->f()) / std::abs(alpha->depth - source->depth) * alpha->distance, 2);
-        double bvariance_beta =
-                pow((source->f() - beta->f()) / std::abs(beta->depth - source->depth) * beta->distance, 2);
+        double bvarianceAlpha = pow((source->f() - alpha->f()) / (alpha->depth - source->depth) * alpha->distance, 2);
+        double bvarianceBeta = pow((source->f() - beta->f()) / (beta->depth - source->depth) * beta->distance, 2);
 
         // Mean
-        double mu_alpha = alpha->f() + sqrt(bvariance_alpha);
-        double mu_beta = beta->f() + sqrt(bvariance_beta);
+        double mu_alpha = alpha->f() + sqrt(bvarianceAlpha);
+        double mu_beta = beta->f() + sqrt(bvarianceBeta);
 
         // Number of expansion predicted on the alpha/beta path towards the goal
-        double expansionAdvanceOnAlpha = std::min(alpha->distance, expansionAdvance / alphaDelay);
-        double expansionAdvanceOnBeta = std::min(beta->distance, expansionAdvance / betaDelay);
+        double expansionAdvanceOnAlpha = std::min((double)alpha->distance, expansionAdvance / alphaDelay);
+        double expansionAdvanceOnBeta = std::min((double)beta->distance, expansionAdvance / betaDelay);
 
         // Variance' (eq. 3)
-        double variance_alpha = bvariance_alpha * (expansionAdvanceOnAlpha / alpha->distance);
-        double variance_beta = bvariance_beta * (expansionAdvanceOnBeta / beta->distance);
+        double varianceAlpha = bvarianceAlpha * (expansionAdvanceOnAlpha / alpha->distance);
+        double varianceBeta = bvarianceBeta * (expansionAdvanceOnBeta / beta->distance);
 
-        double start_alpha = mu_alpha - 2.0 * sqrt(variance_alpha);
-        double start_beta = mu_beta - 2.0 * sqrt(variance_beta);
+        const double alphaStandardDeviation = sqrt(varianceAlpha);
+        const double betaStandardDeviation = sqrt(varianceBeta);
 
-        double endAlpha = mu_alpha + 2.0 * sqrt(variance_alpha);
-        double endBeta = mu_alpha + 2.0 * sqrt(variance_beta);
+        double startAlpha = mu_alpha - 3.0 * alphaStandardDeviation;
+        double startBeta = mu_beta - 3.0 * betaStandardDeviation;
+
+        double endAlpha = mu_alpha + 3.0 * alphaStandardDeviation;
+        double endBeta = mu_beta + 3.0 * betaStandardDeviation;
+
+        if (endAlpha < startBeta) {
+            // Not overlapping intervals
+            //            LOG(INFO) << "Not overlapping intervals";
+            return 0;
+        }
 
         // Integration step
         double benefit = 0.0;
-        double alphaStep = (endAlpha - start_alpha) / 100.0;
-        double betaStep = (endBeta - start_beta) / 100.0;
+        double alphaStep = (endAlpha - startAlpha) / 100.0;
+        double betaStep = (endBeta - startBeta) / 100.0;
 
-        for (double a = start_alpha; a <= endAlpha; a += alphaStep) {
-            double sum = 0.0;
-
-            for (double b = std::max(a, start_beta); b <= endBeta; b += betaStep) {
-                // PDF of normal distribution
-                sum += (a - b) * normalPDF(mu_beta, variance_beta, b);
-            }
-
-            sum *= betaStep;
-
-            benefit += sum * normalPDF(mu_alpha, variance_alpha, a);
+        if (std::abs(alphaStep) < 0.00001 && std::abs(betaStep) < 0.00001) {
+            // Zero variance
+            return 0;
         }
 
-        benefit *= alphaStep;
+        measureNanoTime([&]() {
+
+            int alphaIndex{0};
+            for (double a = startAlpha; a < endAlpha; a += alphaStep) {
+                double sum = 0.0;
+
+                int betaIndex{0};
+                for (double b = startBeta; b < endBeta; b += betaStep) {
+                    if (a < b) {
+                        break;
+                    }
+
+                    // PDF of normal distribution
+                    sum += (a - b) * Statistic::standardNormalTable100(betaIndex);
+
+                    ++betaIndex;
+                }
+
+                benefit += sum * Statistic::standardNormalTable100(alphaIndex);
+                ++alphaIndex;
+            }
+
+        });
 
         return benefit;
     }
 
     double normalPDF(double mean, double variance, double variable) const {
-        return std::exp(-pow(variable - mean, 2) / (2 * variance)) / (sqrt(2 * PI * variance));
+        return std::exp(-pow(variable - mean, 2) / (2 * variance)) / (sqrt(2 * 3.1415 * variance));
     }
 
     Node* createNode(Node* sourceNode, SuccessorBundle<Domain> successor) {
@@ -485,15 +515,17 @@ private:
         auto distance = domain.distance(successorState);
         auto heuristic = domain.heuristic(successorState);
 
-        return nodePool.construct(Node{sourceNode,
+        auto costMax = Domain::COST_MAX;
+
+        return nodePool->construct(sourceNode,
                 successorState,
                 successor.action,
-                domain.COST_MAX,
+                costMax,
                 heuristic,
                 true,
                 static_cast<Cost>(distance * heuristicError + heuristic),
                 distance,
-                distance});
+                distance);
     }
 
     void clearOpenList() {
@@ -556,9 +588,9 @@ private:
     }
 
     const Domain& domain;
-    PriorityQueue<Node> openList{100000000, fHatComparator};
+    PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fHatComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
-    boost::object_pool<Node> nodePool{100000000, 100000000};
+    std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
 
     unsigned int iterationCounter{0};
     unsigned int expansionCounter{0};

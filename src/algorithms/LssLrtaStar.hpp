@@ -5,6 +5,8 @@
 #include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
 #include <vector>
+#include <MemoryConfiguration.hpp>
+#include <utils/LinearMemoryPool.hpp>
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
 #include "experiment/Configuration.hpp"
@@ -23,14 +25,9 @@ public:
     typedef typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle ActionBundle;
 
     LssLrtaStar(const Domain& domain, const Configuration&) : domain{domain} {
-        // Force the object pool to allocate memory
-        State state;
-        Node node = Node(nullptr, std::move(state), Action(), 0, 0, true);
-        nodePool.destroy(nodePool.construct(node));
-
         // Initialize hash table
         nodes.max_load_factor(1);
-        nodes.reserve(100000000);
+        nodes.reserve(Memory::NODE_LIMIT);
     }
 
     std::vector<ActionBundle> selectActions(const State& startState, TerminationChecker& terminationChecker) override {
@@ -159,7 +156,7 @@ private:
         Node*& startNode = nodes[startState];
 
         if (startNode == nullptr) {
-            startNode = nodePool.construct(Node{nullptr, startState, Action(), 0, domain.heuristic(startState), true});
+            startNode = nodePool->construct(Node{nullptr, startState, Action(), 0, domain.heuristic(startState), true});
         } else {
             startNode->g = 0;
             startNode->action = Action();
@@ -200,7 +197,7 @@ private:
             if (successorNode->iteration != iterationCounter) {
                 successorNode->iteration = iterationCounter;
                 successorNode->predecessors.clear();
-                successorNode->g = domain.COST_MAX;
+                successorNode->g = Domain::COST_MAX;
                 successorNode->open = false; // It is not on the open list yet, but it will be
                 // parent, action, and actionCost is outdated too, but not relevant.
             }
@@ -231,7 +228,7 @@ private:
 
     Node* createNode(Node* sourceNode, SuccessorBundle<Domain> successor) {
         Planner::incrementGeneratedNodeCount();
-        return nodePool.construct(Node{sourceNode,
+        return nodePool->construct(Node{sourceNode,
                 successor.state,
                 successor.action,
                 domain.COST_MAX,
@@ -299,9 +296,9 @@ private:
     }
 
     const Domain& domain;
-    PriorityQueue<Node> openList{100000000, fComparator};
+    PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
-    boost::object_pool<Node> nodePool{100000000, 100000000};
+    std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
     unsigned int iterationCounter{0};
 };
 }

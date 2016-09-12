@@ -16,6 +16,10 @@ public:
 
     class Action {
     public:
+        static Action getIdentity() {
+            // TODO
+        }
+
         std::string toString() const {
             // TODO
         }
@@ -61,6 +65,14 @@ public:
     }
 
     const State getStartState() const {
+        // TODO
+    }
+
+    Cost getActionDuration() const {
+        //TODO
+    }
+
+    Action getIdentityAction() const {
         // TODO
     }
 };

@@ -22,8 +22,19 @@ public:
 
     virtual std::vector<ActionBundle> selectActions(const typename Domain::State& startState,
             TerminationChecker& terminationChecker) = 0;
-    //virtual std::vector<ActionBundle> selectAction(const typename Domain::State& startState,
-    //        ExpansionTerminationChecker& terminationChecker) = 0;
+
+    virtual unsigned long long getIdentityActionCount() const final {
+        return identityActionCount;
+    }
+
+    virtual inline void incrementIdentityActionCount() final {
+        ++identityActionCount;
+    }
+
+private:
+    int identityActionCount{0};
+
+
 };
 }
 

@@ -44,15 +44,22 @@ def run_experiments():
     path = "../build/release/Metronome"
     resources = "../resources"
     configuration = """{{
-"timeLimit": 6000000,
-"domainPath": "/input/tiles/korf/4/all/{}",
-"domainInstanceName": "Manual test instance",
-"actionDuration": 6000000,
-"domainName": "SLIDING_TILE_PUZZLE",
-"terminationType": "time",
-"algorithmName": "LSS_LRTA_STAR"
+  "timeLimit": 150000000000,
+  "domainPath": "/input/tiles/korf/4/all/1",
+  "domainInstanceName": "Manual test instance",
+  "actionDuration": 50000,
+  "domainName": "SLIDING_TILE_PUZZLE",
+  "terminationType": "TIME",
+  "algorithmName": "MO_RTS"
 }}
 """
+# "timeLimit": 150000000000,
+# "domainPath": "/input/vacuum/dylan/cups.vw",
+# "domainInstanceName": "Manual test instance",
+# "actionDuration": 50000,
+# "domainName": "GRID_WORLD",
+# "terminationType": "TIME",
+# "algorithmName": "LSS_LRTA_STAR"
     gat = []
     for i in range(1, 10):
         gat.append(execute_metronome(path, resources, configuration.format(i), timeout=60))

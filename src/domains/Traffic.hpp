@@ -55,6 +55,11 @@ public:
             else if(*action == '0') {return 5;}
             else {return 0;}
         }
+
+        static Action getIdentity() {
+            throw std::logic_error("Not implemented function: Traffic::getIndentity()");
+        }
+
         const std::string toString() const {
             std::string s;
             s.push_back(toChar());
@@ -388,8 +393,8 @@ public:
         return goalLocation.getX() == location.getX() && goalLocation.getY() == location.getY();
     }
 
-    const bool isStart(const State& location) const {
-        return startLocation.getX() == location.getX() && startLocation.getY() == location.getY();
+    Cost getActionDuration() const {
+        return actionDuration;
     }
 
 private:

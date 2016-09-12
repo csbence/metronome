@@ -31,7 +31,7 @@ public:
 
         // Initialize hash table
         nodes.max_load_factor(1);
-        nodes.reserve(100000000);
+        nodes.reserve(Memory::NODE_LIMIT);
     }
 
     std::vector<ActionBundle> selectActions(const State& startState,
@@ -299,11 +299,11 @@ private:
         return 0;
     }
 
-    std::vector<Node*> safeNodes{100000000};
+    std::vector<Node*> safeNodes{Memory::NODE_LIMIT};
     const Domain& domain;
-    PriorityQueue<Node> openList{100000000, fComparator};
+    PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
-    boost::object_pool<Node> nodePool{100000000, 100000000};
+    boost::object_pool<Node> nodePool{Memory::NODE_LIMIT, Memory::NODE_LIMIT};
     unsigned int iterationCounter{0};
 };
 }

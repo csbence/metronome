@@ -9,6 +9,7 @@
 
 //#include <iostream>
 #include <cstdio>
+#include <utils/statistic.hpp>
 #define NDEBUG
 
 INITIALIZE_EASYLOGGINGPP
@@ -19,6 +20,7 @@ int main(int argc, char** argv) {
     using namespace metronome;
     printSplashScreen();
 
+    Statistic::initialize();
     if (argc == 1) {
         std::cerr << "Resource path is not provided. :: arg: " << argv[0] << std::endl;
         return 1;
@@ -55,7 +57,7 @@ int main(int argc, char** argv) {
         document.ParseStream(streamWrapper);
     }
 
-    //    getchar(); // Wait for keypress
+    //        getchar(); // Wait for keypress
 
     const Result result = ConfigurationExecutor::executeConfiguration(Configuration(std::move(document)), resourceDir);
 
@@ -63,9 +65,9 @@ int main(int argc, char** argv) {
     LOG(INFO) << "Path length: " << result.pathLength;
     LOG(INFO) << "Nodes :: expanded: " << result.expandedNodes << " generated: " << result.generatedNodes;
 
-//                for (auto action : result.actions) {
-//                    LOG(INFO) << action;
-//                }
+    //                for (auto action : result.actions) {
+    //                    LOG(INFO) << action;
+    //                }
 
     std::cout << "\n\nResult:" << std::endl;
     std::cout << result.getJsonString();

@@ -3,7 +3,7 @@ project(Metronome)
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -pedantic -Wextra")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  ${CMAKE_CXX_FLAGS} -O3")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  ${CMAKE_CXX_FLAGS} -std=c++14 -O3")
 
 set(SOURCE_FILES
         src/main.cpp
@@ -33,7 +33,7 @@ set(SOURCE_FILES
         src/experiment/ConfigurationExecutor.hpp
         src/MetronomeException.hpp
         src/utils/File.hpp
-        src/experiment/termination/ExpansionTerminationChecker.hpp)
+        src/experiment/termination/ExpansionTerminationChecker.hpp src/utils/statistic.hpp src/MemoryConfiguration.hpp src/utils/LinearMemoryPool.hpp)
 
 set(TEST_FILES
         test/test.cpp

@@ -33,12 +33,16 @@ public:
         bool operator==(const Action& rhs) const {
             return label == rhs.label;
         }
-        
+
         bool operator!=(const Action& rhs) const {
             return !(rhs == *this);
         }
 
         char toChar() const { return label; }
+
+        static Action getIdentity() {
+            return Action('0');
+        }
 
         std::string toString() const { return std::string{1, label}; }
 
@@ -158,6 +162,8 @@ public:
             return getSuccessor(state, -1, 0);
         case 'S':
             return getSuccessor(state, 0, 1);
+        case '0':
+            return boost::make_optional(state);
         default:
             return boost::none;
         }
@@ -196,6 +202,10 @@ public:
     }
 
     const State getStartState() const { return startState; }
+
+    Cost getActionDuration() const {
+        return actionDuration;
+    }
 
 private:
     static signed char getIndex(signed char x, signed char y) { return size * y + x; }
