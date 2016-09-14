@@ -220,6 +220,8 @@ public:
 
     Cost heuristic(const State& state) const { return distance(state) * actionDuration; }
 
+    bool safetyPredicate(const State& state) const { return true; }
+
     std::vector<SuccessorBundle<GridWorld>> successors(const State& state) const {
         std::vector<SuccessorBundle<GridWorld>> successors;
 

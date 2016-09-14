@@ -5,11 +5,11 @@
 #include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
 #include <vector>
+#include "MemoryConfiguration.hpp"
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
-#include "experiment/Configuration.hpp"
-#include "experiment/termination/TimeTerminationChecker.hpp"
 #include "utils/Hasher.hpp"
+#include "utils/LinearMemoryPool.hpp"
 #include "utils/PriorityQueue.hpp"
 #define BOOST_POOL_NO_MT
 
@@ -24,18 +24,17 @@ public:
     typedef typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle ActionBundle;
 
     SLssLrtaStar(const Domain& domain, const Configuration&) : domain{domain} {
-        // Force the object pool to allocate memory
-        State state;
-        Node node = Node(nullptr, std::move(state), Action(), 0, 0, true);
-        nodePool.destroy(nodePool.construct(node));
+        //        // Force the object pool to allocate memory
+        //        State state;
+        //        Node node = Node(nullptr, std::move(state), Action(), 0, 0, true);
+        //        nodePool.destroy(nodePool.construct(node));
 
         // Initialize hash table
         nodes.max_load_factor(1);
         nodes.reserve(Memory::NODE_LIMIT);
     }
 
-    std::vector<ActionBundle> selectActions(const State& startState,
-            const TimeTerminationChecker& terminationChecker) override {
+    std::vector<ActionBundle> selectActions(const State& startState, TerminationChecker& terminationChecker) override {
         if (domain.isGoal(startState)) {
             // Goal is already reached
             return std::vector<ActionBundle>();
@@ -46,7 +45,7 @@ public:
             learn(terminationChecker);
         }
 
-        auto bestNode = explore(startState, terminationChecker);
+        const auto bestNode = explore(startState, terminationChecker);
 
         return extractPath(bestNode, nodes[startState]);
     }
@@ -103,6 +102,8 @@ private:
         std::vector<Edge> predecessors;
         /** The action at the root of the tree where this node originally descended from*/
         Action topLevelAction;
+        /** The number of parents we haven't yet explored */
+        int unexploredParents = 0;
     };
 
     class Edge {
@@ -115,7 +116,7 @@ private:
         const Cost actionCost;
     };
 
-    void learn(const TimeTerminationChecker terminationChecker) {
+    void learn(const TerminationChecker terminationChecker) {
         ++iterationCounter;
 
         // Reorder the open list based on the heuristic values
@@ -154,7 +155,7 @@ private:
         }
     }
 
-    Node* explore(const State& startState, const TimeTerminationChecker terminationChecker) {
+    Node* explore(const State& startState, const TerminationChecker terminationChecker) {
         ++iterationCounter;
         clearOpenList();
         openList.reorder(fComparator);
@@ -163,7 +164,7 @@ private:
         Node*& startNode = nodes[startState];
 
         if (startNode == nullptr) {
-            startNode = nodePool.construct(Node{nullptr, startState, Action(), 0, domain.heuristic(startState), true});
+            startNode = nodePool->construct(Node{nullptr, startState, Action(), 0, domain.heuristic(startState), true});
         } else {
             startNode->g = 0;
             startNode->action = Action();
@@ -176,6 +177,8 @@ private:
 
         Node* currentNode = startNode;
 
+        checkSafeNode(currentNode);
+
         while (!terminationChecker.reachedTermination() && !domain.isGoal(currentNode->state)) {
             currentNode = popOpenList();
             expandNode(currentNode);
@@ -184,9 +187,15 @@ private:
         return currentNode; // todo this might be one step behind the best
     }
 
+    void checkSafeNode(Node* candidateNode) {
+        if (domain.safetyPredicate(candidateNode->state)) {
+            safeNodes.push_back(candidateNode);
+            candidateNode->topLevelAction = candidateNode->parent->topLevelAction;
+        }
+    }
+
     void expandNode(Node* sourceNode) {
         Planner::incrementExpandedNodeCount();
-
 
         for (auto successor : domain.successors(sourceNode->state)) {
             auto successorState = successor.state;
@@ -195,13 +204,19 @@ private:
 
             if (successorNode == nullptr) {
                 successorNode = createNode(sourceNode, successor);
+                if (successorNode->parent->parent == nullptr) {
+                    // its the root node [start node] mark top level actions
+                    successorNode->topLevelAction = successorNode->action;
+                    safeTopLevelActionNodes.push_back(successorNode);
+                }
+                checkSafeNode(successorNode);
             }
 
             // If the node is outdated it should be updated.
             if (successorNode->iteration != iterationCounter) {
                 successorNode->iteration = iterationCounter;
                 successorNode->predecessors.clear();
-                successorNode->g = domain.COST_MAX;
+                successorNode->g = Domain::COST_MAX;
                 successorNode->open = false; // It is not on the open list yet, but it will be
                 // parent, action, and actionCost is outdated too, but not relevant.
             }
@@ -232,7 +247,7 @@ private:
 
     Node* createNode(Node* sourceNode, SuccessorBundle<Domain> successor) {
         Planner::incrementGeneratedNodeCount();
-        return nodePool.construct(Node{sourceNode,
+        return nodePool->construct(Node{sourceNode,
                 successor.state,
                 successor.action,
                 domain.COST_MAX,
@@ -262,7 +277,7 @@ private:
 
     std::vector<ActionBundle> extractPath(const Node* targetNode, const Node* sourceNode) const {
         if (targetNode == sourceNode) {
-//                        LOG(INFO) << "We didn't move:" << sourceNode->toString();
+            //                        LOG(INFO) << "We didn't move:" << sourceNode->toString();
             return std::vector<ActionBundle>();
         }
 
@@ -303,7 +318,10 @@ private:
     const Domain& domain;
     PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
-    boost::object_pool<Node> nodePool{Memory::NODE_LIMIT, Memory::NODE_LIMIT};
+    std::vector<Node*> safeTopLevelActionNodes{Memory::NODE_LIMIT};
+
+    std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{
+            std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
     unsigned int iterationCounter{0};
 };
 }

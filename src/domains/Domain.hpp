@@ -75,6 +75,10 @@ public:
     Action getIdentityAction() const {
         // TODO
     }
+
+    bool safetyPredicate(const State& state) const {
+        // TODO
+    }
 };
 }
 #endif // METRONOME_DOMAIN_HPP

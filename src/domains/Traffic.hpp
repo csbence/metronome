@@ -380,7 +380,7 @@ public:
     const State& getStartState() const { return startLocation; }
     const State& getGoalState() const { return goalLocation; }
 
-    bool safetyPredicate(const State& state) {
+    bool safetyPredicate(const State& state) const {
         if (bunkers[state.getX()][state.getY()]) {
             return true;
         }
@@ -388,6 +388,8 @@ public:
     }
 
     Cost heuristic(const State& state) const { return distance(state) * actionDuration; }
+
+
 
     const bool isGoal(const State& location) const {
         return goalLocation.getX() == location.getX() && goalLocation.getY() == location.getY();
