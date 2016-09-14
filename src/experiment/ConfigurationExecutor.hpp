@@ -14,10 +14,10 @@
 #include "algorithms/AStar.hpp"
 #include "algorithms/FHat.hpp"
 #include "algorithms/LssLrtaStar.hpp"
-#include "algorithms/SLssLrtaStar.hpp"
+#include "algorithms/SZero.hpp"
 //#include "algorithms/MoRts.hpp"
 #include "domains/GridWorld.hpp"
-//#include "domains/Traffic.hpp"
+#include "domains/Traffic.hpp"
 #include "domains/SlidingTilePuzzle.hpp"
 #include "utils/File.hpp"
 
@@ -110,8 +110,10 @@ private:
             //            TerminationChecker>(configuration,
             //                                                                                                         domain);
         } else if (algorithmName == ALGORITHM_LSS_LRTA_STAR) {
-            return executeRealTimePlanner<Domain, SLssLrtaStar<Domain, TerminationChecker>, TerminationChecker>(
+            return executeRealTimePlanner<Domain, LssLrtaStar<Domain, TerminationChecker>, TerminationChecker>(
                     configuration, domain);
+        } else if(algorithmName == ALGORITHM_S_ZERO) {
+            return executeRealTimePlanner<Domain, SZero<Domain, TerminationChecker>, TerminationChecker>( configuration, domain);
         } else {
             LOG(ERROR) << "Unknown algorithms name: " << algorithmName << std::endl;
             return Result(configuration, "Unknown: algorithmName");

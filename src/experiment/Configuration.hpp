@@ -22,7 +22,7 @@ static const std::string ALGORITHM_A_STAR{"A_STAR"};
 static const std::string ALGORITHM_LSS_LRTA_STAR{"LSS_LRTA_STAR"};
 static const std::string ALGORITHM_F_HAT{"F_HAT"};
 static const std::string ALGORITHM_MO_RTS{"MO_RTS"};
-static const std::string ALGOIRHTM_SLSS_LRTA_STAR{"SLSS_LRTA_STAR"};
+static const std::string ALGORITHM_S_ZERO{"S_ZERO"};
 static const std::string TERMINATION_CHECKER_TIME{"TIME"};
 static const std::string TERMINATION_CHECKER_EXPANSION{"EXPANSION"};
 
@@ -39,7 +39,6 @@ public:
     bool hasMember(const std::string& key) const { return document.HasMember(key.c_str()); }
 
     std::string getString(const std::string& key) const { return std::string{document[key.c_str()].GetString()}; }
-
     long long int getLong(const std::string& key) const { return document[key.c_str()].GetInt64(); }
 
     std::string getStringOrThrow(const std::string& key) const {
