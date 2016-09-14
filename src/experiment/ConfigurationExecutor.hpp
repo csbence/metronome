@@ -110,7 +110,7 @@ private:
             //            TerminationChecker>(configuration,
             //                                                                                                         domain);
         } else if (algorithmName == ALGORITHM_LSS_LRTA_STAR) {
-            return executeRealTimePlanner<Domain, SLssLrtaStar<Domain, TerminationChecker>, ExpansionTerminationChecker>(
+            return executeRealTimePlanner<Domain, SLssLrtaStar<Domain, TerminationChecker>, TerminationChecker0>(
                     configuration, domain);
         } else {
             LOG(ERROR) << "Unknown algorithms name: " << algorithmName << std::endl;
