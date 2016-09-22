@@ -6,12 +6,14 @@
 #include <unordered_map>
 #include <vector>
 #include <MemoryConfiguration.hpp>
+#include <algorithm>
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
 #include "experiment/Configuration.hpp"
 #include "utils/Hasher.hpp"
 #include "utils/PriorityQueue.hpp"
-#define BOOST_POOL_NO_MT
+#include "utils/TimeMeasurement.hpp"
+#include "easylogging++.h"
 
 namespace metronome {
 
@@ -46,6 +48,19 @@ public:
         }
 
         const auto bestNode = explore(startState, terminationChecker);
+
+//        AStar<Domain> aStar{domain, Configuration()};
+//
+//        const std::vector<Action>& plan = aStar.plan(bestNode->state);
+//
+//        auto hStar = plan
+//                    .size() * domain.getActionDuration();
+//        const unsigned long h = bestNode->f() -bestNode->g;
+//        const double hHat = bestNode->fHat - h - bestNode->g;
+//        const double min = std::max(hHat, 1.0);
+//        const double rel = (hStar - h) / hHat;
+//        LOG(INFO) << "g/h/hhat/hstar " << bestNode->g << " " << h << " " << hHat << " " << hStar
+//                  << " " << rel;
 
         return extractPath(bestNode, nodes[startState]);
     }

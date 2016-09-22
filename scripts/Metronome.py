@@ -16,7 +16,7 @@ def execute_metronome(executable, resources, configuration, timeout):
     try:
         print("Start to execute metronome.")
         result = subprocess.run(" ".join([nice, executable, resources]), input=configuration.encode(),
-                                timeout=timeout, check=False, stdout=PIPE, stderr=PIPE, shell=True)
+                                timeout=timeout, check=True, stdout=PIPE, stderr=PIPE, shell=True)
 
         stdout, stderr = result.stdout, result.stderr
         print("Metronome output: ")
@@ -27,6 +27,14 @@ def execute_metronome(executable, resources, configuration, timeout):
     except subprocess.TimeoutExpired as e:
         # stdout, stderr = e.stdout, result.stderr
         print("Experiment timed out")
+        print(e.stdout.decode())
+        print(e.stderr.decode())
+        sys.stdout.flush()
+        return 0
+    except subprocess.CalledProcessError as e:
+        print("Experiment failed!")
+        print(e.stdout.decode())
+        print(e.stderr.decode())
         sys.stdout.flush()
         return 0
 

@@ -12,7 +12,8 @@
 #include "experiment/Configuration.hpp"
 #include "utils/Hasher.hpp"
 #include "utils/PriorityQueue.hpp"
-#define BOOST_POOL_NO_MT
+#include "utils/TimeMeasurement.hpp"
+#include "easylogging++.h"
 
 namespace metronome {
 
