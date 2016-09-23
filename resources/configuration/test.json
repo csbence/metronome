@@ -1,9 +1,9 @@
 {
   "timeLimit": 150000000000,
-  "domainPath": "input/tiles/korf/4/all/1",
+  "domainPath": "input/vacuum/bence/decisions.vw",
   "domainInstanceName": "Manual test instance",
-  "actionDuration": 50000,
-  "domainName": "SLIDING_TILE_PUZZLE",
+  "actionDuration": 10,
+  "domainName": "GRID_WORLD",
   "terminationType": "EXPANSION",
   "algorithmName": "MO_RTS"
 }

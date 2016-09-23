@@ -2,6 +2,7 @@
 #define METRONOME_MO_RTS_HPP
 #include <fcntl.h>
 #include <stdlib.h>
+#include <MemoryConfiguration.hpp>
 #include <algorithm>
 #include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
@@ -10,9 +11,11 @@
 #include <vector>
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
+#include "easylogging++.h"
 #include "experiment/Configuration.hpp"
 #include "utils/Hasher.hpp"
 #include "utils/PriorityQueue.hpp"
+#include "utils/TimeMeasurement.hpp"
 
 namespace metronome {
 
@@ -49,6 +52,8 @@ public:
 
         const auto bestNode = explore(startState, terminationChecker);
 
+//        bool identityIndicatorPrevious = identityIndicator; // todo remove
+
         // Apply meta-reasoning
         auto nano = measureNanoTime(
                 [&]() { identityIndicator = isBenefitialToSearch(nodes[startState], terminationChecker); });
@@ -58,6 +63,33 @@ public:
         } else {
             avg = avg * 0.9 + nano * 0.1;
         }
+
+//        static int identCounter{0}; // todo start remove
+//
+//        if (identityIndicator != identityIndicatorPrevious) {
+//            const Action currentBestAction = openList.top()->actionLabel;
+//            if (identityIndicator) {
+//                // Take the first identity action
+//                alphaAction = currentBestAction;
+//            } else {
+//                // Finish start moving after identity action
+//
+//                if (alphaAction == currentBestAction) {
+//                    // Metareasoning was beneficial
+//                    LOG(INFO) << "Metawin after " << identCounter;
+//
+//                    identCounter = 0;
+//                } else {
+//                    // Metareasoning was not beneficial
+//                    LOG(INFO) << "Metaloose after " << identCounter;
+//
+//                    identCounter = 0;
+//                }
+//            }
+//        } else if (identityIndicator) {
+//            identCounter++;
+//        }
+//        // todo end remove
 
         //        LOG_EVERY_N(1, INFO) << "Nano time: " << nano << " exp avg: " << avg;
 
@@ -398,6 +430,7 @@ private:
 
         if (betaTargetNode == nullptr) {
             // There are no alternative actions to take
+            LOG(INFO) << "No alternative actions are available";
             return false;
         }
 
@@ -408,6 +441,10 @@ private:
         double benefit = computeBenefit(sourceNode, alphaTargetNode, betaTargetNode, expectedExpansions);
 
         Cost actionCost = domain.getActionDuration(); // Reconsider for identity actions
+
+        //        if (benefit > actionCost) {
+//        LOG(INFO) << "Benefit:  " << benefit << " Cost " << actionCost;
+        //        }
 
         return benefit > actionCost;
     }
@@ -434,17 +471,22 @@ private:
         double alphaDelay{expansionDelay(source, alpha)};
         double betaDelay{expansionDelay(source, beta)};
 
+        assert(alpha->fHat <= beta->fHat);
+
         // Variance belief (eq. 2)
+        // Estimated error to the goal
         // f difference between current and frontier node is the total error on the path divided by the length of the
         // path gives the per step error
-        double bvarianceAlpha = pow((source->f() - alpha->f()) / (alpha->depth - source->depth) * alpha->distance, 2);
-        double bvarianceBeta = pow((source->f() - beta->f()) / (beta->depth - source->depth) * beta->distance, 2);
+        const double bvarianceAlpha = pow((source->f() - alpha->f()) / (alpha->depth - source->depth) * alpha->distance,
+                                       2);
+        const double bvarianceBeta = pow((source->f() - beta->f()) / (beta->depth - source->depth) * beta->distance, 2);
 
         // Mean
-        double mu_alpha = alpha->f() + sqrt(bvarianceAlpha);
-        double mu_beta = beta->f() + sqrt(bvarianceBeta);
+        const double mu_alpha = alpha->f() + sqrt(bvarianceAlpha);
+        const double mu_beta = beta->f() + sqrt(bvarianceBeta);
 
         // Number of expansion predicted on the alpha/beta path towards the goal
+        // (can't be more than the predicted goal distance)
         double expansionAdvanceOnAlpha = std::min((double)alpha->distance, expansionAdvance / alphaDelay);
         double expansionAdvanceOnBeta = std::min((double)beta->distance, expansionAdvance / betaDelay);
 
@@ -461,10 +503,10 @@ private:
         double endAlpha = mu_alpha + 3.0 * alphaStandardDeviation;
         double endBeta = mu_beta + 3.0 * betaStandardDeviation;
 
-        if (endAlpha < startBeta) {
-            // Not overlapping intervals
-            //            LOG(INFO) << "Not overlapping intervals";
-            return 0;
+
+
+        if (endAlpha < startBeta || (alphaStandardDeviation < 0.00001 && betaStandardDeviation < 0.00001)) {
+            return 0;  // Not overlapping ranges or zero variance
         }
 
         // Integration step
@@ -472,7 +514,9 @@ private:
         double alphaStep = (endAlpha - startAlpha) / 100.0;
         double betaStep = (endBeta - startBeta) / 100.0;
 
-        if (std::abs(alphaStep) < 0.00001 && std::abs(betaStep) < 0.00001) {
+        if (alphaStep < 0.00001 && betaStep < 0.00001) {
+            LOG(INFO) << "Double delta spikes";
+
             // Zero variance
             return 0;
         }
@@ -480,11 +524,11 @@ private:
         measureNanoTime([&]() {
 
             int alphaIndex{0};
-            for (double a = startAlpha; a < endAlpha; a += alphaStep) {
+            for (double a = startAlpha; a < endAlpha && alphaIndex < 100; a += alphaStep) {
                 double sum = 0.0;
 
                 int betaIndex{0};
-                for (double b = startBeta; b < endBeta; b += betaStep) {
+                for (double b = startBeta; b < endBeta && betaIndex < 100; b += betaStep) {
                     if (a < b) {
                         break;
                     }
@@ -590,7 +634,8 @@ private:
     const Domain& domain;
     PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fHatComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
-    std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
+    std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{
+            std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
 
     unsigned int iterationCounter{0};
     unsigned int expansionCounter{0};
@@ -605,6 +650,7 @@ private:
      *  Learning step should be omitted when set.
      */
     bool identityIndicator{false};
+//    Action alphaAction;
 };
 }
 
