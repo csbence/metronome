@@ -39,7 +39,7 @@ public:
             // Goal is already reached
             return std::vector<ActionBundle>();
         }
-
+        
         // Learning phase
         if (openList.isNotEmpty()) {
             learn(terminationChecker);
@@ -116,11 +116,23 @@ private:
         const Cost actionCost;
     };
 
+    void sweepBackSafety() {
+        for (auto it = safeNodes.begin(); it != safeNodes.end(); ++it) {
+            Node* currentSafeNode = *it;
+            while (currentSafeNode->parent != nullptr) {
+                Node* newFoundSafeNode = currentSafeNode->parent;
+                safeNodes.push_back(newFoundSafeNode);
+            }
+        }
+    }
+
     void learn(const TerminationChecker terminationChecker) {
         ++iterationCounter;
 
         // Reorder the open list based on the heuristic values
         openList.reorder(hComparator);
+
+        sweepBackSafety();
 
         while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
             auto currentNode = popOpenList();
@@ -180,8 +192,17 @@ private:
         checkSafeNode(currentNode);
 
         while (!terminationChecker.reachedTermination() && !domain.isGoal(currentNode->state)) {
-            currentNode = popOpenList();
-            expandNode(currentNode);
+            if (domain.safetyPredicate(currentNode->state)) { // try to find nodes which lead to safety
+                currentNode = popOpenList();
+                expandNode(currentNode);
+            }
+        }
+
+        if (currentNode == startNode) { // if we can't just do LSS-LRTA*
+            while (!terminationChecker.reachedTermination() && !domain.isGoal(currentNode->state)) {
+                currentNode = popOpenList();
+                expandNode(currentNode);
+            }
         }
 
         return currentNode; // todo this might be one step behind the best
@@ -190,7 +211,9 @@ private:
     void checkSafeNode(Node* candidateNode) {
         if (domain.safetyPredicate(candidateNode->state)) {
             safeNodes.push_back(candidateNode);
-            candidateNode->topLevelAction = candidateNode->parent->topLevelAction;
+            if (candidateNode->parent != nullptr) {
+                candidateNode->topLevelAction = candidateNode->parent->topLevelAction;
+            }
         }
     }
 
@@ -283,14 +306,18 @@ private:
 
         std::vector<ActionBundle> actionBundles;
         auto currentNode = targetNode;
+        // commit to one action
+        actionBundles.emplace_back(currentNode->topLevelAction,currentNode->g - currentNode->parent->g);
 
-        while (currentNode != sourceNode) {
+//        while (currentNode != sourceNode) {
             // The g difference of the child and the parent gives the action cost from the parent
-            actionBundles.emplace_back(currentNode->action, currentNode->g - currentNode->parent->g);
-            currentNode = currentNode->parent;
-        }
+//            actionBundles.emplace_back(currentNode->action, currentNode->g - currentNode->parent->g);
+//            currentNode = currentNode->parent;
+//        }
 
         std::reverse(actionBundles.begin(), actionBundles.end());
+
+
         return actionBundles;
     }
 

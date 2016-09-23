@@ -13,8 +13,8 @@ parser.add_argument("-v", "--verbose", help="increase output verbosity", action=
 parser.add_argument("-n", "--number", help="number of worlds to generate")
 
 args = parser.parse_args()
-height = int(args.height)
-width = int(args.height)
+height = int(args.height) + 1
+width = int(args.height) + 1
 number = int(args.number)
 
 if args.verbose:
@@ -51,10 +51,12 @@ for iteration in range(0,number):
       flipBunker = random.random() 
       if ((x == startX) and (y == startY)):
         world += "@"
-      elif flipObstacle < obstaclePercentage:
+      elif flipObstacle < obstaclePercentage and x != width-1:
         world += "#"
-      elif flipBunker < bunkerPercentage:
+      elif flipBunker < bunkerPercentage and x != width-1:
         world += "$"
+      elif (y == height-1 and x == width-1):
+        world += "*"
       else:
         world += "_"
     world += "\n"
