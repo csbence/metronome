@@ -9,7 +9,7 @@
 
 //#include <iostream>
 #include <cstdio>
-#include <utils/statistic.hpp>
+#include <utils/Statistic.hpp>
 #define NDEBUG
 
 INITIALIZE_EASYLOGGINGPP

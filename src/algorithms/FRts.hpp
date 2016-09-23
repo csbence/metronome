@@ -15,7 +15,7 @@
 #include "utils/Hasher.hpp"
 #include "utils/PriorityQueue.hpp"
 #include "utils/TimeMeasurement.hpp"
-#include "utils/statistics.hpp"
+#include "utils/Statistic.hpp"
 
 namespace metronome {
 
@@ -76,13 +76,13 @@ public:
             if (matchingNode == nullptr) {
                 nodes.push_back(node);
             } else if (matchingNode->fHat > node->fHat) {
-//                nodes.erase(std::re)
+                //                nodes.erase(std::re)
             }
 
-
-//            if (node->actionLabel != alphaAction && (betaTargetNode == nullptr || betaTargetNode->fHat > node->fHat)) {
-//                betaTargetNode = node;
-//            }
+            //            if (node->actionLabel != alphaAction && (betaTargetNode == nullptr || betaTargetNode->fHat >
+            //            node->fHat)) {
+            //                betaTargetNode = node;
+            //            }
         });
     }
 
