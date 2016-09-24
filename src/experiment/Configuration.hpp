@@ -23,6 +23,8 @@ static const std::string ALGORITHM_LSS_LRTA_STAR{"LSS_LRTA_STAR"};
 static const std::string ALGORITHM_F_HAT{"F_HAT"};
 static const std::string ALGORITHM_MO_RTS{"MO_RTS"};
 static const std::string ALGORITHM_S_ZERO{"S_ZERO"};
+static const std::string ALGORITHM_F_RTS{"F_RTS"};
+
 static const std::string TERMINATION_CHECKER_TIME{"TIME"};
 static const std::string TERMINATION_CHECKER_EXPANSION{"EXPANSION"};
 

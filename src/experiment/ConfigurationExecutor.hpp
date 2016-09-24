@@ -7,6 +7,7 @@
 #include <domains/Traffic.hpp>
 #include <experiment/termination/ExpansionTerminationChecker.hpp>
 #include <string>
+#include <algorithms/FRts.hpp>
 #include "Configuration.hpp"
 #include "OfflinePlanManager.hpp"
 #include "RealTimePlanManager.hpp"
@@ -108,8 +109,8 @@ private:
         } else if (algorithmName == ALGORITHM_MO_RTS) {
             return executeRealTimePlanner<Domain, MoRts<Domain, TerminationChecker>, TerminationChecker>(
                 configuration, domain);
-        } else if (algorithmName == ALGORITHM_LSS_LRTA_STAR) {
-            return executeRealTimePlanner<Domain, LssLrtaStar<Domain, TerminationChecker>, TerminationChecker>(
+        } else if (algorithmName == ALGORITHM_F_RTS) {
+            return executeRealTimePlanner<Domain, FRts<Domain, TerminationChecker>, TerminationChecker>(
                     configuration, domain);
         } else if(algorithmName == ALGORITHM_S_ZERO) {
             return executeRealTimePlanner<Domain, SZero<Domain, TerminationChecker>, TerminationChecker>( configuration, domain);
