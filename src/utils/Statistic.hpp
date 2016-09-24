@@ -42,7 +42,7 @@ public:
             const double step{6.0 / resolution}; // 6 = 2 * std dev
 
             int i{0};
-            for (double x = -3; x < 3; x += step) {
+            for (double x = -2; x < 2; x += step) {
                 table[i] = (standardNormalPDF(x) + standardNormalPDF(x + step)) / 2 * step;
                 ++i;
             }
