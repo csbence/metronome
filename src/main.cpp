@@ -8,7 +8,7 @@
 
 //#include <iostream>
 #include <cstdio>
-#include <utils/statistic.hpp>
+#include <utils/Statistic.hpp>
 
 #ifdef GRAPHICS
 #include <X11/Xlib.h>
