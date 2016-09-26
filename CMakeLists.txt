@@ -53,7 +53,7 @@ add_executable(Metronome ${SOURCE_FILES})
 add_executable(MetronomeTest ${TEST_FILES})
 
 find_package(Boost 1.55.0 COMPONENTS thread system REQUIRED)
-find_package(Cairo)
+find_package(Cairo REQUIRED)
 find_package(X11 REQUIRED)
 
 include_directories(
@@ -64,6 +64,10 @@ include_directories(
         dependencies
         src
 )
+
+if (CAIRO_FOUND AND X11_FOUND)
+    add_definitions(-DGRAPHICS)
+endif()
 
 target_link_libraries(Metronome ${Boost_LIBRARIES} ${CAIRO_LIBRARIES} ${X11_LIBRARIES})
 target_link_libraries(MetronomeTest ${Boost_LIBRARIES} ${CAIRO_LIBRARIES} ${X11_LIBRARIES})

@@ -9,14 +9,15 @@
 //#include <iostream>
 #include <cstdio>
 #include <utils/statistic.hpp>
+
+#ifdef GRAPHICS
 #include <X11/Xlib.h>
 #include <cairo/cairo-xlib.h>
 
-#include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 #include <cairo.h>
-#include <cairo-xlib.h>
+#endif
 
 #define NDEBUG
 
@@ -49,7 +50,9 @@ int main(int argc, char** argv) {
     using namespace metronome;
     printSplashScreen();
 
-//    cairo_create_x11_surface(800,800);
+#ifdef GRAPHICS
+    cairo_create_x11_surface(800,800);
+#endif
 
     Statistic::initialize();
     if (argc == 1) {
