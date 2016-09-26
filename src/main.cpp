@@ -1,7 +1,6 @@
+#include <cairo.h>
 #include "easylogging++.h"
 #include "rapidjson/document.h"
-//#include "rapidjson/stringbuffer.h"
-//#include "rapidjson/writer.h"
 #include "experiment/ConfigurationExecutor.hpp"
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/istreamwrapper.h"
@@ -10,15 +9,47 @@
 //#include <iostream>
 #include <cstdio>
 #include <utils/statistic.hpp>
+#include <X11/Xlib.h>
+#include <cairo/cairo-xlib.h>
+
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
+#include <X11/Xutil.h>
+#include <cairo.h>
+#include <cairo-xlib.h>
+
 #define NDEBUG
 
 INITIALIZE_EASYLOGGINGPP
 
 void printSplashScreen();
 
+cairo_surface_t* cairo_create_x11_surface(int x, int y) {
+    Display* dsp;
+    Drawable da;
+    int screen;
+    cairo_surface_t* sfc;
+
+    if ((dsp = XOpenDisplay(NULL)) == NULL)
+        exit(1);
+    screen = DefaultScreen(dsp);
+    da = XCreateSimpleWindow(dsp, DefaultRootWindow(dsp),
+                             0, 0, x, y, 0, 0, 0);
+    XSelectInput(dsp, da, ButtonPressMask | KeyPressMask);
+    XMapWindow(dsp, da);
+
+    sfc = cairo_xlib_surface_create(dsp, da,
+                                    DefaultVisual(dsp, screen), x, y);
+    cairo_xlib_surface_set_size(sfc, x, y);
+
+    return sfc;
+}
+
 int main(int argc, char** argv) {
     using namespace metronome;
     printSplashScreen();
+
+//    cairo_create_x11_surface(800,800);
 
     Statistic::initialize();
     if (argc == 1) {

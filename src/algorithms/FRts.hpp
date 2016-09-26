@@ -15,7 +15,7 @@
 #include "utils/Hasher.hpp"
 #include "utils/PriorityQueue.hpp"
 #include "utils/TimeMeasurement.hpp"
-#include "utils/statistics.hpp"
+#include "utils/Statistic.hpp"
 
 namespace metronome {
 
@@ -63,8 +63,6 @@ public:
         openList.forEach([&](Node* node) {
             Node* matchingNode{nullptr};
 
-            auto iterator = nodes.begin();
-
             // Find the matching node with the same top level action label
             for (Node* bestNode : nodes) {
                 if (bestNode->actionLabel == node->actionLabel) {
@@ -74,16 +72,17 @@ public:
             }
 
             if (matchingNode == nullptr) {
+                // Add new head node
                 nodes.push_back(node);
             } else if (matchingNode->fHat > node->fHat) {
-//                nodes.erase(std::re)
+                // Replace existing head with a better node
+                // TODO this could be optimized
+                std::replace(nodes.begin(), nodes.end(), matchingNode, node);
             }
 
-
-//            if (node->actionLabel != alphaAction && (betaTargetNode == nullptr || betaTargetNode->fHat > node->fHat)) {
-//                betaTargetNode = node;
-//            }
         });
+
+        return nodes;
     }
 
 private:
@@ -524,10 +523,6 @@ private:
         });
 
         return benefit;
-    }
-
-    double normalPDF(double mean, double variance, double variable) const {
-        return std::exp(-pow(variable - mean, 2) / (2 * variance)) / (sqrt(2 * 3.1415 * variance));
     }
 
     Node* createNode(Node* sourceNode, SuccessorBundle<Domain> successor) {

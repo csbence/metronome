@@ -1,9 +1,14 @@
 cmake_minimum_required(VERSION 3.2)
 project(Metronome)
 
+# Ensure that we find all of our support CMake scripts. These are things like
+# locating required libraries for addons, etc. Store them in modules/
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/modules/")
+
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -pedantic -Wextra")
+set(CXX clang++)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  ${CMAKE_CXX_FLAGS} -std=c++14 -O3")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  ${CMAKE_CXX_FLAGS} -O3")
 
 set(SOURCE_FILES
         src/main.cpp
@@ -33,7 +38,7 @@ set(SOURCE_FILES
         src/experiment/ConfigurationExecutor.hpp
         src/MetronomeException.hpp
         src/utils/File.hpp
-        src/experiment/termination/ExpansionTerminationChecker.hpp src/utils/statistic.hpp src/MemoryConfiguration.hpp src/utils/LinearMemoryPool.hpp src/algorithms/FRts.hpp)
+        src/experiment/termination/ExpansionTerminationChecker.hpp src/utils/Statistic.hpp src/MemoryConfiguration.hpp src/utils/LinearMemoryPool.hpp src/algorithms/FRts.hpp)
 
 set(TEST_FILES
         test/test.cpp
@@ -48,13 +53,17 @@ add_executable(Metronome ${SOURCE_FILES})
 add_executable(MetronomeTest ${TEST_FILES})
 
 find_package(Boost 1.55.0 COMPONENTS thread system REQUIRED)
+find_package(Cairo)
+find_package(X11 REQUIRED)
 
 include_directories(
         ${Boost_INCLUDE_DIRS}
         ${Boost_LIBRARY_DIRS}
+        ${CAIRO_INCLUDE_DIRS}
+        ${X11_INCLUDE_DIRS}
         dependencies
         src
 )
 
-target_link_libraries(Metronome ${Boost_LIBRARIES})
-target_link_libraries(MetronomeTest ${Boost_LIBRARIES})
+target_link_libraries(Metronome ${Boost_LIBRARIES} ${CAIRO_LIBRARIES} ${X11_LIBRARIES})
+target_link_libraries(MetronomeTest ${Boost_LIBRARIES} ${CAIRO_LIBRARIES} ${X11_LIBRARIES})

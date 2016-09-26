@@ -7,7 +7,7 @@
 #include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
 #include <utils/LinearMemoryPool.hpp>
-#include <utils/statistic.hpp>
+#include <utils/Statistic.hpp>
 #include <vector>
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
@@ -52,7 +52,7 @@ public:
 
         const auto bestNode = explore(startState, terminationChecker);
 
-//        bool identityIndicatorPrevious = identityIndicator; // todo remove
+        bool identityIndicatorPrevious = identityIndicator; // todo remove
 
         // Apply meta-reasoning
         auto nano = measureNanoTime(
@@ -64,31 +64,31 @@ public:
             avg = avg * 0.9 + nano * 0.1;
         }
 
-//        static int identCounter{0}; // todo start remove
-//
-//        if (identityIndicator != identityIndicatorPrevious) {
-//            const Action currentBestAction = openList.top()->actionLabel;
-//            if (identityIndicator) {
-//                // Take the first identity action
-//                alphaAction = currentBestAction;
-//            } else {
-//                // Finish start moving after identity action
-//
-//                if (alphaAction == currentBestAction) {
-//                    // Metareasoning was beneficial
-//                    LOG(INFO) << "Metawin after " << identCounter;
-//
-//                    identCounter = 0;
-//                } else {
-//                    // Metareasoning was not beneficial
-//                    LOG(INFO) << "Metaloose after " << identCounter;
-//
-//                    identCounter = 0;
-//                }
-//            }
-//        } else if (identityIndicator) {
-//            identCounter++;
-//        }
+        static int identCounter{0}; // todo start remove
+
+        if (identityIndicator != identityIndicatorPrevious) {
+            const Action currentBestAction = openList.top()->actionLabel;
+            if (identityIndicator) {
+                // Take the first identity action
+                alphaAction = currentBestAction;
+            } else {
+                // Finish start moving after identity action
+
+                if (alphaAction == currentBestAction) {
+                    // Metareasoning was beneficial
+                    LOG(INFO) << "Metawin after " << identCounter;
+
+                    identCounter = 0;
+                } else {
+                    // Metareasoning was not beneficial
+                    LOG(INFO) << "Metaloose after " << identCounter;
+
+                    identCounter = 0;
+                }
+            }
+        } else if (identityIndicator) {
+            identCounter++;
+        }
 //        // todo end remove
 
         //        LOG_EVERY_N(1, INFO) << "Nano time: " << nano << " exp avg: " << avg;
@@ -442,9 +442,9 @@ private:
 
         Cost actionCost = domain.getActionDuration(); // Reconsider for identity actions
 
-        //        if (benefit > actionCost) {
-//        LOG(INFO) << "Benefit:  " << benefit << " Cost " << actionCost;
-        //        }
+//                if (benefit > actionCost) {
+        LOG(INFO) << "Benefit:  " << benefit << " Cost " << actionCost;
+//                }
 
         return benefit > actionCost;
     }
@@ -497,29 +497,30 @@ private:
         const double alphaStandardDeviation = sqrt(varianceAlpha);
         const double betaStandardDeviation = sqrt(varianceBeta);
 
-        double startAlpha = mu_alpha - 3.0 * alphaStandardDeviation;
-        double startBeta = mu_beta - 3.0 * betaStandardDeviation;
+        double startAlpha = mu_alpha - 2.0 * alphaStandardDeviation;
+        double startBeta = mu_beta - 2.0 * betaStandardDeviation;
 
-        double endAlpha = mu_alpha + 3.0 * alphaStandardDeviation;
-        double endBeta = mu_beta + 3.0 * betaStandardDeviation;
+        double endAlpha = mu_alpha + 2.0 * alphaStandardDeviation;
+        double endBeta = mu_beta + 2.0 * betaStandardDeviation;
 
+//        startAlpha = startBeta = std::min(startAlpha, startBeta);
+//        endAlpha = endBeta = std::max(startAlpha, startBeta);
 
-
-        if (endAlpha < startBeta || (alphaStandardDeviation < 0.00001 && betaStandardDeviation < 0.00001)) {
-            return 0;  // Not overlapping ranges or zero variance
-        }
+//        if (endAlpha < startBeta || (alphaStandardDeviation < 0.00001 && betaStandardDeviation < 0.00001)) {
+//            return 0;  // Not overlapping ranges or zero variance
+//        }
 
         // Integration step
         double benefit = 0.0;
         double alphaStep = (endAlpha - startAlpha) / 100.0;
         double betaStep = (endBeta - startBeta) / 100.0;
 
-        if (alphaStep < 0.00001 && betaStep < 0.00001) {
-            LOG(INFO) << "Double delta spikes";
-
-            // Zero variance
-            return 0;
-        }
+//        if (alphaStep < 0.00001 && betaStep < 0.00001) {
+//            LOG(INFO) << "Double delta spikes";
+//
+//            // Zero variance
+//            return 0;
+//        }
 
         measureNanoTime([&]() {
 
@@ -650,7 +651,7 @@ private:
      *  Learning step should be omitted when set.
      */
     bool identityIndicator{false};
-//    Action alphaAction;
+    Action alphaAction;
 };
 }
 
