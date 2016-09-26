@@ -116,7 +116,7 @@ private:
         const Cost actionCost;
     };
 
-    void learn(const TerminationChecker terminationChecker) {
+    void learn(const TerminationChecker& terminationChecker) {
         ++iterationCounter;
 
         // Reorder the open list based on the heuristic values
@@ -155,7 +155,7 @@ private:
         }
     }
 
-    Node* explore(const State& startState, const TerminationChecker terminationChecker) {
+    Node* explore(const State& startState, const TerminationChecker& terminationChecker) {
         ++iterationCounter;
         clearOpenList();
         openList.reorder(fComparator);

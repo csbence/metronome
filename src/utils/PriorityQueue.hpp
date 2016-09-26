@@ -48,7 +48,7 @@ public:
         return const_cast<T*>(result);
     }
 
-    const T* top() const {
+    T* top() const {
         if (size == 0) {
             return nullptr;
         }

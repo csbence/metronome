@@ -200,7 +200,7 @@ private:
         const Cost actionCost;
     };
 
-    void learn(TerminationChecker terminationChecker) {
+    void learn(TerminationChecker& terminationChecker) {
         ++iterationCounter;
 
         // Reorder the open list based on the heuristic values
@@ -242,7 +242,7 @@ private:
         }
     }
 
-    const Node* explore(const State& startState, TerminationChecker terminationChecker) {
+    const Node* explore(const State& startState, TerminationChecker& terminationChecker) {
         // Skip initialization if an identity action was applied
         if (!identityIndicator) {
             ++iterationCounter;

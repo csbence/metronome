@@ -5,13 +5,24 @@ namespace metronome {
 
 class ExpansionTerminationChecker {
 public:
+    ExpansionTerminationChecker() {}
+
+    ExpansionTerminationChecker(const ExpansionTerminationChecker&) = delete;
+
+    ExpansionTerminationChecker(ExpansionTerminationChecker&&) = delete;
+
     void resetTo(unsigned int expansionLimit) {
         this->expansionLimit = expansionLimit;
         expansionCount = 0;
     }
 
+    void setRatio(double ratio) {
+        assert(ratio > 0 && ratio <= 1);
+        this->ratio = ratio;
+    }
+
     bool reachedTermination() const {
-        return expansionCount >= expansionLimit;
+        return expansionCount >= expansionLimit * ratio;
     }
 
     /**
@@ -28,6 +39,7 @@ public:
 private:
     unsigned int expansionCount{0};
     unsigned int expansionLimit{0};
+    double ratio{1};
 };
 }
 
