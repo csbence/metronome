@@ -18,8 +18,8 @@
 #include "algorithms/SZero.hpp"
 #include "algorithms/MoRts.hpp"
 #include "domains/GridWorld.hpp"
-#include "domains/Traffic.hpp"
 #include "domains/SlidingTilePuzzle.hpp"
+#include "domains/Traffic.hpp"
 #include "utils/File.hpp"
 
 namespace metronome {
@@ -112,8 +112,9 @@ private:
         } else if (algorithmName == ALGORITHM_F_RTS) {
             return executeRealTimePlanner<Domain, FRts<Domain, TerminationChecker>, TerminationChecker>(
                     configuration, domain);
-        } else if(algorithmName == ALGORITHM_S_ZERO) {
-            return executeRealTimePlanner<Domain, SZero<Domain, TerminationChecker>, TerminationChecker>( configuration, domain);
+        } else if (algorithmName == ALGORITHM_S_ZERO) {
+            return executeRealTimePlanner<Domain, SZero<Domain, TerminationChecker>, TerminationChecker>(
+                    configuration, domain);
         } else {
             LOG(ERROR) << "Unknown algorithms name: " << algorithmName << std::endl;
             return Result(configuration, "Unknown: algorithmName");

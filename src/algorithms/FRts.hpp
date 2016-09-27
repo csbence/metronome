@@ -3,19 +3,20 @@
 
 #include <fcntl.h>
 #include <MemoryConfiguration.hpp>
+#include <algorithm>
 #include <boost/pool/object_pool.hpp>
-#include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
 #include <utils/LinearMemoryPool.hpp>
 #include <vector>
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
+#include "domains/SuccessorBundle.hpp"
 #include "easylogging++.h"
 #include "experiment/Configuration.hpp"
 #include "utils/Hasher.hpp"
 #include "utils/PriorityQueue.hpp"
-#include "utils/TimeMeasurement.hpp"
 #include "utils/Statistic.hpp"
+#include "utils/TimeMeasurement.hpp"
 
 namespace metronome {
 
@@ -44,45 +45,34 @@ public:
             learn(terminationChecker);
         }
 
-        const auto bestNode = explore(startState, terminationChecker);
+        terminationChecker.setRatio(0.5);
+
+        const Node* bestNode{explore(startState, terminationChecker)};
+        std::vector<ActionBundle> bestPath{extractPath(bestNode, nodes[startState])};
 
         // Find potential nodes
-
         const auto potentialHeadNodes = findHeadNodes();
+        double availableTimePerNode = 0.5 / potentialHeadNodes.size();
+        double currentRatio = 0.5;
 
+        LOG(INFO) << "Labels";
         // Decide what to do
+        for (auto node : potentialHeadNodes) {
+            LOG(INFO) << node->actionLabel;
 
-        return extractPath(bestNode, nodes[startState]);
-    }
+            currentRatio += availableTimePerNode;
+            terminationChecker.setRatio(currentRatio);
 
-    std::vector<const Node*> findHeadNodes() {
-        std::vector<const Node*> nodes;
+            // Addition lookahead search on the head nodes
+            const Node* focusedHead = explore(node, terminationChecker, focusedOpenList);
 
-        nodes.push_back(openList.top());
-
-        openList.forEach([&](Node* node) {
-            Node* matchingNode{nullptr};
-
-            // Find the matching node with the same top level action label
-            for (Node* bestNode : nodes) {
-                if (bestNode->actionLabel == node->actionLabel) {
-                    matchingNode = bestNode;
-                    break;
-                }
+            if (focusedHead != nullptr && bestNode->fHat > focusedHead->fHat) {
+                bestNode = focusedHead;
+                bestPath = extractPath(bestNode, nodes[startState]);
             }
+        }
 
-            if (matchingNode == nullptr) {
-                // Add new head node
-                nodes.push_back(node);
-            } else if (matchingNode->fHat > node->fHat) {
-                // Replace existing head with a better node
-                // TODO this could be optimized
-                std::replace(nodes.begin(), nodes.end(), matchingNode, node);
-            }
-
-        });
-
-        return nodes;
+        return bestPath;
     }
 
 private:
@@ -110,6 +100,8 @@ private:
                   distance{distance},
                   distanceError{distanceError},
                   iteration{iteration} {}
+
+        Node(const Node&) = default;
 
         Cost f() const { return g + h; }
 
@@ -179,14 +171,14 @@ private:
         const Cost actionCost;
     };
 
-    void learn(TerminationChecker terminationChecker) {
+    void learn(TerminationChecker& terminationChecker) {
         ++iterationCounter;
 
         // Reorder the open list based on the heuristic values
         openList.reorder(hComparator);
 
         while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
-            auto currentNode = popOpenList();
+            auto currentNode = popOpenList(openList);
             currentNode->iteration = iterationCounter;
 
             Cost currentHeuristicValue = currentNode->h;
@@ -205,13 +197,13 @@ private:
                     // This node is not open yet, because it was not visited in the current planning iteration
 
                     predecessorNode->h = currentHeuristicValue + predecessor.actionCost;
-                    assert(predecessorNode->iteration == iterationCounter - 1);
-                    predecessorNode->iteration = iterationCounter;
+//                    assert(predecessorNode->iteration == iterationCounter - 1);
+//                    predecessorNode->iteration = iterationCounter;
 
                     predecessorNode->distanceError = currentNode->distanceError;
                     predecessorNode->distance = currentNode->distance + 1;
 
-                    addToOpenList(*predecessorNode);
+                    addToOpenList(openList, *predecessorNode);
                 } else if (predecessorNode->h > currentHeuristicValue + predecessor.actionCost) {
                     // This node was visited in this learning phase, but the current path is better then the previous
                     predecessorNode->h = currentHeuristicValue + predecessor.actionCost;
@@ -221,11 +213,39 @@ private:
         }
     }
 
-    const Node* explore(const State& startState, TerminationChecker terminationChecker) {
+    const Node* explore(Node* startNode, TerminationChecker& terminationChecker, PriorityQueue<Node>& openList) {
+        clearOpenList(openList); // TODO fix for learning
+
+        // Do not insert the first node to the open list
+       if (!terminationChecker.reachedTermination()) {
+           if (domain.isGoal(startNode->state)) {
+               return startNode;
+           }
+
+           terminationChecker.notifyExpansion();
+           expandNode(startNode, openList);
+       }
+
+
+        while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
+            Node* const currentNode = popOpenList(openList);
+
+            if (domain.isGoal(currentNode->state)) {
+                return currentNode;
+            }
+
+            terminationChecker.notifyExpansion();
+            expandNode(currentNode, openList);
+        }
+
+        return openList.top();
+    }
+
+    const Node* explore(const State& startState, TerminationChecker& terminationChecker) {
         // Skip initialization if an identity action was applied
         if (!identityIndicator) {
             ++iterationCounter;
-            clearOpenList();
+            clearOpenList(openList);
             openList.reorder(fHatComparator);
 
             Planner::incrementGeneratedNodeCount();
@@ -244,20 +264,20 @@ private:
             startNode->depth = 0; // Depth relative to the LSS search tree
 
             startNode->iteration = iterationCounter;
-            addToOpenList(*startNode);
+            addToOpenList(openList, *startNode);
         }
 
         bool expanded = false;
         while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
             expanded = true;
-            Node* const currentNode = popOpenList();
+            Node* const currentNode = popOpenList(openList);
 
             if (domain.isGoal(currentNode->state)) {
                 return currentNode;
             }
 
             terminationChecker.notifyExpansion();
-            expandNode(currentNode);
+            expandNode(currentNode, openList);
         }
 
         // Normal action - discovery failed - top is current
@@ -267,7 +287,7 @@ private:
 
         if (!expanded) {
             LOG(INFO) << "Take emergency step.";
-            return emergencyStep(popOpenList());
+            return emergencyStep(popOpenList(openList));
         }
 
         return openList.top();
@@ -309,7 +329,7 @@ private:
         return bestChildNode;
     }
 
-    void expandNode(Node* sourceNode) {
+    void expandNode(Node* sourceNode, PriorityQueue<Node>& openList) {
         Planner::incrementExpandedNodeCount();
 
         sourceNode->expansion = ++expansionCounter;
@@ -366,7 +386,7 @@ private:
 
                 // Open list management
                 if (!successorNode->open) {
-                    addToOpenList(*successorNode);
+                    addToOpenList(openList, *successorNode);
                 } else {
                     openList.update(*successorNode);
                 }
@@ -389,6 +409,60 @@ private:
             nextHeuristicError += (localHeuristicError - nextHeuristicError) / Planner::getExpandedNodeCount();
             nextDistanceError += (localDistanceError - nextDistanceError) / Planner::getExpandedNodeCount();
         }
+    }
+
+    std::vector<Node*> findHeadNodes() {
+        std::vector<Node*> nodes;
+
+        Node* const topNode = openList.top();
+        nodes.push_back(topNode);
+
+        const Cost topCost = topNode->g;
+        const Cost topHHat = topNode->fHat;
+
+        openList.forEach([&](Node* node) {
+            Node* matchingNode{nullptr};
+
+            // Find the matching node with the same top level action label
+            for (Node* bestNode : nodes) {
+                if (bestNode->actionLabel == node->actionLabel) {
+                    matchingNode = bestNode;
+                    break;
+                }
+            }
+
+            if (matchingNode == nullptr) {
+                // Add new head node
+                nodes.push_back(node);
+            } else if (matchingNode->fHat > node->fHat) {
+                // Replace existing head with a better node
+                // TODO this could be optimized
+                std::replace(nodes.begin(), nodes.end(), matchingNode, node);
+            }
+
+        });
+
+        return nodes;
+    }
+
+    std::vector<Node*> findTopTwoHeadNodes() {
+        // Find best two actions
+        const auto alphaTargetNode = openList.top();
+        const Action alphaAction = alphaTargetNode->actionLabel;
+
+        Node* betaTargetNode{nullptr};
+        openList.forEach([&](Node* node) {
+            if (node->actionLabel != alphaAction && (betaTargetNode == nullptr || betaTargetNode->fHat > node->fHat)) {
+                betaTargetNode = node;
+            }
+        });
+
+        std::vector<Node*> nodes({alphaTargetNode});
+        if (betaTargetNode != nullptr) {
+            nodes.push_back(betaTargetNode);
+        }
+
+        return nodes;
     }
 
     bool isBenefitialToSearch(const Node* sourceNode, const TerminationChecker& terminationChecker) {
@@ -545,12 +619,12 @@ private:
                 distance);
     }
 
-    void clearOpenList() {
+    void clearOpenList(PriorityQueue<Node>& openList) {
         openList.forEach([](Node* node) { node->open = false; });
         openList.clear();
     }
 
-    Node* popOpenList() {
+    Node* popOpenList(PriorityQueue<Node>& openList) {
         if (openList.isEmpty()) {
             throw MetronomeException("Open list was empty. Goal is not reachable.");
         }
@@ -560,7 +634,7 @@ private:
         return node;
     }
 
-    void addToOpenList(Node& node) {
+    void addToOpenList(PriorityQueue<Node>& openList, Node& node) {
         node.open = true;
         openList.push(node);
     }
@@ -609,6 +683,8 @@ private:
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
     std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{
             std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
+
+    PriorityQueue<Node> focusedOpenList{Memory::OPEN_LIST_SIZE, fHatComparator};
 
     unsigned int iterationCounter{0};
     unsigned int expansionCounter{0};

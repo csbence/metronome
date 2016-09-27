@@ -13,6 +13,10 @@ public:
         expansionCount = 0;
     }
 
+    void setRatio(double) {
+        throw MetronomeException("Function not implemented");
+    }
+
     bool reachedTermination() const { return getEllapsedTime() >= timeLimit; };
 
     void notifyExpansion() { ++expansionCount; }
