@@ -25,6 +25,7 @@ INITIALIZE_EASYLOGGINGPP
 
 void printSplashScreen();
 
+#ifdef GRAPHICS
 cairo_surface_t* cairo_create_x11_surface(int x, int y) {
     Display* dsp;
     Drawable da;
@@ -45,6 +46,7 @@ cairo_surface_t* cairo_create_x11_surface(int x, int y) {
 
     return sfc;
 }
+#endif
 
 int main(int argc, char** argv) {
     using namespace metronome;
