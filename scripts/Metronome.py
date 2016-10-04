@@ -3,6 +3,7 @@
 import json
 import subprocess
 import numpy as np
+import copy
 from subprocess import Popen, PIPE
 
 import sys
@@ -12,10 +13,11 @@ def execute_metronome(executable, resources, configuration, timeout):
     nice = "nice -n 20"
     # proc = Popen(" ".join([nice, executable, resources]), stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
 
+    json_configuration = json.dumps(configuration)
 
     try:
         print("Start to execute metronome.")
-        result = subprocess.run(" ".join([nice, executable, resources]), input=configuration.encode(),
+        result = subprocess.run(" ".join([nice, executable, resources]), input=json_configuration.encode(),
                                 timeout=timeout, check=True, stdout=PIPE, stderr=PIPE, shell=True)
 
         stdout, stderr = result.stdout, result.stderr
@@ -48,38 +50,21 @@ def execute_metronome(executable, resources, configuration, timeout):
     return result["goalAchievementTime"]
 
 
-def run_experiments():
+def run_experiments(configurations):
     path = "../build/release/Metronome"
     resources = "../resources"
-    configuration = """{{
-"timeLimit": 150000000000,
-"domainPath": "/input/vacuum/variants/cups/cups_{}.vw",
-"domainInstanceName": "Manual test instance",
-"actionDuration": 50000,
-"domainName": "GRID_WORLD",
-"terminationType": "TIME",
-"algorithmName": "LSS_LRTA_STAR"
-}}
-"""
-#    "timeLimit": 150000000000,
-#   "domainPath": "/input/tiles/korf/4/all/1",
-#   "domainInstanceName": "Manual test instance",
-#   "actionDuration": 50000,
-#   "domainName": "SLIDING_TILE_PUZZLE",
-#   "terminationType": "TIME",
-#   "algorithmName": "MO_RTS"
     gat = []
-    for i in range(1, 10):
-        gat.append(execute_metronome(path, resources, configuration.format(i), timeout=60))
+
+    for configuration in configurations:
+        gat.append(execute_metronome(path, resources, configuration, timeout=60))
 
         successful = [x for x in gat if x != 0]
         failed_count = len(gat) - len(successful)
         succeeded_count = len(successful)
 
-        print("Iteration: " + str(i))
         print("GATs: " + str(gat))
         print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
-        print("Avg of successful:{}".format(np.mean(successful) / 1000000000))
+        print("Avg of successful:{}".format(np.mean(successful)))
 
     successful = [x for x in gat if x != 0]
     failed_count = len(gat) - len(successful)
@@ -88,14 +73,43 @@ def run_experiments():
     print("Experiment completed!")
     print("GATs: " + str(gat))
     print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
-    print("Avg of successful:{}".format(np.mean(successful) / 1000000000))
+    print("Avg of successful:{}".format(np.mean(successful)))
 
+def cartesian_product(configurations, key, values):
+    joined_configurations = []
+    for configuration in configurations:
+        for value in values:
+            deepcopy = copy.deepcopy(configuration)
+            deepcopy[key] = value;
+            joined_configurations.append(deepcopy)
+
+    return joined_configurations
+
+
+def generate_experiment_configurations(algorithms, domain_type, domains,
+                                       termination_type, action_duration):
+    configuration = {
+        "timeLimit": 150000000000,
+        "domainInstanceName": "Manual test instance",
+        "actionDuration": action_duration,
+        "domainName": domain_type,
+        "terminationType": termination_type
+    }
+
+    configurations = [configuration]
+    configurations = cartesian_product(configurations, "algorithmName", algorithms)
+    configurations = cartesian_product(configurations, "domainPath", domains)
+
+
+    return configurations
 
 def main():
     print("Metronome python.")
+    print(sys.argv[1])
 
-    run_experiments()
-
+    domains = ["/input/vacuum/variants/cups/cups_{}.vw".format(x) for x in range(0, 100)]
+    configurations = generate_experiment_configurations(["A_STAR", "LSS_LRTA_STAR"], "GRID_WORLD", domains, "TIME", 1000)
+    run_experiments(configurations)
     print("Done")
 
 
