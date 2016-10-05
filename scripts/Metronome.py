@@ -22,6 +22,7 @@ def execute_metronome(executable, resources, configuration, timeout):
 
         stdout, stderr = result.stdout, result.stderr
         print("Metronome output: ")
+        sys.stdout.flush()
         print(result.stdout.decode())
         print(result.stderr.decode())
         print("Finish execution")
@@ -29,12 +30,14 @@ def execute_metronome(executable, resources, configuration, timeout):
     except subprocess.TimeoutExpired as e:
         # stdout, stderr = e.stdout, result.stderr
         print("Experiment timed out")
+        sys.stdout.flush()
         print(e.stdout.decode())
         print(e.stderr.decode())
         sys.stdout.flush()
         return 0
     except subprocess.CalledProcessError as e:
         print("Experiment failed!")
+        sys.stdout.flush()
         print(e.stdout.decode())
         print(e.stderr.decode())
         sys.stdout.flush()
@@ -75,12 +78,13 @@ def run_experiments(configurations):
     print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
     print("Avg of successful:{}".format(np.mean(successful)))
 
+
 def cartesian_product(configurations, key, values):
     joined_configurations = []
     for configuration in configurations:
         for value in values:
             deepcopy = copy.deepcopy(configuration)
-            deepcopy[key] = value;
+            deepcopy[key] = value
             joined_configurations.append(deepcopy)
 
     return joined_configurations
@@ -100,15 +104,15 @@ def generate_experiment_configurations(algorithms, domain_type, domains,
     configurations = cartesian_product(configurations, "algorithmName", algorithms)
     configurations = cartesian_product(configurations, "domainPath", domains)
 
-
     return configurations
+
 
 def main():
     print("Metronome python.")
     print(sys.argv[1])
 
     domains = ["/input/vacuum/variants/cups/cups_{}.vw".format(x) for x in range(0, 100)]
-    configurations = generate_experiment_configurations(["A_STAR", "LSS_LRTA_STAR"], "GRID_WORLD", domains, "TIME", 1000)
+    configurations = generate_experiment_configurations(["MO_RTS"], "GRID_WORLD", domains, "EXPANSION", 100)
     run_experiments(configurations)
     print("Done")
 
