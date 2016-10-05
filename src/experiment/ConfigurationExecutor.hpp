@@ -41,8 +41,6 @@ public:
 
 private:
     static Result unsafeExecuteConfiguration(const Configuration& configuration, const std::string& resourcesDir) {
-        // todo validate configuration
-
         LOG(INFO) << "Configuration started.";
 
         if (!configuration.hasMember(DOMAIN_NAME)) {

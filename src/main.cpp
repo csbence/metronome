@@ -1,4 +1,6 @@
+#ifdef GRAPHICS
 #include <cairo.h>
+#endif
 #include "easylogging++.h"
 #include "rapidjson/document.h"
 #include "experiment/ConfigurationExecutor.hpp"

@@ -53,8 +53,8 @@ add_executable(Metronome ${SOURCE_FILES})
 add_executable(MetronomeTest ${TEST_FILES})
 
 find_package(Boost 1.55.0 COMPONENTS thread system REQUIRED)
-find_package(Cairo REQUIRED)
-find_package(X11 REQUIRED)
+find_package(Cairo)
+find_package(X11)
 
 include_directories(
         ${Boost_INCLUDE_DIRS}

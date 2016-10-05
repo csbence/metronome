@@ -31,13 +31,21 @@ public:
         if (!domain.isGoal(currentState)) {
             throw MetronomeException("Goal is not reached!");
         }
+
+        const std::string terminationCheckerType{configuration.getString(TERMINATION_CHECKER_TYPE)};
+        long long int calculatedPlanningTime = planningTime;
+
+        if (terminationCheckerType == TERMINATION_CHECKER_EXPANSION) {
+            calculatedPlanningTime = planner.getExpandedNodeCount();
+        }
+
         return Result(configuration,
                 planner.getExpandedNodeCount(),
                 planner.getGeneratedNodeCount(),
                 planningTime,
                 pathLength * configuration.getLong("actionDuration"),
-                planningTime + pathLength * configuration.getLong("actionDuration"),
-                planningTime,
+                calculatedPlanningTime + pathLength * configuration.getLong("actionDuration"),
+                calculatedPlanningTime,
                 pathLength,
                 actionStrings);
     }
