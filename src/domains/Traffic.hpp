@@ -23,7 +23,7 @@ public:
     public:
         Action() : value(0) {}
         Action(unsigned int actionDuration) : value(actionDuration) {}
-        constexpr char toChar() const {
+        char toChar() const {
             if (value == 1) {
                 return 'N';
             } else if (value == 2) {
