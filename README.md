@@ -4,9 +4,17 @@ Real time search library implemented in C++
 
 # Requirements
 
+## Metronome C++
+
 * Clang 3.8
 * Cmake
+* Boost
+* X11 and Cairo (optional for visualizaion)
+
+## Experiment execution and plotting
+
 * Python 3.5 + NumPy
+* PyMongo
 
 
 # features
@@ -15,14 +23,13 @@ Search domains including VaccumWorld, Traffic, TestDomain
 
 Algorithm set that makes use of real time search paradigms 
 
-# todo
+# How to run
 
-Finish VacuumWorld and Traffic representation
+1. Generate makefiles with Cmake and compile the project
+2. Metronome requires the resource folder as the first argument and a configuration file. The latter can be provided
+as the second argument or as standard input.
 
-Implement real time A* and its extentions (LSS-LRTA*)
-
-
-Input format:
+Example configuration:
 
 "timeLimit" : NumberLong(150000000000),
 "domainPath" : "input/vacuum/h_400.vw",
