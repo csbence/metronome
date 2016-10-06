@@ -4,10 +4,12 @@ import json
 import subprocess
 import numpy as np
 import copy
+import mongo_client
 from subprocess import Popen, PIPE
 
 import sys
 
+__author__ = 'Bence Cserna'
 
 def execute_metronome(executable, resources, configuration, timeout):
     nice = "nice -n 20"
@@ -50,7 +52,7 @@ def execute_metronome(executable, resources, configuration, timeout):
     print(result)
 
     sys.stdout.flush()
-    return result["goalAchievementTime"]
+    return result
 
 
 def run_experiments(configurations):
@@ -58,8 +60,14 @@ def run_experiments(configurations):
     resources = "../resources"
     gat = []
 
+    results = []
+
     for configuration in configurations:
-        gat.append(execute_metronome(path, resources, configuration, timeout=60))
+        result = execute_metronome(path, resources, configuration, timeout=60)
+        result["experimentConfiguration"] = configuration
+        results.append(result)
+
+        gat.append(result["goalAchievementTime"])
 
         successful = [x for x in gat if x != 0]
         failed_count = len(gat) - len(successful)
@@ -77,6 +85,8 @@ def run_experiments(configurations):
     print("GATs: " + str(gat))
     print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
     print("Avg of successful:{}".format(np.mean(successful)))
+
+    return results
 
 
 def cartesian_product(configurations, key, values):
@@ -111,9 +121,18 @@ def main():
     print("Metronome python.")
     print(sys.argv[1])
 
-    domains = ["/input/vacuum/variants/cups/cups_{}.vw".format(x) for x in range(0, 100)]
-    configurations = generate_experiment_configurations(["MO_RTS"], "GRID_WORLD", domains, "EXPANSION", 100)
-    run_experiments(configurations)
+    domains = ["/input/vacuum/variants/cups/cups_{}.vw".format(x) for x in range(0, 1)]
+
+    configurations = generate_experiment_configurations(["A_STAR"], "GRID_WORLD", domains, "EXPANSION", 100)
+
+    results = run_experiments(configurations)
+    print("Execution completed")
+
+    print(results)
+    db = mongo_client.open_connection()
+
+    mongo_client.upload_results(db, results)
+
     print("Done")
 
 
