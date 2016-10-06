@@ -48,8 +48,8 @@ def execute_metronome(executable, resources, configuration, timeout):
     raw_result = stdout.decode().split("Result:", 2)[1]
     result = json.loads(raw_result)
 
-    print("Parsed result: \n")
-    print(result)
+#    print("Parsed result: \n")
+#    print(result)
 
     sys.stdout.flush()
     return result
@@ -73,18 +73,18 @@ def run_experiments(configurations):
         failed_count = len(gat) - len(successful)
         succeeded_count = len(successful)
 
-        print("GATs: " + str(gat))
+ #       print("GATs: " + str(gat))
         print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
-        print("Avg of successful:{}".format(np.mean(successful)))
+   #     print("Avg of successful:{}".format(np.mean(successful)))
 
     successful = [x for x in gat if x != 0]
     failed_count = len(gat) - len(successful)
     succeeded_count = len(successful)
 
     print("Experiment completed!")
-    print("GATs: " + str(gat))
+#    pr#int("GATs: " + str(gat))
     print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
-    print("Avg of successful:{}".format(np.mean(successful)))
+#    p#rint("Avg of successful:{}".format(np.mean(successful)))
 
     return results
 
@@ -101,11 +101,10 @@ def cartesian_product(configurations, key, values):
 
 
 def generate_experiment_configurations(algorithms, domain_type, domains,
-                                       termination_type, action_duration):
+                                       termination_type, action_durations):
     configuration = {
         "timeLimit": 150000000000,
         "domainInstanceName": "Manual test instance",
-        "actionDuration": action_duration,
         "domainName": domain_type,
         "terminationType": termination_type
     }
@@ -113,6 +112,7 @@ def generate_experiment_configurations(algorithms, domain_type, domains,
     configurations = [configuration]
     configurations = cartesian_product(configurations, "algorithmName", algorithms)
     configurations = cartesian_product(configurations, "domainPath", domains)
+    configurations = cartesian_product(configurations, "actionDuration", action_durations)
 
     return configurations
 
@@ -121,14 +121,16 @@ def main():
     print("Metronome python.")
     print(sys.argv[1])
 
-    domains = ["/input/vacuum/variants/cups/cups_{}.vw".format(x) for x in range(0, 1)]
+    domains = ["/input/tiles/korf/4/all/{}".format(x) for x in range(1, 100)]
+#    domains = ["/input/vacuum/variants/cups-2/cups_{}.vw".format(x) for x in range(0, 100)]
+#    domains.extend(["/input/vacuum/variants/wall-2/wall_{}.vw".format(x) for x in range(0, 100)])
 
-    configurations = generate_experiment_configurations(["A_STAR"], "GRID_WORLD", domains, "EXPANSION", 100)
+    configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "MO_RTS"], "SLIDING_TILE_PUZZLE", domains, "EXPANSION", [100, 1000, 10000, 100000])
 
     results = run_experiments(configurations)
     print("Execution completed")
 
-    print(results)
+ #   print(results)
     db = mongo_client.open_connection()
 
     mongo_client.upload_results(db, results)

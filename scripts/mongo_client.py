@@ -2,7 +2,6 @@
 
 import json
 import numpy as np
-import matplotlib.pyplot as plt
 from pymongo import MongoClient
 
 import sys
