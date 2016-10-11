@@ -4,22 +4,28 @@ import json
 import subprocess
 import numpy as np
 import copy
-import mongo_client
 from subprocess import Popen, PIPE
 
 import sys
 
+from mongo_client import MetronomeMongoClient
+
 __author__ = 'Bence Cserna'
+
 
 def execute_metronome(executable, resources, configuration, timeout):
     nice = "nice -n 20"
+    " ".join([nice, executable, resources]),
+
+
+def execute_metronome(command, timeout):
     # proc = Popen(" ".join([nice, executable, resources]), stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
 
     json_configuration = json.dumps(configuration)
 
     try:
         print("Start to execute metronome.")
-        result = subprocess.run(" ".join([nice, executable, resources]), input=json_configuration.encode(),
+        result = subprocess.run(command, input=json_configuration.encode(),
                                 timeout=timeout, check=True, stdout=PIPE, stderr=PIPE, shell=True)
 
         stdout, stderr = result.stdout, result.stderr
@@ -48,8 +54,8 @@ def execute_metronome(executable, resources, configuration, timeout):
     raw_result = stdout.decode().split("Result:", 2)[1]
     result = json.loads(raw_result)
 
-#    print("Parsed result: \n")
-#    print(result)
+    #    print("Parsed result: \n")
+    #    print(result)
 
     sys.stdout.flush()
     return result
@@ -73,18 +79,18 @@ def run_experiments(configurations):
         failed_count = len(gat) - len(successful)
         succeeded_count = len(successful)
 
- #       print("GATs: " + str(gat))
+        #       print("GATs: " + str(gat))
         print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
-   #     print("Avg of successful:{}".format(np.mean(successful)))
+        #     print("Avg of successful:{}".format(np.mean(successful)))
 
     successful = [x for x in gat if x != 0]
     failed_count = len(gat) - len(successful)
     succeeded_count = len(successful)
 
     print("Experiment completed!")
-#    pr#int("GATs: " + str(gat))
+    #    pr#int("GATs: " + str(gat))
     print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
-#    p#rint("Avg of successful:{}".format(np.mean(successful)))
+    #    p#rint("Avg of successful:{}".format(np.mean(successful)))
 
     return results
 
@@ -122,19 +128,25 @@ def main():
     print(sys.argv[1])
 
     domains = ["/input/tiles/korf/4/all/{}".format(x) for x in range(1, 100)]
-#    domains = ["/input/vacuum/variants/cups-2/cups_{}.vw".format(x) for x in range(0, 100)]
-#    domains.extend(["/input/vacuum/variants/wall-2/wall_{}.vw".format(x) for x in range(0, 100)])
+    #    domains = ["/input/vacuum/variants/cups-2/cups_{}.vw".format(x) for x in range(0, 100)]
+    #    domains.extend(["/input/vacuum/variants/wall-2/wall_{}.vw".format(x) for x in range(0, 100)])
 
-    configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "MO_RTS"], "SLIDING_TILE_PUZZLE", domains, "EXPANSION", [100, 1000, 10000, 100000])
+    # configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "MO_RTS"], "SLIDING_TILE_PUZZLE", domains, "EXPANSION", [100, 1000, 10000, 100000])
 
-    results = run_experiments(configurations)
-    print("Execution completed")
+    # results = run_experiments(configurations)
+    # print("Execution completed")
 
- #   print(results)
-    db = mongo_client.open_connection()
+    data = None
+    db = MetronomeMongoClient()
+    # mongo_client.upload_results(db, results)
+    data = db.get_results("A_STAR",
+                          "GRID_WORLD",
+                          "/input/vacuum/variants/cups-2/cups_",
+                          "EXPANSION",
+                          10)
 
-    mongo_client.upload_results(db, results)
-
+    for value in data:
+        print(value)
     print("Done")
 
 
