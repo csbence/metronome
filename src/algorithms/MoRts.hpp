@@ -506,21 +506,14 @@ private:
 //        startAlpha = startBeta = std::min(startAlpha, startBeta);
 //        endAlpha = endBeta = std::max(startAlpha, startBeta);
 
-//        if (endAlpha < startBeta || (alphaStandardDeviation < 0.00001 && betaStandardDeviation < 0.00001)) {
-//            return 0;  // Not overlapping ranges or zero variance
-//        }
+        if (endAlpha < startBeta || (alphaStandardDeviation < 0.00001 && betaStandardDeviation < 0.00001)) {
+            return 0;  // Not overlapping ranges or zero variance
+        }
 
         // Integration step
         double benefit = 0.0;
         double alphaStep = (endAlpha - startAlpha) / 100.0;
         double betaStep = (endBeta - startBeta) / 100.0;
-
-//        if (alphaStep < 0.00001 && betaStep < 0.00001) {
-//            LOG(INFO) << "Double delta spikes";
-//
-//            // Zero variance
-//            return 0;
-//        }
 
         measureNanoTime([&]() {
 
