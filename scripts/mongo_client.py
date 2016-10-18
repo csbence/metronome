@@ -34,11 +34,21 @@ class MetronomeMongoClient:
             "experimentConfiguration.domainName": domain,
             "experimentConfiguration.domainPath": {"$regex": "%s.*" % re.escape(instance)},
             "experimentConfiguration.terminationType": termination_type,
-            "experimentConfiguration.actionDuration": int(action_duration),
+            # "experimentConfiguration.actionDuration": int(action_duration),
             "success": True
         }
 
-        print(query)
+        return list(self.db.experimentalResult.find(query))
 
-        return self.db.experimentalResult.find(query)
+    def get_results(self, algorithms, domain, instance, termination_type):
+
+        query = {
+            "experimentConfiguration.algorithmName": {"$in": algorithms},
+            "experimentConfiguration.domainName": domain,
+            "experimentConfiguration.domainPath": {"$regex": "%s.*" % re.escape(instance)},
+            "experimentConfiguration.terminationType": termination_type,
+            "success": True
+        }
+
+        return list(self.db.experimentalResult.find(query))
 

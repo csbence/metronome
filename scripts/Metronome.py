@@ -143,7 +143,7 @@ def main():
                           "GRID_WORLD",
                           "/input/vacuum/variants/cups-2/cups_",
                           "EXPANSION",
-                          10)
+                          100)
 
     for value in data:
         print(value)
