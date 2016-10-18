@@ -16,7 +16,6 @@ Real time search library implemented in C++
 * Python 3.5 + NumPy
 * PyMongo
 
-
 # features
 
 Search domains including VaccumWorld, Traffic, TestDomain

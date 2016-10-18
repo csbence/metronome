@@ -27,6 +27,7 @@ public:
         while (!domain.isGoal(currentState)) {
             auto planningIterationTime = measureNanoTime([&] {
                 terminationChecker.resetTo(timeBound);
+//                terminationChecker.resetTo(actionDuration); // TODO !!! Single step
 
                 auto actionBundles{planner.selectActions(currentState, terminationChecker)};
 
