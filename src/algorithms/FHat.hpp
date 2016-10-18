@@ -1,19 +1,19 @@
 #ifndef METRONOME_FHAT_HPP
 #define METRONOME_FHAT_HPP
 #include <fcntl.h>
-#include <boost/pool/object_pool.hpp>
+#include <MemoryConfiguration.hpp>
+#include <algorithm>
 #include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
 #include <vector>
-#include <MemoryConfiguration.hpp>
-#include <algorithm>
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
+#include "easylogging++.h"
 #include "experiment/Configuration.hpp"
 #include "utils/Hasher.hpp"
 #include "utils/PriorityQueue.hpp"
+#include "utils/StaticVector.hpp"
 #include "utils/TimeMeasurement.hpp"
-#include "easylogging++.h"
 
 namespace metronome {
 
@@ -26,11 +26,6 @@ public:
     typedef typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle ActionBundle;
 
     FHat(const Domain& domain, const Configuration&) : domain{domain} {
-        // Force the object pool to allocate memory
-        State state;
-        Node node = Node(nullptr, std::move(state), Action(), 0, 0, true, 0, 0, 0);
-        nodePool.destroy(nodePool.construct(node));
-
         // Initialize hash table
         nodes.max_load_factor(1);
         nodes.reserve(Memory::NODE_LIMIT);
@@ -49,18 +44,18 @@ public:
 
         const auto bestNode = explore(startState, terminationChecker);
 
-//        AStar<Domain> aStar{domain, Configuration()};
-//
-//        const std::vector<Action>& plan = aStar.plan(bestNode->state);
-//
-//        auto hStar = plan
-//                    .size() * domain.getActionDuration();
-//        const unsigned long h = bestNode->f() -bestNode->g;
-//        const double hHat = bestNode->fHat - h - bestNode->g;
-//        const double min = std::max(hHat, 1.0);
-//        const double rel = (hStar - h) / hHat;
-//        LOG(INFO) << "g/h/hhat/hstar " << bestNode->g << " " << h << " " << hHat << " " << hStar
-//                  << " " << rel;
+        //        AStar<Domain> aStar{domain, Configuration()};
+        //
+        //        const std::vector<Action>& plan = aStar.plan(bestNode->state);
+        //
+        //        auto hStar = plan
+        //                    .size() * domain.getActionDuration();
+        //        const unsigned long h = bestNode->f() -bestNode->g;
+        //        const double hHat = bestNode->fHat - h - bestNode->g;
+        //        const double min = std::max(hHat, 1.0);
+        //        const double rel = (hStar - h) / hHat;
+        //        LOG(INFO) << "g/h/hhat/hstar " << bestNode->g << " " << h << " " << hHat << " " << hStar
+        //                  << " " << rel;
 
         return extractPath(bestNode, nodes[startState]);
     }
@@ -192,7 +187,7 @@ private:
         }
     }
 
-   const Node* explore(const State& startState, TerminationChecker& terminationChecker) {
+    const Node* explore(const State& startState, TerminationChecker& terminationChecker) {
         ++iterationCounter;
         clearOpenList();
         openList.reorder(fHatComparator);
@@ -384,7 +379,8 @@ private:
     const Domain& domain;
     PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fHatComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
-    boost::object_pool<Node> nodePool{Memory::NODE_LIMIT, Memory::NODE_LIMIT};
+    std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{
+            std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
     unsigned int iterationCounter{0};
 
     double heuristicError{0};

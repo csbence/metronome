@@ -1,19 +1,18 @@
 #ifndef METRONOME_LSSLRTASTAR_HPP
 #define METRONOME_LSSLRTASTAR_HPP
 #include <fcntl.h>
-#include <boost/pool/object_pool.hpp>
+#include <MemoryConfiguration.hpp>
 #include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
 #include <vector>
-#include <MemoryConfiguration.hpp>
-#include <utils/LinearMemoryPool.hpp>
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
+#include "easylogging++.h"
 #include "experiment/Configuration.hpp"
 #include "utils/Hasher.hpp"
 #include "utils/PriorityQueue.hpp"
+#include "utils/StaticVector.hpp"
 #include "utils/TimeMeasurement.hpp"
-#include "easylogging++.h"
 
 namespace metronome {
 
@@ -299,7 +298,8 @@ private:
     const Domain& domain;
     PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
-    std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
+    std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{
+            std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
     unsigned int iterationCounter{0};
 };
 }

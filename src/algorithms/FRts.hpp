@@ -4,9 +4,8 @@
 #include <fcntl.h>
 #include <MemoryConfiguration.hpp>
 #include <algorithm>
-#include <boost/pool/object_pool.hpp>
 #include <unordered_map>
-#include <utils/LinearMemoryPool.hpp>
+#include <utils/StaticVector.hpp>
 #include <vector>
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"

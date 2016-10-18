@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
-#include <utils/LinearMemoryPool.hpp>
+#include <utils/StaticVector.hpp>
 #include <utils/Statistic.hpp>
 #include <vector>
 #include "MetronomeException.hpp"
