@@ -10,7 +10,6 @@
 #include "utils/Hasher.hpp"
 #include "utils/StaticVector.hpp"
 #include "utils/PriorityQueue.hpp"
-#define BOOST_POOL_NO_MT
 
 namespace metronome {
 
