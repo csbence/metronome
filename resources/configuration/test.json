@@ -5,5 +5,5 @@
   "actionDuration": 100,
   "domainName": "GRID_WORLD",
   "terminationType": "EXPANSION",
-  "algorithmName": "F_RTS"
+  "algorithmName": "A_STAR"
 }

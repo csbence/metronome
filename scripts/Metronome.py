@@ -130,6 +130,12 @@ def main():
     domains = ["/input/tiles/korf/4/all/{}".format(x) for x in range(1, 100)]
     #    domains = ["/input/vacuum/variants/cups-2/cups_{}.vw".format(x) for x in range(0, 100)]
     #    domains.extend(["/input/vacuum/variants/wall-2/wall_{}.vw".format(x) for x in range(0, 100)])
+#    domains = ["/input/tiles/korf/4/all/{}".format(x) for x in range(1, 100)]
+#    domains = ["/input/vacuum/variants/cups-2/cups_{}.vw".format(x) for x in range(0, 100)]
+#    domains = ["/input/vacuum/variants/uniform-2/uniform_{}.vw".format(x) for x in range(0, 100)]
+#    domains.extend(["/input/vacuum/variants/wall-2/wall_{}.vw".format(x) for x in range(0, 100)])
+
+    configurations = generate_experiment_configurations(["A_STAR", "LSS_LRTA_STAR", "MO_RTS"], "GRID_WORLD", domains, "EXPANSION", [10, 20, 50, 100])
 
     # configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "MO_RTS"], "SLIDING_TILE_PUZZLE", domains, "EXPANSION", [100, 1000, 10000, 100000])
 
