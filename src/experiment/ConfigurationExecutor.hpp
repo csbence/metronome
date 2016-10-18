@@ -59,7 +59,7 @@ private:
             return executeDomain<SlidingTilePuzzle>(configuration, resourcesDir);
         } else {
             LOG(ERROR) << "Unknown domain name: " << domainName << std::endl;
-            return Result(configuration, "Unknown: domainName");
+            return Result(configuration, "Unknown: domainName: " + domainName);
         }
     }
 
@@ -119,7 +119,7 @@ private:
                     configuration, domain);
         } else {
             LOG(ERROR) << "Unknown algorithms name: " << algorithmName << std::endl;
-            return Result(configuration, "Unknown: algorithmName");
+            return Result(configuration, "Unknown: algorithmName: " + algorithmName);
         }
     }
 
@@ -165,8 +165,25 @@ private:
 
         RealTimePlanManager<Domain, Planner, TerminationChecker> realTimePlanManager;
 
+        if (!configuration.hasMember(LOOKAHEAD_TYPE)) {
+            LOG(ERROR) << "Lookahead type not found." << std::endl;
+            return Result(configuration, "Missing: lookaheadType");
+        }
+
+        std::string lookaheadType{configuration.getString(LOOKAHEAD_TYPE)};
+
+        bool dynamicLookahead;
+        if (lookaheadType == LOOKAHEAD_STATIC) {
+            dynamicLookahead = false;
+        } else if (lookaheadType == LOOKAHEAD_DYNAMIC) {
+            dynamicLookahead = true;
+        } else {
+            LOG(ERROR) << "Unknown lookahead type: " << lookaheadType << std::endl;
+            return Result(configuration, "Unknown lookaheadType: " + lookaheadType);
+        }
+
         LOG(INFO) << "Configuration done.";
-        return realTimePlanManager.plan(configuration, domain, planner);
+        return realTimePlanManager.plan(configuration, domain, planner, dynamicLookahead);
     }
 };
 }

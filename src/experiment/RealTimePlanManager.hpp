@@ -8,10 +8,10 @@
 #include "utils/TimeMeasurement.hpp"
 
 namespace metronome {
-template <typename Domain, typename Planner, typename TerminationChecker>
-class RealTimePlanManager : PlanManager<Domain, Planner> {
+template<typename Domain, typename Planner, typename TerminationChecker>
+class RealTimePlanManager: PlanManager<Domain, Planner> {
 public:
-    Result plan(const Configuration& configuration, const Domain& domain, Planner& planner) {
+    Result plan(const Configuration& configuration, const Domain& domain, Planner planner, bool dynamicLookahead) {
         using namespace std::chrono;
 
         std::vector<typename Domain::Action> actions;
@@ -26,8 +26,11 @@ public:
 
         while (!domain.isGoal(currentState)) {
             auto planningIterationTime = measureNanoTime([&] {
-                terminationChecker.resetTo(timeBound);
-//                terminationChecker.resetTo(actionDuration); // TODO !!! Single step
+                if (dynamicLookahead) {
+                    terminationChecker.resetTo(timeBound);
+                } else {
+                    terminationChecker.resetTo(actionDuration);
+                }
 
                 auto actionBundles{planner.selectActions(currentState, terminationChecker)};
 
@@ -35,7 +38,7 @@ public:
                 timeBound = 0;
                 for (auto& actionBundle : actionBundles) {
                     boost::optional<typename Domain::State> nextState =
-                            domain.transition(currentState, actionBundle.action);
+                        domain.transition(currentState, actionBundle.action);
                     if (!nextState.is_initialized()) {
                         throw MetronomeException("Invalid action. Partial plan is corrupt.");
                     }
@@ -70,15 +73,15 @@ public:
         }
 
         return Result(configuration,
-                planner.getExpandedNodeCount(),
-                planner.getGeneratedNodeCount(),
-                planningTime, // Planning time
-                pathLength * configuration.getLong("actionDuration"), // Execution time
-                domain.getActionDuration() + pathLength * configuration.getLong("actionDuration"), // GAT
-                domain.getActionDuration(), // Idle planning time
-                pathLength, // Path length
-                actionStrings,
-                planner.getIdentityActionCount());
+                      planner.getExpandedNodeCount(),
+                      planner.getGeneratedNodeCount(),
+                      planningTime, // Planning time
+                      pathLength * configuration.getLong("actionDuration"), // Execution time
+                      domain.getActionDuration() + pathLength * configuration.getLong("actionDuration"), // GAT
+                      domain.getActionDuration(), // Idle planning time
+                      pathLength, // Path length
+                      actionStrings,
+                      planner.getIdentityActionCount());
     }
 };
 }

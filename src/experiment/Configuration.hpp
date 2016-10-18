@@ -13,6 +13,7 @@ static const std::string ALGORITHM_NAME{"algorithmName"};
 static const std::string TERMINATION_CHECKER_TYPE{"terminationType"};
 static const std::string ACTION_DURATION{"actionDuration"};
 static const std::string TIME_LIMIT{"timeLimit"};
+static const std::string LOOKAHEAD_TYPE{"lookaheadType"};
 
 static const std::string DOMAIN_GRID_WORLD{"GRID_WORLD"};
 static const std::string DOMAIN_TRAFFIC{"TRAFFIC"};
@@ -28,6 +29,9 @@ static const std::string ALGORITHM_F_RTS{"F_RTS"};
 
 static const std::string TERMINATION_CHECKER_TIME{"TIME"};
 static const std::string TERMINATION_CHECKER_EXPANSION{"EXPANSION"};
+
+static const std::string LOOKAHEAD_STATIC{"STATIC"};
+static const std::string LOOKAHEAD_DYNAMIC{"DYNAMIC"};
 
 class Configuration {
 public:
