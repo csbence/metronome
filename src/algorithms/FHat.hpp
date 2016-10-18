@@ -196,7 +196,7 @@ private:
         Node*& startNode = nodes[startState];
 
         if (startNode == nullptr) {
-            startNode = nodePool.construct(
+            startNode = nodePool->construct(
                     Node{nullptr, startState, Action(), 0, domain.heuristic(startState), true, 0, 0, 0});
         } else {
             startNode->g = 0;
@@ -305,7 +305,7 @@ private:
         auto distance = domain.distance(successorState);
         auto heuristic = domain.heuristic(successorState);
 
-        return nodePool.construct(Node{sourceNode,
+        return nodePool->construct(Node{sourceNode,
                 successorState,
                 successor.action,
                 domain.COST_MAX,
