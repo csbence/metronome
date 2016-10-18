@@ -22,12 +22,16 @@ def flatten(experiment):
     return {**experiment, **experiment_configuration}
 
 
-def construct_data_frame(db):
+def plot_experiments(db, algorithms, domain, instance, termination_type):
     data = db.get_results(algorithms,
                           "SLIDING_TILE_PUZZLE",
                           tiles_path,
                           "EXPANSION")
 
+    plot_experiments(construct_data_frame(data))
+
+
+def construct_data_frame(data):
     flat_data = [flatten(experiment) for experiment in data]
     return DataFrame(flat_data)
 
