@@ -17,6 +17,7 @@
 #include "algorithms/LssLrtaStar.hpp"
 #include "algorithms/SZero.hpp"
 #include "algorithms/MoRts.hpp"
+#include "algorithms/MoRtsOld.hpp"
 #include "domains/GridWorld.hpp"
 #include "domains/SlidingTilePuzzle.hpp"
 #include "domains/Traffic.hpp"
@@ -106,6 +107,9 @@ private:
                     configuration, domain);
         } else if (algorithmName == ALGORITHM_MO_RTS) {
             return executeRealTimePlanner<Domain, MoRts<Domain, TerminationChecker>, TerminationChecker>(
+                configuration, domain);
+        } else if (algorithmName == ALGORITHM_MO_RTS_OLD) {
+            return executeRealTimePlanner<Domain, MoRtsOld<Domain, TerminationChecker>, TerminationChecker>(
                 configuration, domain);
         } else if (algorithmName == ALGORITHM_F_RTS) {
             return executeRealTimePlanner<Domain, FRts<Domain, TerminationChecker>, TerminationChecker>(
