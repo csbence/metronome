@@ -225,8 +225,8 @@ public:
     std::vector<SuccessorBundle<GridWorld>> successors(const State& state) const {
         std::vector<SuccessorBundle<GridWorld>> successors;
 
-        addValidSuccessor(successors, state, 0, -1, Action::getActions()[0]);
         addValidSuccessor(successors, state, 0, 1, Action::getActions()[1]);
+        addValidSuccessor(successors, state, 0, -1, Action::getActions()[0]);
         addValidSuccessor(successors, state, -1, 0, Action::getActions()[2]);
         addValidSuccessor(successors, state, 1, 0, Action::getActions()[3]);
 
