@@ -13,6 +13,7 @@ static const std::string ALGORITHM_NAME{"algorithmName"};
 static const std::string TERMINATION_CHECKER_TYPE{"terminationType"};
 static const std::string ACTION_DURATION{"actionDuration"};
 static const std::string TIME_LIMIT{"timeLimit"};
+static const std::string LOOKAHEAD_TYPE{"lookaheadType"};
 
 static const std::string DOMAIN_GRID_WORLD{"GRID_WORLD"};
 static const std::string DOMAIN_TRAFFIC{"TRAFFIC"};
@@ -22,11 +23,15 @@ static const std::string ALGORITHM_A_STAR{"A_STAR"};
 static const std::string ALGORITHM_LSS_LRTA_STAR{"LSS_LRTA_STAR"};
 static const std::string ALGORITHM_F_HAT{"F_HAT"};
 static const std::string ALGORITHM_MO_RTS{"MO_RTS"};
+static const std::string ALGORITHM_MO_RTS_OLD{"MO_RTS_OLD"};
 static const std::string ALGORITHM_S_ZERO{"S_ZERO"};
 static const std::string ALGORITHM_F_RTS{"F_RTS"};
 
 static const std::string TERMINATION_CHECKER_TIME{"TIME"};
 static const std::string TERMINATION_CHECKER_EXPANSION{"EXPANSION"};
+
+static const std::string LOOKAHEAD_STATIC{"STATIC"};
+static const std::string LOOKAHEAD_DYNAMIC{"DYNAMIC"};
 
 class Configuration {
 public:

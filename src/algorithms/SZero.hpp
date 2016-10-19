@@ -1,7 +1,6 @@
 #ifndef METRONOME_SLSSLRTASTAR_HPP
 #define METRONOME_SLSSLRTASTAR_HPP
 #include <fcntl.h>
-#include <boost/pool/object_pool.hpp>
 #include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
 #include <vector>
@@ -9,9 +8,8 @@
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
 #include "utils/Hasher.hpp"
-#include "utils/LinearMemoryPool.hpp"
+#include "utils/StaticVector.hpp"
 #include "utils/PriorityQueue.hpp"
-#define BOOST_POOL_NO_MT
 
 namespace metronome {
 

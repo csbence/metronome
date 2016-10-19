@@ -14,6 +14,23 @@ public:
     Result plan(const Configuration& configuration, const Domain& domain, Planner& planner) {
         using namespace std::chrono;
 
+        if (!configuration.hasMember(LOOKAHEAD_TYPE)) {
+            LOG(ERROR) << "Lookahead type not found." << std::endl;
+            return Result(configuration, "Missing: lookaheadType");
+        }
+
+        std::string lookaheadType{configuration.getString(LOOKAHEAD_TYPE)};
+
+        bool dynamicLookahead;
+        if (lookaheadType == LOOKAHEAD_STATIC) {
+            dynamicLookahead = false;
+        } else if (lookaheadType == LOOKAHEAD_DYNAMIC) {
+            dynamicLookahead = true;
+        } else {
+            LOG(ERROR) << "Unknown lookahead type: " << lookaheadType << std::endl;
+            return Result(configuration, "Unknown lookaheadType: " + lookaheadType);
+        }
+
         std::vector<typename Domain::Action> actions;
         long long int planningTime{0};
         const auto actionDuration = configuration.getLong(ACTION_DURATION);
@@ -26,7 +43,11 @@ public:
 
         while (!domain.isGoal(currentState)) {
             auto planningIterationTime = measureNanoTime([&] {
-                terminationChecker.resetTo(timeBound);
+                if (dynamicLookahead) {
+                    terminationChecker.resetTo(timeBound);
+                } else {
+                    terminationChecker.resetTo(actionDuration);
+                }
 
                 auto actionBundles{planner.selectActions(currentState, terminationChecker)};
 

@@ -1,33 +1,33 @@
-#ifndef METRONOME_FRTS_H
-#define METRONOME_FRTS_H
-
+#ifndef METRONOME_MO_RTS_OLD_HPP
+#define METRONOME_MO_RTS_OLD_HPP
 #include <fcntl.h>
+#include <stdlib.h>
 #include <MemoryConfiguration.hpp>
 #include <algorithm>
+#include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
 #include <utils/StaticVector.hpp>
+#include <utils/Statistic.hpp>
 #include <vector>
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
-#include "domains/SuccessorBundle.hpp"
 #include "easylogging++.h"
 #include "experiment/Configuration.hpp"
 #include "utils/Hasher.hpp"
 #include "utils/PriorityQueue.hpp"
-#include "utils/Statistic.hpp"
 #include "utils/TimeMeasurement.hpp"
 
 namespace metronome {
 
-template <typename Domain, typename TerminationChecker>
-class FRts final : public OnlinePlanner<Domain, TerminationChecker> {
+template<typename Domain, typename TerminationChecker>
+class MoRtsOld final: public OnlinePlanner<Domain, TerminationChecker> {
 public:
     typedef typename Domain::State State;
     typedef typename Domain::Action Action;
     typedef typename Domain::Cost Cost;
     typedef typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle ActionBundle;
 
-    FRts(const Domain& domain, const Configuration&) : domain{domain} {
+    MoRtsOld(const Domain& domain, const Configuration&) : domain{domain} {
         // Initialize hash table
         nodes.max_load_factor(1);
         nodes.reserve(Memory::NODE_LIMIT);
@@ -40,38 +40,70 @@ public:
         }
 
         // Learning phase
-        if (openList.isNotEmpty()) {
+        if (!identityIndicator && openList.isNotEmpty()) {
             learn(terminationChecker);
         }
 
-        terminationChecker.setRatio(0.5);
-
-        const Node* bestNode{explore(startState, terminationChecker)};
-        std::vector<ActionBundle> bestPath{extractPath(bestNode, nodes[startState])};
-
-        // Find potential nodes
-        const auto potentialHeadNodes = findHeadNodes();
-        double availableTimePerNode = 0.5 / potentialHeadNodes.size();
-        double currentRatio = 0.5;
-
-        LOG(INFO) << "Labels";
-        // Decide what to do
-        for (auto node : potentialHeadNodes) {
-            LOG(INFO) << node->actionLabel;
-
-            currentRatio += availableTimePerNode;
-            terminationChecker.setRatio(currentRatio);
-
-            // Addition lookahead search on the head nodes
-            const Node* focusedHead = explore(node, terminationChecker, focusedOpenList);
-
-            if (focusedHead != nullptr && bestNode->fHat > focusedHead->fHat) {
-                bestNode = focusedHead;
-                bestPath = extractPath(bestNode, nodes[startState]);
-            }
+        // Reset error counters if the exploration step is not to be continued
+        if (!identityIndicator) {
+            nextHeuristicError = 0;
+            nextDistanceError = 0;
         }
 
-        return bestPath;
+        const auto bestNode = explore(startState, terminationChecker);
+
+        bool identityIndicatorPrevious = identityIndicator; // todo remove
+
+        // Apply meta-reasoning
+        auto nano = measureNanoTime(
+            [&]() { identityIndicator = isBenefitialToSearch(nodes[startState], terminationChecker); });
+        static double avg{-1};
+        if (avg < 0) {
+            avg = nano;
+        } else {
+            avg = avg * 0.9 + nano * 0.1;
+        }
+
+        static int identCounter{0}; // todo start remove
+
+        if (identityIndicator != identityIndicatorPrevious) {
+            const Action currentBestAction = openList.top()->actionLabel;
+            if (identityIndicator) {
+                // Take the first identity action
+                alphaAction = currentBestAction;
+            } else {
+                // Finish start moving after identity action
+
+                if (alphaAction == currentBestAction) {
+                    // Metareasoning was beneficial
+                    LOG(INFO) << "Metawin after " << identCounter;
+
+                    identCounter = 0;
+                } else {
+                    // Metareasoning was not beneficial
+                    LOG(INFO) << "Metaloose after " << identCounter;
+
+                    identCounter = 0;
+                }
+            }
+        } else if (identityIndicator) {
+            identCounter++;
+        }
+//        // todo end remove
+
+        //        LOG_EVERY_N(1, INFO) << "Nano time: " << nano << " exp avg: " << avg;
+
+        // Update error counters if the exploration step is done
+        if (!identityIndicator) {
+            distanceError = nextDistanceError;
+            heuristicError = nextHeuristicError;
+
+            return extractPath(bestNode, nodes[startState]);
+        } else {
+            // Select identity action
+            this->incrementIdentityActionCount();
+            return std::vector<ActionBundle>{ActionBundle{Action::getIdentity(), domain.getActionDuration()}};
+        }
     }
 
 private:
@@ -80,27 +112,25 @@ private:
     class Node {
     public:
         Node(Node* parent,
-                const State& state,
-                Action action,
-                Cost g,
-                Cost h,
-                bool open,
-                Cost fHat,
-                Cost distance,
-                Cost distanceError,
-                unsigned int iteration = 0)
-                : parent{parent},
-                  state{state},
-                  action{std::move(action)},
-                  g{g},
-                  h{h},
-                  open{open},
-                  fHat{fHat},
-                  distance{distance},
-                  distanceError{distanceError},
-                  iteration{iteration} {}
-
-        Node(const Node&) = default;
+             const State& state,
+             Action action,
+             Cost g,
+             Cost h,
+             bool open,
+             Cost fHat,
+             Cost distance,
+             Cost distanceError,
+             unsigned int iteration = 0)
+            : parent{parent},
+              state{state},
+              action{std::move(action)},
+              g{g},
+              h{h},
+              open{open},
+              fHat{fHat},
+              distance{distance},
+              distanceError{distanceError},
+              iteration{iteration} {}
 
         Cost f() const { return g + h; }
 
@@ -113,7 +143,7 @@ private:
         std::string toString() const {
             std::ostringstream stream;
             stream << "s: " << state << " g: " << g << " h: " << h << " fhat: " << fHat << " a: " << action << " "
-                                                                                                               "p: ";
+                "p: ";
             if (parent == nullptr) {
                 stream << "None";
             } else {
@@ -163,7 +193,9 @@ private:
     class Edge {
     public:
         Edge(Node* predecessor, Action action, Cost actionCost)
-                : predecessor{predecessor}, action{action}, actionCost{actionCost} {}
+            : predecessor{predecessor},
+              action{action},
+              actionCost{actionCost} {}
 
         Node* predecessor;
         const Action action;
@@ -177,7 +209,7 @@ private:
         openList.reorder(hComparator);
 
         while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
-            auto currentNode = popOpenList(openList);
+            auto currentNode = popOpenList();
             currentNode->iteration = iterationCounter;
 
             Cost currentHeuristicValue = currentNode->h;
@@ -196,13 +228,13 @@ private:
                     // This node is not open yet, because it was not visited in the current planning iteration
 
                     predecessorNode->h = currentHeuristicValue + predecessor.actionCost;
-//                    assert(predecessorNode->iteration == iterationCounter - 1);
-//                    predecessorNode->iteration = iterationCounter;
+                    assert(predecessorNode->iteration == iterationCounter - 1);
+                    predecessorNode->iteration = iterationCounter;
 
                     predecessorNode->distanceError = currentNode->distanceError;
                     predecessorNode->distance = currentNode->distance + 1;
 
-                    addToOpenList(openList, *predecessorNode);
+                    addToOpenList(*predecessorNode);
                 } else if (predecessorNode->h > currentHeuristicValue + predecessor.actionCost) {
                     // This node was visited in this learning phase, but the current path is better then the previous
                     predecessorNode->h = currentHeuristicValue + predecessor.actionCost;
@@ -212,39 +244,11 @@ private:
         }
     }
 
-    const Node* explore(Node* startNode, TerminationChecker& terminationChecker, PriorityQueue<Node>& openList) {
-        clearOpenList(openList); // TODO fix for learning
-
-        // Do not insert the first node to the open list
-       if (!terminationChecker.reachedTermination()) {
-           if (domain.isGoal(startNode->state)) {
-               return startNode;
-           }
-
-           terminationChecker.notifyExpansion();
-           expandNode(startNode, openList);
-       }
-
-
-        while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
-            Node* const currentNode = popOpenList(openList);
-
-            if (domain.isGoal(currentNode->state)) {
-                return currentNode;
-            }
-
-            terminationChecker.notifyExpansion();
-            expandNode(currentNode, openList);
-        }
-
-        return openList.top();
-    }
-
     const Node* explore(const State& startState, TerminationChecker& terminationChecker) {
         // Skip initialization if an identity action was applied
         if (!identityIndicator) {
             ++iterationCounter;
-            clearOpenList(openList);
+            clearOpenList();
             openList.reorder(fHatComparator);
 
             Planner::incrementGeneratedNodeCount();
@@ -252,7 +256,7 @@ private:
 
             if (startNode == nullptr) {
                 startNode = nodePool->construct(
-                        nullptr, startState, Action(), 0, domain.heuristic(startState), true, 0, 0, 0);
+                    nullptr, startState, Action(), 0, domain.heuristic(startState), true, 0, 0, 0);
             } else {
                 startNode->g = 0;
                 startNode->action = Action();
@@ -263,20 +267,20 @@ private:
             startNode->depth = 0; // Depth relative to the LSS search tree
 
             startNode->iteration = iterationCounter;
-            addToOpenList(openList, *startNode);
+            addToOpenList(*startNode);
         }
 
         bool expanded = false;
         while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
             expanded = true;
-            Node* const currentNode = popOpenList(openList);
+            Node* const currentNode = popOpenList();
 
             if (domain.isGoal(currentNode->state)) {
                 return currentNode;
             }
 
             terminationChecker.notifyExpansion();
-            expandNode(currentNode, openList);
+            expandNode(currentNode);
         }
 
         // Normal action - discovery failed - top is current
@@ -286,7 +290,7 @@ private:
 
         if (!expanded) {
             LOG(INFO) << "Take emergency step.";
-            return emergencyStep(popOpenList(openList));
+            return emergencyStep(popOpenList());
         }
 
         return openList.top();
@@ -328,7 +332,7 @@ private:
         return bestChildNode;
     }
 
-    void expandNode(Node* sourceNode, PriorityQueue<Node>& openList) {
+    void expandNode(Node* sourceNode) {
         Planner::incrementExpandedNodeCount();
 
         sourceNode->expansion = ++expansionCounter;
@@ -371,7 +375,7 @@ private:
                 successorNode->depth = sourceNode->depth + 1;
 
                 double currentDistanceEstimate =
-                        successorNode->distanceError / (1.0 - distanceError); // Dionne 2011 (3.8)
+                    successorNode->distanceError / (1.0 - distanceError); // Dionne 2011 (3.8)
                 successorNode->fHat = successorNode->g + successorNode->h + heuristicError * currentDistanceEstimate;
 
                 // Labeling
@@ -385,7 +389,7 @@ private:
 
                 // Open list management
                 if (!successorNode->open) {
-                    addToOpenList(openList, *successorNode);
+                    addToOpenList(*successorNode);
                 } else {
                     openList.update(*successorNode);
                 }
@@ -410,64 +414,12 @@ private:
         }
     }
 
-    std::vector<Node*> findHeadNodes() {
-        std::vector<Node*> nodes;
-
-        Node* const topNode = openList.top();
-        nodes.push_back(topNode);
-
-        const Cost topCost = topNode->g;
-        const Cost topHHat = topNode->fHat;
-
-        openList.forEach([&](Node* node) {
-            Node* matchingNode{nullptr};
-
-            // Find the matching node with the same top level action label
-            for (Node* bestNode : nodes) {
-                if (bestNode->actionLabel == node->actionLabel) {
-                    matchingNode = bestNode;
-                    break;
-                }
-            }
-
-            if (matchingNode == nullptr) {
-                // Add new head node
-                nodes.push_back(node);
-            } else if (matchingNode->fHat > node->fHat) {
-                // Replace existing head with a better node
-                // TODO this could be optimized
-                std::replace(nodes.begin(), nodes.end(), matchingNode, node);
-            }
-
-        });
-
-        return nodes;
-    }
-
-    std::vector<Node*> findTopTwoHeadNodes() {
-        // Find best two actions
-        const auto alphaTargetNode = openList.top();
-        const Action alphaAction = alphaTargetNode->actionLabel;
-
-        Node* betaTargetNode{nullptr};
-        openList.forEach([&](Node* node) {
-            if (node->actionLabel != alphaAction && (betaTargetNode == nullptr || betaTargetNode->fHat > node->fHat)) {
-                betaTargetNode = node;
-            }
-        });
-
-        std::vector<Node*> nodes({alphaTargetNode});
-        if (betaTargetNode != nullptr) {
-            nodes.push_back(betaTargetNode);
-        }
-
-        return nodes;
-    }
-
     bool isBenefitialToSearch(const Node* sourceNode, const TerminationChecker& terminationChecker) {
         if (openList.getSize() <= 1) {
             return false; // No alternative actions
         }
+
+        LOG(INFO) << "IsBeneficial?";
 
         // Find best two actions
         const auto alphaTargetNode = openList.top();
@@ -494,9 +446,9 @@ private:
 
         Cost actionCost = domain.getActionDuration(); // Reconsider for identity actions
 
-        //        if (benefit > actionCost) {
-        //        LOG(INFO) << "Benefit:  " << benefit << " Cost " << actionCost;
-        //        }
+//                if (benefit > actionCost) {
+        LOG(INFO) << "Benefit:  " << benefit << " Cost " << actionCost;
+//                }
 
         return benefit > actionCost;
     }
@@ -506,7 +458,7 @@ private:
         int count = 1;
 
         for (Node* current = target->parent; current != nullptr && current->generation > 0 && target != source;
-                current = current->parent) {
+             current = current->parent) {
             ++count;
             delay += current->expansion - current->generation;
         }
@@ -516,9 +468,9 @@ private:
 
     // Returns the utility of searching at a given state
     double computeBenefit(const Node* source,
-            const Node* alpha,
-            const Node* beta,
-            unsigned int expansionAdvance) const {
+                          const Node* alpha,
+                          const Node* beta,
+                          unsigned int expansionAdvance) const {
         // Calculate delay for alpha and beta path
         double alphaDelay{expansionDelay(source, alpha)};
         double betaDelay{expansionDelay(source, beta)};
@@ -529,8 +481,8 @@ private:
         // Estimated error to the goal
         // f difference between current and frontier node is the total error on the path divided by the length of the
         // path gives the per step error
-        const double bvarianceAlpha =
-                pow((source->f() - alpha->f()) / (alpha->depth - source->depth) * alpha->distance, 2);
+        const double bvarianceAlpha = pow((source->f() - alpha->f()) / (alpha->depth - source->depth) * alpha->distance,
+                                          2);
         const double bvarianceBeta = pow((source->f() - beta->f()) / (beta->depth - source->depth) * beta->distance, 2);
 
         // Mean
@@ -539,8 +491,8 @@ private:
 
         // Number of expansion predicted on the alpha/beta path towards the goal
         // (can't be more than the predicted goal distance)
-        double expansionAdvanceOnAlpha = std::min((double)alpha->distance, expansionAdvance / alphaDelay);
-        double expansionAdvanceOnBeta = std::min((double)beta->distance, expansionAdvance / betaDelay);
+        double expansionAdvanceOnAlpha = std::min((double) alpha->distance, expansionAdvance / alphaDelay);
+        double expansionAdvanceOnBeta = std::min((double) beta->distance, expansionAdvance / betaDelay);
 
         // Variance' (eq. 3)
         double varianceAlpha = bvarianceAlpha * (expansionAdvanceOnAlpha / alpha->distance);
@@ -549,53 +501,53 @@ private:
         const double alphaStandardDeviation = sqrt(varianceAlpha);
         const double betaStandardDeviation = sqrt(varianceBeta);
 
-        double startAlpha = mu_alpha - 3.0 * alphaStandardDeviation;
-        double startBeta = mu_beta - 3.0 * betaStandardDeviation;
+        double startAlpha = mu_alpha - 2.0 * alphaStandardDeviation;
+        double startBeta = mu_beta - 2.0 * betaStandardDeviation;
 
-        double endAlpha = mu_alpha + 3.0 * alphaStandardDeviation;
-        double endBeta = mu_beta + 3.0 * betaStandardDeviation;
+        double endAlpha = mu_alpha + 2.0 * alphaStandardDeviation;
+        double endBeta = mu_beta + 2.0 * betaStandardDeviation;
+
+        double start = std::min(startAlpha, startBeta);
+        double end = std::max(startAlpha, startBeta);
 
         if (endAlpha < startBeta || (alphaStandardDeviation < 0.00001 && betaStandardDeviation < 0.00001)) {
-            return 0; // Not overlapping ranges or zero variance
+            return 0;  // Not overlapping ranges or zero variance
         }
 
         // Integration step
         double benefit = 0.0;
-        double alphaStep = (endAlpha - startAlpha) / 100.0;
-        double betaStep = (endBeta - startBeta) / 100.0;
+        double step = (end - start) / 100.0;
 
-        if (alphaStep < 0.00001 && betaStep < 0.00001) {
-            LOG(INFO) << "Double delta spikes";
-
-            // Zero variance
+        if (step < 0.000001) {
             return 0;
         }
 
-        measureNanoTime([&]() {
+        double a, b;
+        for (int i = 0; i < 100; ++i) {
+            a = start + ((end - start) * ((i + 0.5) / 100.0));
 
-            int alphaIndex{0};
-            for (double a = startAlpha; a < endAlpha && alphaIndex < 100; a += alphaStep) {
-                double sum = 0.0;
+            int j;
+            double sum = 0.0;
+            for (j = 0; j < 100; ++j) {
+                b = start + ((end - start) * ((j + 0.5) / 100.0));
 
-                int betaIndex{0};
-                for (double b = startBeta; b < endBeta && betaIndex < 100; b += betaStep) {
-                    if (a < b) {
-                        break;
-                    }
+                if (a < b)
+                    break;
 
-                    // PDF of normal distribution
-                    sum += (a - b) * Statistic::standardNormalTable100(betaIndex);
-
-                    ++betaIndex;
-                }
-
-                benefit += sum * Statistic::standardNormalTable100(alphaIndex);
-                ++alphaIndex;
+                sum += (a - b) * std::exp(-pow(b - mu_beta, 2) / (2 * varianceBeta)) / (sqrt(2 * 3.1415 * varianceBeta));
             }
 
-        });
+            sum *= (end - start) / 100.0;
+
+            benefit += sum * std::exp(-pow(a - mu_alpha, 2) / (2 * varianceAlpha)) / (sqrt(2 * 3.1415 * varianceAlpha)) *
+                ((end - start) / 100.0);
+        }
 
         return benefit;
+    }
+
+    double normalPDF(double mean, double variance, double variable) const {
+        return std::exp(-pow(variable - mean, 2) / (2 * variance)) / (sqrt(2 * 3.1415 * variance));
     }
 
     Node* createNode(Node* sourceNode, SuccessorBundle<Domain> successor) {
@@ -608,22 +560,22 @@ private:
         auto costMax = Domain::COST_MAX;
 
         return nodePool->construct(sourceNode,
-                successorState,
-                successor.action,
-                costMax,
-                heuristic,
-                true,
-                static_cast<Cost>(distance * heuristicError + heuristic),
-                distance,
-                distance);
+                                   successorState,
+                                   successor.action,
+                                   costMax,
+                                   heuristic,
+                                   true,
+                                   static_cast<Cost>(distance * heuristicError + heuristic),
+                                   distance,
+                                   distance);
     }
 
-    void clearOpenList(PriorityQueue<Node>& openList) {
+    void clearOpenList() {
         openList.forEach([](Node* node) { node->open = false; });
         openList.clear();
     }
 
-    Node* popOpenList(PriorityQueue<Node>& openList) {
+    Node* popOpenList() {
         if (openList.isEmpty()) {
             throw MetronomeException("Open list was empty. Goal is not reachable.");
         }
@@ -633,7 +585,7 @@ private:
         return node;
     }
 
-    void addToOpenList(PriorityQueue<Node>& openList, Node& node) {
+    void addToOpenList(Node& node) {
         node.open = true;
         openList.push(node);
     }
@@ -681,9 +633,7 @@ private:
     PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fHatComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
     std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{
-            std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
-
-    PriorityQueue<Node> focusedOpenList{Memory::OPEN_LIST_SIZE, fHatComparator};
+        std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
 
     unsigned int iterationCounter{0};
     unsigned int expansionCounter{0};
@@ -698,8 +648,8 @@ private:
      *  Learning step should be omitted when set.
      */
     bool identityIndicator{false};
-    //    Action alphaAction;
+    Action alphaAction;
 };
 }
 
-#endif // METRONOME_FRTS_H
+#endif // METRONOME_MO_RTS_HPP

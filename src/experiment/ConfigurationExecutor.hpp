@@ -17,6 +17,7 @@
 #include "algorithms/LssLrtaStar.hpp"
 #include "algorithms/SZero.hpp"
 #include "algorithms/MoRts.hpp"
+#include "algorithms/MoRtsOld.hpp"
 #include "domains/GridWorld.hpp"
 #include "domains/SlidingTilePuzzle.hpp"
 #include "domains/Traffic.hpp"
@@ -41,8 +42,6 @@ public:
 
 private:
     static Result unsafeExecuteConfiguration(const Configuration& configuration, const std::string& resourcesDir) {
-        // todo validate configuration
-
         LOG(INFO) << "Configuration started.";
 
         if (!configuration.hasMember(DOMAIN_NAME)) {
@@ -60,7 +59,7 @@ private:
             return executeDomain<SlidingTilePuzzle>(configuration, resourcesDir);
         } else {
             LOG(ERROR) << "Unknown domain name: " << domainName << std::endl;
-            return Result(configuration, "Unknown: domainName");
+            return Result(configuration, "Unknown: domainName: " + domainName);
         }
     }
 
@@ -109,6 +108,9 @@ private:
         } else if (algorithmName == ALGORITHM_MO_RTS) {
             return executeRealTimePlanner<Domain, MoRts<Domain, TerminationChecker>, TerminationChecker>(
                 configuration, domain);
+        } else if (algorithmName == ALGORITHM_MO_RTS_OLD) {
+            return executeRealTimePlanner<Domain, MoRtsOld<Domain, TerminationChecker>, TerminationChecker>(
+                configuration, domain);
         } else if (algorithmName == ALGORITHM_F_RTS) {
             return executeRealTimePlanner<Domain, FRts<Domain, TerminationChecker>, TerminationChecker>(
                     configuration, domain);
@@ -117,7 +119,7 @@ private:
                     configuration, domain);
         } else {
             LOG(ERROR) << "Unknown algorithms name: " << algorithmName << std::endl;
-            return Result(configuration, "Unknown: algorithmName");
+            return Result(configuration, "Unknown: algorithmName: " + algorithmName);
         }
     }
 
@@ -162,6 +164,8 @@ private:
         Planner planner{domain, configuration};
 
         RealTimePlanManager<Domain, Planner, TerminationChecker> realTimePlanManager;
+
+
 
         LOG(INFO) << "Configuration done.";
         return realTimePlanManager.plan(configuration, domain, planner);

@@ -1,18 +1,18 @@
 #ifndef METRONOME_ASTAR_HPP
 #define METRONOME_ASTAR_HPP
-#define BOOST_POOL_NO_MT
 
 #include <easylogging++.h>
-#include <boost/pool/object_pool.hpp>
 #include <domains/Traffic.hpp>
 #include <unordered_map>
 #include <utils/PriorityQueue.hpp>
 #include <utils/Visualizer.hpp>
 #include <vector>
+#include <MemoryConfiguration.hpp>
 #include "OfflinePlanner.hpp"
 #include "Planner.hpp"
 #include "experiment/Configuration.hpp"
 #include "utils/Hasher.hpp"
+#include "utils/StaticVector.hpp"
 
 namespace metronome {
 
@@ -24,11 +24,6 @@ class AStar final : public OfflinePlanner<Domain> {
 
 public:
     AStar(const Domain& domain, const Configuration&) : domain(domain), openList(20000000, fValueComparator) {
-        // Force the object pool to allocate memory
-        State state;
-        Node node = Node(nullptr, std::move(state), Action(), 0, 0);
-        nodePool.destroy(nodePool.construct(node));
-
         // Initialize hash table
         nodes.max_load_factor(1);
         nodes.reserve(100000000);
@@ -38,7 +33,7 @@ public:
         Cost heuristic = domain.heuristic(startState);
         Node localStartNode = Node(nullptr, startState, Action(), 0, heuristic);
 
-        auto startNode = nodePool.construct(localStartNode);
+        auto startNode = nodePool->construct(localStartNode);
         Planner::incrementGeneratedNodeCount();
 
         nodes[localStartNode.state] = startNode;
@@ -82,7 +77,7 @@ public:
                             newCost,
                             newCost + domain.heuristic(successor.state));
 
-                    successorNode = nodePool.construct(std::move(tempSuccessorNode));
+                    successorNode = nodePool->construct(std::move(tempSuccessorNode));
 //                            LOG(INFO) << "addToOpen(NEW): " + successorNode->toString();
                     openList.push(*successorNode);
                 } else if (successorNode->g > newCost) {
@@ -148,7 +143,7 @@ private:
     const Domain& domain;
     PriorityQueue<Node> openList;
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes;
-    boost::object_pool<Node> nodePool{1, 100000000};
+    std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
 };
 }
 
