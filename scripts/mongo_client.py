@@ -27,16 +27,18 @@ class MetronomeMongoClient:
     def upload_results(self, results):
         self.db.experimentalResult.insert_many(results)
 
-    def get_results(self, algorithm, domain, instance, termination_type, lookahead_type):
+    def get_results(self, algorithms, domain, instance, termination_type, lookahead_type):
 
         query = {
-            "experimentConfiguration.algorithmName": algorithm,
+            "experimentConfiguration.algorithmName": {"$in": algorithms},
             "experimentConfiguration.domainName": domain,
             "experimentConfiguration.domainPath": {"$regex": "%s.*" % re.escape(instance)},
             "experimentConfiguration.terminationType": termination_type,
-            "experimentConfiguration.actionDuration": lookahead_type,
+            "experimentConfiguration.lookaheadType": lookahead_type,
             "success": True
         }
+
+        print(query)
 
         return list(self.db.experimentalResult.find(query))
 
