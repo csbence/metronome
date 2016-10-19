@@ -15,10 +15,10 @@ __author__ = 'Bence Cserna'
 
 def execute_metronome(executable, resources, configuration, timeout):
     nice = "nice -n 20"
-    " ".join([nice, executable, resources]),
+    return execute_metronome_command(" ".join([nice, executable, resources]), configuration, timeout)
 
 
-def execute_metronome(command, timeout):
+def execute_metronome_command(command, configuration, timeout):
     # proc = Popen(" ".join([nice, executable, resources]), stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
 
     json_configuration = json.dumps(configuration)
@@ -80,7 +80,7 @@ def run_experiments(configurations):
         succeeded_count = len(successful)
 
         #       print("GATs: " + str(gat))
-        print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
+        print("Failed: {} Succeeded: {}/{}".format(failed_count, succeeded_count, len(configurations)))
         #     print("Avg of successful:{}".format(np.mean(successful)))
 
     successful = [x for x in gat if x != 0]
@@ -107,7 +107,7 @@ def cartesian_product(configurations, key, values):
 
 
 def generate_experiment_configurations(algorithms, domain_type, domains,
-                                       termination_type, action_durations):
+                                       termination_type, action_durations, lookahead_type):
     configuration = {
         "timeLimit": 150000000000,
         "domainInstanceName": "Manual test instance",
@@ -119,40 +119,37 @@ def generate_experiment_configurations(algorithms, domain_type, domains,
     configurations = cartesian_product(configurations, "algorithmName", algorithms)
     configurations = cartesian_product(configurations, "domainPath", domains)
     configurations = cartesian_product(configurations, "actionDuration", action_durations)
+    configurations = cartesian_product(configurations, "lookaheadType", lookahead_type)
 
     return configurations
 
 
 def main():
     print("Metronome python.")
-    print(sys.argv[1])
 
-    domains = ["/input/tiles/korf/4/all/{}".format(x) for x in range(1, 100)]
-    #    domains = ["/input/vacuum/variants/cups-2/cups_{}.vw".format(x) for x in range(0, 100)]
-    #    domains.extend(["/input/vacuum/variants/wall-2/wall_{}.vw".format(x) for x in range(0, 100)])
-#    domains = ["/input/tiles/korf/4/all/{}".format(x) for x in range(1, 100)]
-#    domains = ["/input/vacuum/variants/cups-2/cups_{}.vw".format(x) for x in range(0, 100)]
-#    domains = ["/input/vacuum/variants/uniform-2/uniform_{}.vw".format(x) for x in range(0, 100)]
-#    domains.extend(["/input/vacuum/variants/wall-2/wall_{}.vw".format(x) for x in range(0, 100)])
+    #domains = ["/input/tiles/korf/4/all/{}".format(x) for x in range(1, 100)]
+    domains = ["/input/vacuum/variants/cups-2/cups_{}.vw".format(x) for x in range(0, 100)]
+    domains.extend(["/input/vacuum/variants/wall-2/wall_{}.vw".format(x) for x in range(0, 100)])
+    domains.extend(["/input/vacuum/variants/uniform-2/uniform_{}.vw".format(x) for x in range(0, 100)])
 
-    configurations = generate_experiment_configurations(["A_STAR", "LSS_LRTA_STAR", "MO_RTS"], "GRID_WORLD", domains, "EXPANSION", [10, 20, 50, 100])
+    configurations = generate_experiment_configurations(["A_STAR", "LSS_LRTA_STAR", "MO_RTS", "MO_RTS_OLD"], "GRID_WORLD", domains, "EXPANSION", [10], ["STATIC"])
 
     # configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "MO_RTS"], "SLIDING_TILE_PUZZLE", domains, "EXPANSION", [100, 1000, 10000, 100000])
 
-    # results = run_experiments(configurations)
+    results = run_experiments(list(reversed(configurations)))
     # print("Execution completed")
 
     data = None
     db = MetronomeMongoClient()
-    # mongo_client.upload_results(db, results)
-    data = db.get_results("A_STAR",
-                          "GRID_WORLD",
-                          "/input/vacuum/variants/cups-2/cups_",
-                          "EXPANSION",
-                          100)
+    db.upload_results(results)
+#    data = db.get_results("A_STAR",
+#                          "GRID_WORLD",
+#                          "/input/vacuum/variants/cups-2/cups_",
+#                          "EXPANSION",
+#                          100)
 
-    for value in data:
-        print(value)
+#    for value in data:
+#        print(value)
     print("Done")
 
 
