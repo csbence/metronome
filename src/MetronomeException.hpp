@@ -4,18 +4,15 @@
 #include <exception>
 #include <string>
 namespace metronome {
-class MetronomeException: std::exception {
+class MetronomeException : std::exception {
 public:
-    MetronomeException(std::string message) : message{std::move(message)} {
+    MetronomeException(std::string message) : message{std::move(message)} {}
 
-    }
+    virtual const char* what() const throw() { return this->message.c_str(); }
 
-    virtual const char* what() const throw() {
-        return this->message.c_str();
-    }
 protected:
     const std::string message;
 };
 }
 
-#endif //METRONOME_METRONOMEEXCEPTION_HPP
+#endif // METRONOME_METRONOMEEXCEPTION_HPP

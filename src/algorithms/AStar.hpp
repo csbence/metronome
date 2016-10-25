@@ -1,15 +1,18 @@
 #ifndef METRONOME_ASTAR_HPP
 #define METRONOME_ASTAR_HPP
-#define BOOST_POOL_NO_MT
 
-#include <boost/pool/object_pool.hpp>
+#include <easylogging++.h>
+#include <domains/Traffic.hpp>
 #include <unordered_map>
 #include <utils/PriorityQueue.hpp>
+#include <utils/Visualizer.hpp>
 #include <vector>
+#include <MemoryConfiguration.hpp>
 #include "OfflinePlanner.hpp"
 #include "Planner.hpp"
 #include "experiment/Configuration.hpp"
 #include "utils/Hasher.hpp"
+#include "utils/StaticVector.hpp"
 
 namespace metronome {
 
@@ -20,18 +23,18 @@ class AStar final : public OfflinePlanner<Domain> {
     typedef typename Domain::Cost Cost;
 
 public:
-    AStar(const Domain& domain, const Configuration&) : domain(domain), openList(10000000, fValueComparator) {
-        // Force the object pool to allocate memory
-        State state;
-        Node node = Node(nullptr, std::move(state), Action(), 0, 0);
-        nodePool.destroy(nodePool.construct(node));
+    AStar(const Domain& domain, const Configuration&) : domain(domain), openList(20000000, fValueComparator) {
+        // Initialize hash table
+        nodes.max_load_factor(1);
+        nodes.reserve(100000000);
     }
 
     std::vector<Action> plan(const State& startState) override {
         Cost heuristic = domain.heuristic(startState);
         Node localStartNode = Node(nullptr, startState, Action(), 0, heuristic);
 
-        auto startNode = nodePool.construct(localStartNode);
+        auto startNode = nodePool->construct(localStartNode);
+        Planner::incrementGeneratedNodeCount();
 
         nodes[localStartNode.state] = startNode;
 
@@ -40,12 +43,13 @@ public:
         while (!openList.isEmpty()) {
             Planner::incrementExpandedNodeCount();
             Node* currentNode = openList.pop();
+            //            LOG_EVERY_N(100000, INFO) << "\nFrom: " << currentNode->toString();
 
             if (domain.isGoal(currentNode->state)) {
                 std::vector<Action> actions;
                 // Goal is reached
 
-                while (!domain.isStart(currentNode->state)) {
+                while (startState != currentNode->state ) {
                     actions.push_back(currentNode->action);
                     currentNode = currentNode->parent;
                 }
@@ -54,18 +58,18 @@ public:
                 return actions;
             }
 
-            auto successors = domain.successors(currentNode->state);
-            for (auto successor : successors) {
-                //                if (successor.state == currentNode->state) {
-                //                    continue; // Skip parent TODO this might be unnecessary
-                //                }
-
-                Planner::incrementGeneratedNodeCount();
+            for (auto successor : domain.successors(currentNode->state)) {
+                //                LOG(INFO) << "successor" << successor << std::endl;
+                if (successor.state == currentNode->state) {
+                    continue; // Skip parent TODO this might be unnecessary
+                }
 
                 auto& successorNode = nodes[successor.state];
                 auto newCost = successor.actionCost + currentNode->g;
 
                 if (successorNode == nullptr) {
+                    Planner::incrementGeneratedNodeCount();
+
                     // New state discovered
                     const Node tempSuccessorNode(currentNode,
                             successor.state,
@@ -73,8 +77,8 @@ public:
                             newCost,
                             newCost + domain.heuristic(successor.state));
 
-                    successorNode = nodePool.construct(std::move(tempSuccessorNode));
-                    //                    LOG(INFO) << "addToOpen(NEW): " + successorNode->toString();
+                    successorNode = nodePool->construct(std::move(tempSuccessorNode));
+//                            LOG(INFO) << "addToOpen(NEW): " + successorNode->toString();
                     openList.push(*successorNode);
                 } else if (successorNode->g > newCost) {
                     // Better path found to an existing state
@@ -83,10 +87,12 @@ public:
                     successorNode->g = newCost;
                     successorNode->f = newCost + domain.heuristic(successor.state);
 
-                    openList.update(*successorNode);
+                    openList.insertOrUpdate(*successorNode);
                 } else {
                     // The new path is not better than the existing
                 }
+
+                //                LOG(INFO) << "\n\tSuccessor: " << successorNode->toString();
             }
         }
 
@@ -97,16 +103,13 @@ private:
     class Node {
     public:
         Node(Node* parent, const State state, Action action, Cost g, Cost f)
-                : parent{parent}, state{state}, action{std::move(action)}, g{g}, f{f} {
-        }
+                : parent{parent}, state{state}, action{std::move(action)}, g{g}, f{f} {}
 
-        unsigned long hash() const {
-            return state->hash();
-        }
+        unsigned long hash() const { return state->hash(); }
 
         std::string toString() const {
             std::ostringstream stream;
-            stream << "s: " << state << " f: " << f << " a: " << action << " p: ";
+            stream << "s: " << state << " g: " << g << " h: " << f - g << " f: " << f << " a: " << action << " p: ";
             if (parent == nullptr) {
                 stream << "None";
             } else {
@@ -115,11 +118,9 @@ private:
             return stream.str();
         }
 
-        bool operator==(const Node& node) const {
-            return state == node.state;
-        }
+        bool operator==(const Node& node) const { return state == node.state; }
 
-        mutable unsigned int index;
+        mutable unsigned int index{std::numeric_limits<unsigned int>::max()};
         Node* parent;
         const State state;
         Action action;
@@ -142,7 +143,7 @@ private:
     const Domain& domain;
     PriorityQueue<Node> openList;
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes;
-    boost::object_pool<Node> nodePool{1, 100000000};
+    std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
 };
 }
 

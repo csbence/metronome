@@ -12,8 +12,7 @@ template <typename T>
 class PriorityQueue {
 public:
     PriorityQueue(unsigned int capacity, std::function<int(const T&, const T&)> comparator)
-            : capacity{capacity}, comparator{comparator}, queue{capacity}, size{0} {
-    }
+            : capacity{capacity}, comparator{comparator}, queue{capacity}, size{0} {}
 
     void push(T& item) {
         if (size == capacity) {
@@ -45,35 +44,35 @@ public:
         }
 
         BOOST_ASSERT_MSG(result->index == 0, "Internal index of top item was not null");
+        result->index = std::numeric_limits<unsigned int>::max();
         return const_cast<T*>(result);
     }
 
-    const T* top() const {
+    T* top() const {
         if (size == 0) {
             return nullptr;
         }
 
         return queue[0];
     }
-    /*
-      void print(){
-        std::cout << "Queue: " << std::endl;
-        if(isEmpty()) {
-            return;
-        }
-        for(auto &i : queue){
-            std::cout << " " << i << " ";
-        }
-        std::cout << std::endl;
-      }
-    */
 
-    void clear() {
-        size = 0;
+    void clear() { size = 0; }
+
+    void insertOrUpdate(T& item) {
+        if (item.index == std::numeric_limits<unsigned int>::max()) {
+            // Item is not in the queue yet
+            push(item);
+        } else {
+            // Already in the queue
+            update(item);
+        }
     }
 
     void update(T& item) {
         auto index = item.index;
+
+        assert(index != std::numeric_limits<unsigned int>::max() && "Cannot update a node that is not in the queue!");
+
         siftUp(item.index, item);
 
         if (item.index == index) {
@@ -95,21 +94,13 @@ public:
         }
     }
 
-    unsigned int getCapacity() const {
-        return capacity;
-    }
+    unsigned int getCapacity() const { return capacity; }
 
-    unsigned int getSize() const {
-        return size;
-    }
+    unsigned int getSize() const { return size; }
 
-    bool isEmpty() const {
-        return size == 0;
-    }
+    bool isEmpty() const { return size == 0; }
 
-    bool isNotEmpty() const {
-        return size != 0;
-    }
+    bool isNotEmpty() const { return size != 0; }
 
 private:
     void siftUp(const unsigned int index, T& item) {

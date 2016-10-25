@@ -1,0 +1,384 @@
+Metronome python.
+Start to execute metronome.
+Metronome output: 
+
+ ___            ___     
+|###\  ______  /###|   
+|#|\#\ \    / /#/|#|   
+|#| \#\ \  / /#/ |#|   
+|#|  \#\ \/ /#/  |#|   
+|#|      /\      |#|   
+|#|     /  \     |#|   
+|#|    /____\    |#|   
+---- Metronome  ----
+ When time matters!
+
+2016-08-25 14:25:42,239 INFO  [default] {
+2016-08-25 14:25:42,240 INFO  [default] "timeLimit": 6000000,
+2016-08-25 14:25:42,240 INFO  [default] "domainPath": "/input/tiles/korf/4/all/1",
+2016-08-25 14:25:42,240 INFO  [default] "domainInstanceName": "Manual test instance",
+2016-08-25 14:25:42,240 INFO  [default] "actionDuration": 6000000,
+2016-08-25 14:25:42,240 INFO  [default] "domainName": "SLIDING_TILE_PUZZLE",
+2016-08-25 14:25:42,240 INFO  [default] "terminationType": "time",
+2016-08-25 14:25:42,240 INFO  [default] "algorithmName": "LSS_LRTA_STAR"
+2016-08-25 14:25:42,240 INFO  [default] }
+2016-08-25 14:25:42,241 INFO  [default] Configuration started.
+2016-08-25 14:25:46,352 INFO  [default] Configuration done.
+2016-08-25 14:25:46,657 INFO  [default] Planning: Done
+2016-08-25 14:25:49,062 INFO  [default] Execution completed in 303ms
+2016-08-25 14:25:49,062 INFO  [default] Path length: 81
+2016-08-25 14:25:49,062 INFO  [default] Nodes :: expanded: 24416 generated: 54905
+
+
+Result:
+{"errorMessage":"","success":true,"expandedNodes":24416,"generatedNodes":54905,"planningTime":303798929,"actionExecutionTime":486000000,"goalAchievementTime":789798929,"idlePlanningTime":303798929,"pathLength":81,"timestamp":1472149546657732768}
+
+Finish execution
+Parsed result: 
+
+{'goalAchievementTime': 789798929, 'actionExecutionTime': 486000000, 'success': True, 'generatedNodes': 54905, 'timestamp': 1472149546657732768, 'idlePlanningTime': 303798929, 'planningTime': 303798929, 'expandedNodes': 24416, 'pathLength': 81, 'errorMessage': ''}
+Iteration: 1
+GATs: [789798929]
+Failed: 0 Succeeded: 1
+Avg of successful:0.789798929
+Start to execute metronome.
+Metronome output: 
+
+ ___            ___     
+|###\  ______  /###|   
+|#|\#\ \    / /#/|#|   
+|#| \#\ \  / /#/ |#|   
+|#|  \#\ \/ /#/  |#|   
+|#|      /\      |#|   
+|#|     /  \     |#|   
+|#|    /____\    |#|   
+---- Metronome  ----
+ When time matters!
+
+2016-08-25 14:25:49,076 INFO  [default] {
+2016-08-25 14:25:49,076 INFO  [default] "timeLimit": 6000000,
+2016-08-25 14:25:49,076 INFO  [default] "domainPath": "/input/tiles/korf/4/all/2",
+2016-08-25 14:25:49,076 INFO  [default] "domainInstanceName": "Manual test instance",
+2016-08-25 14:25:49,076 INFO  [default] "actionDuration": 6000000,
+2016-08-25 14:25:49,076 INFO  [default] "domainName": "SLIDING_TILE_PUZZLE",
+2016-08-25 14:25:49,076 INFO  [default] "terminationType": "time",
+2016-08-25 14:25:49,076 INFO  [default] "algorithmName": "LSS_LRTA_STAR"
+2016-08-25 14:25:49,076 INFO  [default] }
+2016-08-25 14:25:49,076 INFO  [default] Configuration started.
+2016-08-25 14:25:53,004 INFO  [default] Configuration done.
+2016-08-25 14:25:53,955 INFO  [default] Planning: Done
+2016-08-25 14:25:56,166 INFO  [default] Execution completed in 950ms
+2016-08-25 14:25:56,167 INFO  [default] Path length: 187
+2016-08-25 14:25:56,167 INFO  [default] Nodes :: expanded: 97017 generated: 220358
+
+
+Result:
+{"errorMessage":"","success":true,"expandedNodes":97017,"generatedNodes":220358,"planningTime":950006666,"actionExecutionTime":1122000000,"goalAchievementTime":2072006666,"idlePlanningTime":950006666,"pathLength":187,"timestamp":1472149553955725969}
+
+Finish execution
+Parsed result: 
+
+{'goalAchievementTime': 2072006666, 'actionExecutionTime': 1122000000, 'success': True, 'generatedNodes': 220358, 'timestamp': 1472149553955725969, 'idlePlanningTime': 950006666, 'planningTime': 950006666, 'expandedNodes': 97017, 'pathLength': 187, 'errorMessage': ''}
+Iteration: 2
+GATs: [789798929, 2072006666]
+Failed: 0 Succeeded: 2
+Avg of successful:1.4309027975
+Start to execute metronome.
+Metronome output: 
+
+ ___            ___     
+|###\  ______  /###|   
+|#|\#\ \    / /#/|#|   
+|#| \#\ \  / /#/ |#|   
+|#|  \#\ \/ /#/  |#|   
+|#|      /\      |#|   
+|#|     /  \     |#|   
+|#|    /____\    |#|   
+---- Metronome  ----
+ When time matters!
+
+2016-08-25 14:25:56,181 INFO  [default] {
+2016-08-25 14:25:56,181 INFO  [default] "timeLimit": 6000000,
+2016-08-25 14:25:56,181 INFO  [default] "domainPath": "/input/tiles/korf/4/all/3",
+2016-08-25 14:25:56,182 INFO  [default] "domainInstanceName": "Manual test instance",
+2016-08-25 14:25:56,182 INFO  [default] "actionDuration": 6000000,
+2016-08-25 14:25:56,182 INFO  [default] "domainName": "SLIDING_TILE_PUZZLE",
+2016-08-25 14:25:56,182 INFO  [default] "terminationType": "time",
+2016-08-25 14:25:56,182 INFO  [default] "algorithmName": "LSS_LRTA_STAR"
+2016-08-25 14:25:56,182 INFO  [default] }
+2016-08-25 14:25:56,182 INFO  [default] Configuration started.
+2016-08-25 14:25:59,827 INFO  [default] Configuration done.
+2016-08-25 14:26:00,148 INFO  [default] Planning: Done
+2016-08-25 14:26:02,497 INFO  [default] Execution completed in 319ms
+2016-08-25 14:26:02,497 INFO  [default] Path length: 81
+2016-08-25 14:26:02,497 INFO  [default] Nodes :: expanded: 24267 generated: 56345
+
+
+Result:
+{"errorMessage":"","success":true,"expandedNodes":24267,"generatedNodes":56345,"planningTime":319825814,"actionExecutionTime":486000000,"goalAchievementTime":805825814,"idlePlanningTime":319825814,"pathLength":81,"timestamp":1472149560149040120}
+
+Finish execution
+Parsed result: 
+
+{'goalAchievementTime': 805825814, 'actionExecutionTime': 486000000, 'success': True, 'generatedNodes': 56345, 'timestamp': 1472149560149040120, 'idlePlanningTime': 319825814, 'planningTime': 319825814, 'expandedNodes': 24267, 'pathLength': 81, 'errorMessage': ''}
+Iteration: 3
+GATs: [789798929, 2072006666, 805825814]
+Failed: 0 Succeeded: 3
+Avg of successful:1.222543803
+Start to execute metronome.
+Metronome output: 
+
+ ___            ___     
+|###\  ______  /###|   
+|#|\#\ \    / /#/|#|   
+|#| \#\ \  / /#/ |#|   
+|#|  \#\ \/ /#/  |#|   
+|#|      /\      |#|   
+|#|     /  \     |#|   
+|#|    /____\    |#|   
+---- Metronome  ----
+ When time matters!
+
+2016-08-25 14:26:02,510 INFO  [default] {
+2016-08-25 14:26:02,511 INFO  [default] "timeLimit": 6000000,
+2016-08-25 14:26:02,511 INFO  [default] "domainPath": "/input/tiles/korf/4/all/4",
+2016-08-25 14:26:02,511 INFO  [default] "domainInstanceName": "Manual test instance",
+2016-08-25 14:26:02,511 INFO  [default] "actionDuration": 6000000,
+2016-08-25 14:26:02,511 INFO  [default] "domainName": "SLIDING_TILE_PUZZLE",
+2016-08-25 14:26:02,511 INFO  [default] "terminationType": "time",
+2016-08-25 14:26:02,511 INFO  [default] "algorithmName": "LSS_LRTA_STAR"
+2016-08-25 14:26:02,511 INFO  [default] }
+2016-08-25 14:26:02,511 INFO  [default] Configuration started.
+2016-08-25 14:26:06,186 INFO  [default] Configuration done.
+2016-08-25 14:26:06,731 INFO  [default] Planning: Done
+2016-08-25 14:26:09,089 INFO  [default] Execution completed in 544ms
+2016-08-25 14:26:09,089 INFO  [default] Path length: 116
+2016-08-25 14:26:09,089 INFO  [default] Nodes :: expanded: 44445 generated: 102047
+
+
+Result:
+{"errorMessage":"","success":true,"expandedNodes":44445,"generatedNodes":102047,"planningTime":544347140,"actionExecutionTime":696000000,"goalAchievementTime":1240347140,"idlePlanningTime":544347140,"pathLength":116,"timestamp":1472149566731874466}
+
+Finish execution
+Parsed result: 
+
+{'goalAchievementTime': 1240347140, 'actionExecutionTime': 696000000, 'success': True, 'generatedNodes': 102047, 'timestamp': 1472149566731874466, 'idlePlanningTime': 544347140, 'planningTime': 544347140, 'expandedNodes': 44445, 'pathLength': 116, 'errorMessage': ''}
+Iteration: 4
+GATs: [789798929, 2072006666, 805825814, 1240347140]
+Failed: 0 Succeeded: 4
+Avg of successful:1.22699463725
+Start to execute metronome.
+Metronome output: 
+
+ ___            ___     
+|###\  ______  /###|   
+|#|\#\ \    / /#/|#|   
+|#| \#\ \  / /#/ |#|   
+|#|  \#\ \/ /#/  |#|   
+|#|      /\      |#|   
+|#|     /  \     |#|   
+|#|    /____\    |#|   
+---- Metronome  ----
+ When time matters!
+
+2016-08-25 14:26:09,101 INFO  [default] {
+2016-08-25 14:26:09,101 INFO  [default] "timeLimit": 6000000,
+2016-08-25 14:26:09,101 INFO  [default] "domainPath": "/input/tiles/korf/4/all/5",
+2016-08-25 14:26:09,101 INFO  [default] "domainInstanceName": "Manual test instance",
+2016-08-25 14:26:09,101 INFO  [default] "actionDuration": 6000000,
+2016-08-25 14:26:09,101 INFO  [default] "domainName": "SLIDING_TILE_PUZZLE",
+2016-08-25 14:26:09,101 INFO  [default] "terminationType": "time",
+2016-08-25 14:26:09,101 INFO  [default] "algorithmName": "LSS_LRTA_STAR"
+2016-08-25 14:26:09,101 INFO  [default] }
+2016-08-25 14:26:09,101 INFO  [default] Configuration started.
+2016-08-25 14:26:12,753 INFO  [default] Configuration done.
+2016-08-25 14:26:14,295 INFO  [default] Planning: Done
+2016-08-25 14:26:16,479 INFO  [default] Execution completed in 1542ms
+2016-08-25 14:26:16,481 INFO  [default] Path length: 288
+2016-08-25 14:26:16,481 INFO  [default] Nodes :: expanded: 165812 generated: 375660
+
+
+Result:
+{"errorMessage":"","success":true,"expandedNodes":165812,"generatedNodes":375660,"planningTime":1542584068,"actionExecutionTime":1728000000,"goalAchievementTime":3270584068,"idlePlanningTime":1542584068,"pathLength":288,"timestamp":1472149574296027174}
+
+Finish execution
+Parsed result: 
+
+{'goalAchievementTime': 3270584068, 'actionExecutionTime': 1728000000, 'success': True, 'generatedNodes': 375660, 'timestamp': 1472149574296027174, 'idlePlanningTime': 1542584068, 'planningTime': 1542584068, 'expandedNodes': 165812, 'pathLength': 288, 'errorMessage': ''}
+Iteration: 5
+GATs: [789798929, 2072006666, 805825814, 1240347140, 3270584068]
+Failed: 0 Succeeded: 5
+Avg of successful:1.6357125234
+Start to execute metronome.
+Metronome output: 
+
+ ___            ___     
+|###\  ______  /###|   
+|#|\#\ \    / /#/|#|   
+|#| \#\ \  / /#/ |#|   
+|#|  \#\ \/ /#/  |#|   
+|#|      /\      |#|   
+|#|     /  \     |#|   
+|#|    /____\    |#|   
+---- Metronome  ----
+ When time matters!
+
+2016-08-25 14:26:16,497 INFO  [default] {
+2016-08-25 14:26:16,497 INFO  [default] "timeLimit": 6000000,
+2016-08-25 14:26:16,497 INFO  [default] "domainPath": "/input/tiles/korf/4/all/6",
+2016-08-25 14:26:16,497 INFO  [default] "domainInstanceName": "Manual test instance",
+2016-08-25 14:26:16,497 INFO  [default] "actionDuration": 6000000,
+2016-08-25 14:26:16,497 INFO  [default] "domainName": "SLIDING_TILE_PUZZLE",
+2016-08-25 14:26:16,497 INFO  [default] "terminationType": "time",
+2016-08-25 14:26:16,497 INFO  [default] "algorithmName": "LSS_LRTA_STAR"
+2016-08-25 14:26:16,497 INFO  [default] }
+2016-08-25 14:26:16,497 INFO  [default] Configuration started.
+2016-08-25 14:26:20,869 INFO  [default] Configuration done.
+2016-08-25 14:26:21,115 INFO  [default] Planning: Done
+2016-08-25 14:26:23,458 INFO  [default] Execution completed in 245ms
+2016-08-25 14:26:23,458 INFO  [default] Path length: 70
+2016-08-25 14:26:23,458 INFO  [default] Nodes :: expanded: 23387 generated: 53498
+
+
+Result:
+{"errorMessage":"","success":true,"expandedNodes":23387,"generatedNodes":53498,"planningTime":245315797,"actionExecutionTime":420000000,"goalAchievementTime":665315797,"idlePlanningTime":245315797,"pathLength":70,"timestamp":1472149581115810959}
+
+Finish execution
+Parsed result: 
+
+{'goalAchievementTime': 665315797, 'actionExecutionTime': 420000000, 'success': True, 'generatedNodes': 53498, 'timestamp': 1472149581115810959, 'idlePlanningTime': 245315797, 'planningTime': 245315797, 'expandedNodes': 23387, 'pathLength': 70, 'errorMessage': ''}
+Iteration: 6
+GATs: [789798929, 2072006666, 805825814, 1240347140, 3270584068, 665315797]
+Failed: 0 Succeeded: 6
+Avg of successful:1.4739797356666668
+Start to execute metronome.
+Metronome output: 
+
+ ___            ___     
+|###\  ______  /###|   
+|#|\#\ \    / /#/|#|   
+|#| \#\ \  / /#/ |#|   
+|#|  \#\ \/ /#/  |#|   
+|#|      /\      |#|   
+|#|     /  \     |#|   
+|#|    /____\    |#|   
+---- Metronome  ----
+ When time matters!
+
+2016-08-25 14:26:23,471 INFO  [default] {
+2016-08-25 14:26:23,472 INFO  [default] "timeLimit": 6000000,
+2016-08-25 14:26:23,472 INFO  [default] "domainPath": "/input/tiles/korf/4/all/7",
+2016-08-25 14:26:23,472 INFO  [default] "domainInstanceName": "Manual test instance",
+2016-08-25 14:26:23,472 INFO  [default] "actionDuration": 6000000,
+2016-08-25 14:26:23,472 INFO  [default] "domainName": "SLIDING_TILE_PUZZLE",
+2016-08-25 14:26:23,472 INFO  [default] "terminationType": "time",
+2016-08-25 14:26:23,472 INFO  [default] "algorithmName": "LSS_LRTA_STAR"
+2016-08-25 14:26:23,472 INFO  [default] }
+2016-08-25 14:26:23,472 INFO  [default] Configuration started.
+2016-08-25 14:26:27,147 INFO  [default] Configuration done.
+2016-08-25 14:26:28,574 INFO  [default] Planning: Done
+2016-08-25 14:26:30,752 INFO  [default] Execution completed in 1425ms
+2016-08-25 14:26:30,752 INFO  [default] Path length: 262
+2016-08-25 14:26:30,752 INFO  [default] Nodes :: expanded: 137405 generated: 302171
+
+
+Result:
+{"errorMessage":"","success":true,"expandedNodes":137405,"generatedNodes":302171,"planningTime":1425776836,"actionExecutionTime":1572000000,"goalAchievementTime":2997776836,"idlePlanningTime":1425776836,"pathLength":262,"timestamp":1472149588574106824}
+
+Finish execution
+Parsed result: 
+
+{'goalAchievementTime': 2997776836, 'actionExecutionTime': 1572000000, 'success': True, 'generatedNodes': 302171, 'timestamp': 1472149588574106824, 'idlePlanningTime': 1425776836, 'planningTime': 1425776836, 'expandedNodes': 137405, 'pathLength': 262, 'errorMessage': ''}
+Iteration: 7
+GATs: [789798929, 2072006666, 805825814, 1240347140, 3270584068, 665315797, 2997776836]
+Failed: 0 Succeeded: 7
+Avg of successful:1.6916650357142855
+Start to execute metronome.
+Metronome output: 
+
+ ___            ___     
+|###\  ______  /###|   
+|#|\#\ \    / /#/|#|   
+|#| \#\ \  / /#/ |#|   
+|#|  \#\ \/ /#/  |#|   
+|#|      /\      |#|   
+|#|     /  \     |#|   
+|#|    /____\    |#|   
+---- Metronome  ----
+ When time matters!
+
+2016-08-25 14:26:30,767 INFO  [default] {
+2016-08-25 14:26:30,767 INFO  [default] "timeLimit": 6000000,
+2016-08-25 14:26:30,767 INFO  [default] "domainPath": "/input/tiles/korf/4/all/8",
+2016-08-25 14:26:30,767 INFO  [default] "domainInstanceName": "Manual test instance",
+2016-08-25 14:26:30,768 INFO  [default] "actionDuration": 6000000,
+2016-08-25 14:26:30,768 INFO  [default] "domainName": "SLIDING_TILE_PUZZLE",
+2016-08-25 14:26:30,768 INFO  [default] "terminationType": "time",
+2016-08-25 14:26:30,768 INFO  [default] "algorithmName": "LSS_LRTA_STAR"
+2016-08-25 14:26:30,768 INFO  [default] }
+2016-08-25 14:26:30,768 INFO  [default] Configuration started.
+2016-08-25 14:26:34,435 INFO  [default] Configuration done.
+2016-08-25 14:26:34,975 INFO  [default] Planning: Done
+2016-08-25 14:26:37,115 INFO  [default] Execution completed in 539ms
+2016-08-25 14:26:37,115 INFO  [default] Path length: 118
+2016-08-25 14:26:37,115 INFO  [default] Nodes :: expanded: 55189 generated: 125520
+
+
+Result:
+{"errorMessage":"","success":true,"expandedNodes":55189,"generatedNodes":125520,"planningTime":539082766,"actionExecutionTime":708000000,"goalAchievementTime":1247082766,"idlePlanningTime":539082766,"pathLength":118,"timestamp":1472149594975688915}
+
+Finish execution
+Parsed result: 
+
+{'goalAchievementTime': 1247082766, 'actionExecutionTime': 708000000, 'success': True, 'generatedNodes': 125520, 'timestamp': 1472149594975688915, 'idlePlanningTime': 539082766, 'planningTime': 539082766, 'expandedNodes': 55189, 'pathLength': 118, 'errorMessage': ''}
+Iteration: 8
+GATs: [789798929, 2072006666, 805825814, 1240347140, 3270584068, 665315797, 2997776836, 1247082766]
+Failed: 0 Succeeded: 8
+Avg of successful:1.636092252
+Start to execute metronome.
+Metronome output: 
+
+ ___            ___     
+|###\  ______  /###|   
+|#|\#\ \    / /#/|#|   
+|#| \#\ \  / /#/ |#|   
+|#|  \#\ \/ /#/  |#|   
+|#|      /\      |#|   
+|#|     /  \     |#|   
+|#|    /____\    |#|   
+---- Metronome  ----
+ When time matters!
+
+2016-08-25 14:26:37,130 INFO  [default] {
+2016-08-25 14:26:37,130 INFO  [default] "timeLimit": 6000000,
+2016-08-25 14:26:37,130 INFO  [default] "domainPath": "/input/tiles/korf/4/all/9",
+2016-08-25 14:26:37,130 INFO  [default] "domainInstanceName": "Manual test instance",
+2016-08-25 14:26:37,130 INFO  [default] "actionDuration": 6000000,
+2016-08-25 14:26:37,130 INFO  [default] "domainName": "SLIDING_TILE_PUZZLE",
+2016-08-25 14:26:37,130 INFO  [default] "terminationType": "time",
+2016-08-25 14:26:37,130 INFO  [default] "algorithmName": "LSS_LRTA_STAR"
+2016-08-25 14:26:37,130 INFO  [default] }
+2016-08-25 14:26:37,130 INFO  [default] Configuration started.
+2016-08-25 14:26:40,810 INFO  [default] Configuration done.
+2016-08-25 14:26:41,649 INFO  [default] Planning: Done
+2016-08-25 14:26:43,804 INFO  [default] Execution completed in 838ms
+2016-08-25 14:26:43,804 INFO  [default] Path length: 164
+2016-08-25 14:26:43,804 INFO  [default] Nodes :: expanded: 84504 generated: 189628
+
+
+Result:
+{"errorMessage":"","success":true,"expandedNodes":84504,"generatedNodes":189628,"planningTime":838329293,"actionExecutionTime":984000000,"goalAchievementTime":1822329293,"idlePlanningTime":838329293,"pathLength":164,"timestamp":1472149601649576300}
+
+Finish execution
+Parsed result: 
+
+{'goalAchievementTime': 1822329293, 'actionExecutionTime': 984000000, 'success': True, 'generatedNodes': 189628, 'timestamp': 1472149601649576300, 'idlePlanningTime': 838329293, 'planningTime': 838329293, 'expandedNodes': 84504, 'pathLength': 164, 'errorMessage': ''}
+Iteration: 9
+GATs: [789798929, 2072006666, 805825814, 1240347140, 3270584068, 665315797, 2997776836, 1247082766, 1822329293]
+Failed: 0 Succeeded: 9
+Avg of successful:1.6567852565555556
+Experiment completed!
+GATs: [789798929, 2072006666, 805825814, 1240347140, 3270584068, 665315797, 2997776836, 1247082766, 1822329293]
+Failed: 0 Succeeded: 9
+Avg of successful:1.6567852565555556
+Done

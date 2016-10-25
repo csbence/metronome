@@ -1,37 +1,37 @@
 #ifndef METRONOME_FHAT_HPP
 #define METRONOME_FHAT_HPP
 #include <fcntl.h>
-#include <boost/pool/object_pool.hpp>
+#include <MemoryConfiguration.hpp>
+#include <algorithm>
 #include <domains/SuccessorBundle.hpp>
 #include <unordered_map>
 #include <vector>
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
+#include "easylogging++.h"
 #include "experiment/Configuration.hpp"
-#include "experiment/termination/TimeTerminationChecker.hpp"
 #include "utils/Hasher.hpp"
 #include "utils/PriorityQueue.hpp"
-#define BOOST_POOL_NO_MT
+#include "utils/StaticVector.hpp"
+#include "utils/TimeMeasurement.hpp"
 
 namespace metronome {
 
-template <typename Domain>
-class FHat final : public OnlinePlanner<Domain> {
+template <typename Domain, typename TerminationChecker>
+class FHat final : public OnlinePlanner<Domain, TerminationChecker> {
 public:
     typedef typename Domain::State State;
     typedef typename Domain::Action Action;
     typedef typename Domain::Cost Cost;
-    typedef typename OnlinePlanner<Domain>::ActionBundle ActionBundle;
+    typedef typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle ActionBundle;
 
     FHat(const Domain& domain, const Configuration&) : domain{domain} {
-        // Force the object pool to allocate memory
-        State state;
-        Node node = Node(nullptr, std::move(state), Action(), 0, 0, true, 0, 0, 0);
-        nodePool.destroy(nodePool.construct(node));
+        // Initialize hash table
+        nodes.max_load_factor(1);
+        nodes.reserve(Memory::NODE_LIMIT);
     }
 
-    std::vector<ActionBundle> selectActions(const State& startState,
-            const TimeTerminationChecker& terminationChecker) override {
+    std::vector<ActionBundle> selectActions(const State& startState, TerminationChecker& terminationChecker) override {
         if (domain.isGoal(startState)) {
             // Goal is already reached
             return std::vector<ActionBundle>();
@@ -42,15 +42,22 @@ public:
             learn(terminationChecker);
         }
 
-        const Node localStartNode =
-                Node(nullptr, std::move(startState), Action(-1), 0, domain.heuristic(startState), true, 0, 0, 0);
+        const auto bestNode = explore(startState, terminationChecker);
 
-        Planner::incrementGeneratedNodeCount();
-        auto startNode = nodePool.construct(localStartNode);
+        //        AStar<Domain> aStar{domain, Configuration()};
+        //
+        //        const std::vector<Action>& plan = aStar.plan(bestNode->state);
+        //
+        //        auto hStar = plan
+        //                    .size() * domain.getActionDuration();
+        //        const unsigned long h = bestNode->f() -bestNode->g;
+        //        const double hHat = bestNode->fHat - h - bestNode->g;
+        //        const double min = std::max(hHat, 1.0);
+        //        const double rel = (hStar - h) / hHat;
+        //        LOG(INFO) << "g/h/hhat/hstar " << bestNode->g << " " << h << " " << hHat << " " << hStar
+        //                  << " " << rel;
 
-        auto bestNode = explore(startNode, terminationChecker);
-
-        return extractPath(bestNode, startNode);
+        return extractPath(bestNode, nodes[startState]);
     }
 
 private:
@@ -64,7 +71,7 @@ private:
                 Cost g,
                 Cost h,
                 bool open,
-                Cost hHat,
+                Cost fHat,
                 Cost distance,
                 Cost distanceError,
                 unsigned int iteration = 0)
@@ -89,12 +96,14 @@ private:
 
         std::string toString() const {
             std::ostringstream stream;
-            stream << "s: " << state << " g: " << g << " h: " << h << " a: " << action << " p: ";
+            stream << "s: " << state << " g: " << g << " h: " << h << " fhat: " << fHat << " a: " << action << " "
+                                                                                                               "p: ";
             if (parent == nullptr) {
                 stream << "None";
             } else {
                 stream << parent->state;
             }
+            stream << (open ? " Open" : " Not Open");
             return stream.str();
         }
 
@@ -136,7 +145,7 @@ private:
         const Cost actionCost;
     };
 
-    void learn(TimeTerminationChecker terminationChecker) {
+    void learn(TerminationChecker& terminationChecker) {
         ++iterationCounter;
 
         // Reorder the open list based on the heuristic values
@@ -178,28 +187,47 @@ private:
         }
     }
 
-    Node* explore(Node* startNode, TimeTerminationChecker terminationChecker) {
+    const Node* explore(const State& startState, TerminationChecker& terminationChecker) {
         ++iterationCounter;
         clearOpenList();
         openList.reorder(fHatComparator);
 
-        Node* currentNode = startNode;
+        Planner::incrementGeneratedNodeCount();
+        Node*& startNode = nodes[startState];
 
-        nodes[startNode->state] = startNode;
+        if (startNode == nullptr) {
+            startNode = nodePool->construct(
+                    Node{nullptr, startState, Action(), 0, domain.heuristic(startState), true, 0, 0, 0});
+        } else {
+            startNode->g = 0;
+            startNode->action = Action();
+            startNode->predecessors.clear();
+            startNode->parent = nullptr;
+        }
+
+        startNode->iteration = iterationCounter;
         addToOpenList(*startNode);
+
+        Node* currentNode = startNode;
 
         nextHeuristicError = 0;
         nextDistanceError = 0;
 
-        while (!terminationChecker.reachedTermination() && !domain.isGoal(currentNode->state)) {
-            currentNode = popOpenList();
+        while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
+            Node* const currentNode = popOpenList();
+
+            if (domain.isGoal(currentNode->state)) {
+                return currentNode;
+            }
+
+            terminationChecker.notifyExpansion();
             expandNode(currentNode);
         }
 
         distanceError = nextDistanceError;
         heuristicError = nextHeuristicError;
 
-        return currentNode; // todo this might be one step behind the best
+        return openList.top();
     }
 
     void expandNode(Node* sourceNode) {
@@ -207,7 +235,6 @@ private:
 
         Node* bestChildNode{nullptr};
 
-        auto currentGValue = sourceNode->g;
         for (auto successor : domain.successors(sourceNode->state)) {
             auto successorState = successor.state;
 
@@ -235,7 +262,7 @@ private:
             }
 
             // only generate those state that are not visited yet or whose cost value are lower than this path
-            Cost successorGValueFromCurrent{currentGValue + successor.actionCost};
+            Cost successorGValueFromCurrent{sourceNode->g + successor.actionCost};
             if (successorNode->g > successorGValueFromCurrent) {
                 successorNode->g = successorGValueFromCurrent;
                 successorNode->parent = sourceNode;
@@ -259,7 +286,6 @@ private:
 
         if (bestChildNode != nullptr) {
             // Local error values (min 0.0)
-            double zero = 0.0;
             double localHeuristicError = bestChildNode->f() - sourceNode->f();
             double localDistanceError = bestChildNode->distance - sourceNode->distance + 1;
 
@@ -267,29 +293,27 @@ private:
             localDistanceError = (localDistanceError < 0.0) ? 0.0 : localDistanceError;
 
             // The next error values are the weighted average of the local error and the previous error
-            nextHeuristicError += (localHeuristicError - nextHeuristicError) / getExpandedNodeCount();
-            nextDistanceError += (localDistanceError - nextDistanceError) / getExpandedNodeCount();
+            nextHeuristicError += (localHeuristicError - nextHeuristicError) / Planner::getExpandedNodeCount();
+            nextDistanceError += (localDistanceError - nextDistanceError) / Planner::getExpandedNodeCount();
         }
     }
 
     Node* createNode(Node* sourceNode, SuccessorBundle<Domain> successor) {
-        incrementGeneratedNodeCount();
+        Planner::incrementGeneratedNodeCount();
 
         auto successorState = successor.state;
         auto distance = domain.distance(successorState);
         auto heuristic = domain.heuristic(successorState);
 
-        const Node tempSuccessorNode(sourceNode,
+        return nodePool->construct(Node{sourceNode,
                 successorState,
                 successor.action,
                 domain.COST_MAX,
                 heuristic,
                 true,
-                distance * heuristicError + heuristic,
+                static_cast<Cost>(distance * heuristicError + heuristic),
                 distance,
-                distance);
-
-        return nodePool.construct(std::move(tempSuccessorNode));
+                distance});
     }
 
     void clearOpenList() {
@@ -324,7 +348,7 @@ private:
 
         while (currentNode != sourceNode) {
             // The g difference of the child and the parent gives the action cost from the parent
-            actionBundles.emplace_back(currentNode->action, currentNode->parent->g - currentNode->g);
+            actionBundles.emplace_back(currentNode->action, currentNode->g - currentNode->parent->g);
             currentNode = currentNode->parent;
         }
 
@@ -333,9 +357,9 @@ private:
     }
 
     static int fHatComparator(const Node& lhs, const Node& rhs) {
-        if (lhs.fHat() < rhs.fHat())
+        if (lhs.fHat < rhs.fHat)
             return -1;
-        if (rhs.fHat() > rhs.fHat())
+        if (lhs.fHat > rhs.fHat)
             return 1;
         if (lhs.g > rhs.g)
             return -1;
@@ -353,9 +377,10 @@ private:
     }
 
     const Domain& domain;
-    PriorityQueue<Node> openList{10000000, fHatComparator};
+    PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fHatComparator};
     std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
-    boost::object_pool<Node> nodePool{100000000, 100000000};
+    std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{
+            std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
     unsigned int iterationCounter{0};
 
     double heuristicError{0};

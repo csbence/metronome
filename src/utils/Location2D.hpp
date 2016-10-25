@@ -1,17 +1,24 @@
-#ifndef METRONOME_TUPLE_HPP
-#define METRONOME_TUPLE_HPP
+#ifndef METRONOME_LOCATION2D_HPP
+#define METRONOME_LOCATION2D_HPP
 
 namespace metronome {
 class Location2D {
 public:
-    Location2D() : x(0), y(0) {
-
+    Location2D() : x(0), y(0) {}
+    Location2D(int x, int y) : x(x), y(y) {}
+    Location2D operator=(Location2D toCopy) {
+        swap(*this, toCopy);
+        return *this;
     }
-    Location2D(unsigned int x, unsigned int y) : x(x), y(y) {
+    int x;
+    int y;
+private:
+    friend void swap(Location2D& first, Location2D& second) {
+        using std::swap;
+        swap(first.x,second.x);
+        swap(first.x,second.y);
     }
-    unsigned int x;
-    unsigned int y;
 };
 }
 
-#endif // METRONOME_TUPLE_HPP
+#endif // METRONOME_LOCATION2D_HPP

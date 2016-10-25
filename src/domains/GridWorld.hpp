@@ -7,6 +7,7 @@
 #include <experiment/Configuration.hpp>
 #include <functional>
 #include <limits>
+#include <ostream>
 #include <unordered_set>
 #include <utils/Hasher.hpp>
 #include <vector>
@@ -18,56 +19,60 @@ class GridWorld {
 public:
     typedef long long int Cost;
     static constexpr Cost COST_MAX = std::numeric_limits<Cost>::max();
-    /*
-     * State <- location of the agent as a pair
-     * Action <- value representing the action taken {N,S,E,W,V} = {0,1,2,3,4}
-     * Cost <- value for taking action from a state
-     */
+
     class Action {
     public:
-        Action() : value(0) {}
-        Action(unsigned int value) : value(value) {}
-        /*Character representation of the Action*/
-        constexpr char toChar() const {
-            if (value == 1) {
-                return 'N';
-            } else if (value == 2) {
-                return 'E';
-            } else if (value == 3) {
-                return 'S';
-            } else if (value == 4) {
-                return 'W';
-            } else {
-                return '~';
-            }
+        Action() : label{'~'} {};
+
+        static std::vector<Action>& getActions() {
+            static std::vector<Action> actions{Action('N'), Action('S'), Action('W'), Action('E')};
+            return actions;
         }
-        /*String representation of the Action*/
-        const std::string toString() const {
-            std::string s;
-            s.push_back(toChar());
-            return s;
+
+        bool operator==(const Action& rhs) const { return label == rhs.label; }
+
+        bool operator!=(const Action& rhs) const { return !(rhs == *this); }
+
+        char toChar() const { return label; }
+
+        static Action getIdentity() {
+            return Action('0');
+        }
+
+        std::string toString() const { return std::string{label}; }
+
+        friend std::ostream& operator<<(std::ostream& os, const Action& action) {
+            os << action.label;
+            return os;
         }
 
     private:
-        /*Internal cost of the Action*/
-        unsigned int value;
+        Action(char label) : label{label} {}
+        char label;
     };
+
     class State {
     public:
         State() : x(0), y(0) {}
-        State(unsigned int x, unsigned int y) : x(x), y(y) {}
-        State& operator=(State toCopy) {
-            swap(*this, toCopy);
-            return *this;
-        }
+        State(unsigned int x, unsigned int y) : x{x}, y{y} {}
         /*Standard getters for the State(x,y)*/
         unsigned int getX() const { return x; }
         unsigned int getY() const { return y; }
         std::size_t hash() const { return x ^ y << 16 ^ y >> 16; }
         bool operator==(const State& state) const { return x == state.x && y == state.y; }
+        bool operator!=(const State& state) const { return x != state.x || y != state.y; }
+        State& operator=(State toCopy) {
+            swap(*this, toCopy);
+            return *this;
+        }
         std::string toString() {
             std::string string{"x: "};
             return string + std::to_string(x) + " y: " + std::to_string(y);
+        }
+
+        friend std::ostream& operator<<(std::ostream& stream, const GridWorld::State& state) {
+            stream << "x: " << state.getX() << " y: " << state.getY();
+            return stream;
         }
 
     private:
@@ -82,11 +87,8 @@ public:
         }
     };
     /*Entry point for using this Domain*/
-    GridWorld(const Configuration& configuration, std::istream& input) {
-        if (!configuration.hasMember(ACTION_DURATION)) {
-            throw MetronomeException("No value provided.");
-        }
-        actionDuration = configuration.getLong(ACTION_DURATION);
+    GridWorld(const Configuration& configuration, std::istream& input)
+            : actionDuration(configuration.getLongOrThrow(ACTION_DURATION)) {
         obstacles = std::unordered_set<State, typename metronome::Hasher<State>>{};
         unsigned int currentHeight = 0;
         unsigned int currentWidth = 0;
@@ -108,7 +110,7 @@ public:
         boost::optional<State> tempStarState;
         boost::optional<State> tempGoalState;
 
-        while (getline(input, line)) {
+        while (getline(input, line) && currentHeight < height) {
             for (auto it = line.cbegin(); it != line.cend(); ++it) {
                 if (*it == '@') { // find the start location
                     tempStarState = State(currentWidth, currentHeight);
@@ -141,50 +143,56 @@ public:
         startLocation = tempStarState.get();
         goalLocation = tempGoalState.get();
     }
-    /*
-     * Calculate the transition state given
-     * a state and action pair
+
+    /**
+     * Transition to a new state from the given state applying the given action.
+     *
+     * @return the original state if the transition is not possible
      */
-    const State transition(const State& state, const Action& action) const {
+    boost::optional<State> transition(const State& sourceState, const Action& action) const {
+        boost::optional<State> targetState;
+
         if (action.toChar() == 'N') {
-            State newState = State(state.getX(), state.getY() - 1);
+            State newState = State(sourceState.getX(), sourceState.getY() - 1);
             if (isLegalLocation(newState)) {
-                return newState;
+                targetState = newState;
             }
         } else if (action.toChar() == 'E') {
-            State newState = State(state.getX() + 1, state.getY());
+            State newState = State(sourceState.getX() + 1, sourceState.getY());
             if (isLegalLocation(newState)) {
-                return newState;
+                targetState = newState;
             }
         } else if (action.toChar() == 'S') {
-            State newState = State(state.getX(), state.getY() + 1);
+            State newState = State(sourceState.getX(), sourceState.getY() + 1);
             if (isLegalLocation(newState)) {
-                return newState;
+                targetState = newState;
             }
         } else if (action.toChar() == 'W') {
-            State newState = State(state.getX() - 1, state.getY());
+            State newState = State(sourceState.getX() - 1, sourceState.getY());
             if (isLegalLocation(newState)) {
-                return newState;
+                targetState = newState;
             }
+        } else if (action.toChar() == '0') {
+            return boost::make_optional(sourceState);
         }
 
-        return state;
+        return targetState;
     }
     /*Validating a goal state*/
-    const bool isGoal(const State& location) const {
+    bool isGoal(const State& location) const {
         return location.getX() == goalLocation.getX() && location.getY() == goalLocation.getY();
     }
     /*Validating an obstacle state*/
-    const bool isObstacle(const State& location) const { return obstacles.find(location) != obstacles.end(); }
+    bool isObstacle(const State& location) const { return obstacles.find(location) != obstacles.end(); }
     /*Validating the agent can visit the state*/
-    const bool isLegalLocation(const State& location) const {
+    bool isLegalLocation(const State& location) const {
         return location.getX() < width && location.getY() < height && !isObstacle(location);
     }
     /*Standard getters for the (width,height) of the domain*/
-    const unsigned int getWidth() { return width; }
-    const unsigned int getHeight() { return height; }
+    unsigned int getWidth() { return width; }
+    unsigned int getHeight() { return height; }
     /*Adding an obstacle to the domain*/
-    const bool addObstacle(const State& toAdd) {
+    bool addObstacle(const State& toAdd) {
         if (isLegalLocation(toAdd)) {
             obstacles.insert(toAdd);
             return true;
@@ -192,11 +200,11 @@ public:
         return false;
     }
 
-    const std::vector<State>::size_type getNumberObstacles() { return obstacles.size(); }
+    std::vector<State>::size_type getNumberObstacles() { return obstacles.size(); }
 
-    const State getStartState() const { return startLocation; }
+    State getStartState() const { return startLocation; }
 
-    const bool isStart(const State& state) const {
+    bool isStart(const State& state) const {
         return state.getX() == startLocation.getX() && state.getY() == startLocation.getY();
     }
 
@@ -212,24 +220,22 @@ public:
 
     Cost heuristic(const State& state) const { return distance(state) * actionDuration; }
 
-    std::vector<SuccessorBundle<GridWorld>> successors(State state) const {
+    bool safetyPredicate(const State& state) const { return true; }
+
+    std::vector<SuccessorBundle<GridWorld>> successors(const State& state) const {
         std::vector<SuccessorBundle<GridWorld>> successors;
 
-        static const unsigned int actions[] = {4, 3, 2, 1};
-
-        for (auto a : actions) {
-            State newState = transition(state, Action(a));
-            if (!(newState == state)) {
-                successors.push_back(SuccessorBundle<GridWorld>{newState, a, actionDuration});
-            }
-        }
+        addValidSuccessor(successors, state, 0, 1, Action::getActions()[1]);
+        addValidSuccessor(successors, state, 0, -1, Action::getActions()[0]);
+        addValidSuccessor(successors, state, -1, 0, Action::getActions()[2]);
+        addValidSuccessor(successors, state, 1, 0, Action::getActions()[3]);
 
         return successors;
     }
 
     void visualize(std::ostream& display) const {
-        for (auto i = 0; i < height; ++i) {
-            for (auto j = 0; j < width; ++j) {
+        for (unsigned int i = 0; i < height; ++i) {
+            for (unsigned int j = 0; j < width; ++j) {
                 if (startLocation.getX() == j && startLocation.getY() == i) {
                     display << '@';
                 } else if (goalLocation.getX() == j && goalLocation.getY() == i) {
@@ -245,14 +251,31 @@ public:
         display << "\n";
     }
 
-    void animate(std::ostream& display, std::vector<Action> actions) const {
-        for (auto action : actions) {
-            if (action.toChar() == 'N') {
-            }
-        }
+    Cost getActionDuration() const {
+        return actionDuration;
     }
 
 private:
+    void addValidSuccessor(std::vector<SuccessorBundle<GridWorld>>& successors,
+            const State& sourceState,
+            signed char relativeX,
+            signed char relativeY,
+            Action& action) const {
+        const boost::optional<State>& successor = getSuccessor(sourceState, relativeX, relativeY);
+        if (successor.is_initialized()) {
+            successors.emplace_back(successor.get(), action, actionDuration);
+        }
+    }
+
+    boost::optional<State> getSuccessor(const State& sourceState, signed char relativeX, signed char relativeY) const {
+        State newState = State(sourceState.getX() + relativeX, sourceState.getY() + relativeY);
+        if (isLegalLocation(newState)) {
+            return boost::make_optional(newState);
+        }
+
+        return boost::none;
+    }
+
     /*
      * maxActions <- maximum number of actions
      * width/height <- internal size representation of world
@@ -267,19 +290,9 @@ private:
     unsigned int width;
     unsigned int height;
     std::unordered_set<State, typename metronome::Hasher<State>> obstacles;
-    State startLocation = State();
-    State goalLocation = State();
-    Cost actionDuration;
+    State startLocation{};
+    State goalLocation{};
+    const Cost actionDuration;
 };
-
-std::ostream& operator<<(std::ostream& stream, const GridWorld::Action& action) {
-    stream << "action: " << action.toChar();
-    return stream;
-}
-
-std::ostream& operator<<(std::ostream& stream, const GridWorld::State& state) {
-    stream << "x: " << state.getX() << " y: " << state.getY();
-    return stream;
-}
 }
 #endif
