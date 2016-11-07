@@ -18,12 +18,14 @@ static const std::string LOOKAHEAD_TYPE{"lookaheadType"};
 static const std::string DOMAIN_GRID_WORLD{"GRID_WORLD"};
 static const std::string DOMAIN_TRAFFIC{"TRAFFIC"};
 static const std::string DOMAIN_TILES{"SLIDING_TILE_PUZZLE"};
+static const std::string DOMAIN_GRAPH{"GRAPH"};
 
 static const std::string ALGORITHM_A_STAR{"A_STAR"};
 static const std::string ALGORITHM_LSS_LRTA_STAR{"LSS_LRTA_STAR"};
 static const std::string ALGORITHM_F_HAT{"F_HAT"};
 static const std::string ALGORITHM_MO_RTS{"MO_RTS"};
 static const std::string ALGORITHM_MO_RTS_OLD{"MO_RTS_OLD"};
+static const std::string ALGORITHM_SLOW_RTS{"SLOW_RTS"};
 static const std::string ALGORITHM_S_ZERO{"S_ZERO"};
 static const std::string ALGORITHM_F_RTS{"F_RTS"};
 
