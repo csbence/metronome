@@ -65,7 +65,6 @@ def run_experiments(configurations):
     path = "../build/release/Metronome"
     resources = "../resources"
     gat = []
-
     results = []
 
     for configuration in configurations:
@@ -79,18 +78,14 @@ def run_experiments(configurations):
         failed_count = len(gat) - len(successful)
         succeeded_count = len(successful)
 
-        #       print("GATs: " + str(gat))
         print("Failed: {} Succeeded: {}/{}".format(failed_count, succeeded_count, len(configurations)))
-        #     print("Avg of successful:{}".format(np.mean(successful)))
 
     successful = [x for x in gat if x != 0]
     failed_count = len(gat) - len(successful)
     succeeded_count = len(successful)
 
     print("Experiment completed!")
-    #    pr#int("GATs: " + str(gat))
     print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
-    #    p#rint("Avg of successful:{}".format(np.mean(successful)))
 
     return results
 
