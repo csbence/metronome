@@ -14,12 +14,7 @@ public:
     Result plan(const Configuration& configuration, const Domain& domain, Planner& planner) {
         using namespace std::chrono;
 
-        if (!configuration.hasMember(LOOKAHEAD_TYPE)) {
-            LOG(ERROR) << "Lookahead type not found." << std::endl;
-            return Result(configuration, "Missing: lookaheadType");
-        }
-
-        std::string lookaheadType{configuration.getString(LOOKAHEAD_TYPE)};
+        std::string lookaheadType{configuration.getStringOrThrow(LOOKAHEAD_TYPE)};
 
         bool dynamicLookahead;
         if (lookaheadType == LOOKAHEAD_STATIC) {
@@ -33,26 +28,29 @@ public:
 
         std::vector<typename Domain::Action> actions;
         long long int planningTime{0};
-        const auto actionDuration = configuration.getLong(ACTION_DURATION);
+        const auto firstIterationDuration = getFirstIterationDuration(configuration);
+        const auto actionExecutionTime = configuration.getLong("actionExecutionTime", 1);
         auto currentState = domain.getStartState();
 
         TerminationChecker terminationChecker;
 
-        long long int timeBound = actionDuration;
+        long long int timeBound = firstIterationDuration;
         long long int previousTimeBound;
 
         while (!domain.isGoal(currentState)) {
             auto planningIterationTime = measureNanoTime([&] {
                 if (dynamicLookahead) {
-                    terminationChecker.resetTo(timeBound);
+                    terminationChecker.resetTo(timeBound / actionExecutionTime);
                 } else {
-                    terminationChecker.resetTo(actionDuration);
+                    terminationChecker.resetTo(firstIterationDuration);
                 }
 
                 auto actionBundles{planner.selectActions(currentState, terminationChecker)};
 
                 previousTimeBound = timeBound;
                 timeBound = 0;
+
+                LOG(INFO) << "Number of actions: " << actionBundles.size();
                 for (auto& actionBundle : actionBundles) {
                     boost::optional<typename Domain::State> nextState =
                             domain.transition(currentState, actionBundle.action);
@@ -60,7 +58,7 @@ public:
                         throw MetronomeException("Invalid action. Partial plan is corrupt.");
                     }
                     currentState = nextState.get();
-//                    LOG(INFO) << actionBundle.action << std::endl;
+//                    LOG(INFO) << actionBundle.actionDuration << std::endl;
                     actions.emplace_back(actionBundle.action);
                     timeBound += actionBundle.actionDuration;
                 }
@@ -88,6 +86,7 @@ public:
 
         for (auto& action : actions) {
             actionStrings.push_back(action.toString());
+            LOG(INFO) << action.toString();
         }
 
         return Result(configuration,
@@ -100,6 +99,15 @@ public:
                 pathLength, // Path length
                 actionStrings,
                 planner.getIdentityActionCount());
+    }
+
+private:
+    long long int getFirstIterationDuration(const Configuration& configuration) const {
+        if (configuration.hasMember(FIRST_ITERATION_DURATION)) {
+            return configuration.getLong(FIRST_ITERATION_DURATION);
+        }
+
+        return configuration.getLongOrThrow(ACTION_DURATION);
     }
 };
 }
