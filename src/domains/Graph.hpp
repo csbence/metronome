@@ -66,13 +66,13 @@ public:
         bool operator==(const State& state) const { return state.id == id; }
         bool operator!=(const State& rhs) const { return !(rhs == *this); }
         std::size_t hash() const { return id; }
+        std::size_t getId() const { return id; }
         std::string toString() const { return std::to_string(id); }
+
         friend std::ostream& operator<<(std::ostream& stream, const State& state) {
-            //            stream << "State: State" << id;
+            stream << "State: " << state.getId();
             return stream;
         }
-
-        std::size_t getId() const { return id; }
 
     private:
         std::size_t id;
@@ -103,7 +103,8 @@ public:
         if (state.getId() != action.getSourceStateId()) {
             return boost::none;
         }
-        LOG(INFO) << "Current: state.id " << state.getId() << " next: " << action.getTargetStateId();
+        LOG(INFO) << "Current: state.id " << state.getId() << " next: " << action.getTargetStateId()
+                  << " Cost: " << action.getActionCost();
 
         return boost::make_optional(State{action.getTargetStateId()});
     }
@@ -129,7 +130,7 @@ public:
     }
 
     const State getStartState() const { return State{startStateId}; }
-    
+
     Cost getActionDuration() const { return 0; }
 
     bool safetyPredicate(const State& state) const {

@@ -40,70 +40,37 @@ public:
         }
 
         // Learning phase
-        if (!identityIndicator && openList.isNotEmpty()) {
+        if (openList.isNotEmpty()) {
             learn(terminationChecker);
         }
 
-        // Reset error counters if the exploration step is not to be continued
-        if (!identityIndicator) {
-            nextHeuristicError = 0;
-            nextDistanceError = 0;
-        }
+        nextHeuristicError = 0;
+        nextDistanceError = 0;
 
-        const auto bestNode = explore(startState, terminationChecker);
-
-        bool identityIndicatorPrevious = identityIndicator; // todo remove
+        auto bestNode = explore(startState, terminationChecker);
 
         // Apply meta-reasoning
-        auto nano = measureNanoTime(
-                [&]() { identityIndicator = isBenefitialToSearch(nodes[startState], terminationChecker); });
-        static double avg{-1};
-        if (avg < 0) {
-            avg = nano;
-        } else {
-            avg = avg * 0.9 + nano * 0.1;
-        }
+        auto slowDown = findRobustPath(nodes[startState], terminationChecker);
 
-        static int identCounter{0}; // todo start remove
+        distanceError = nextDistanceError;
+        heuristicError = nextHeuristicError;
 
-        if (identityIndicator != identityIndicatorPrevious) {
-            const Action currentBestAction = openList.top()->actionLabel;
-            if (identityIndicator) {
-                // Take the first identity action
-                alphaAction = currentBestAction;
-            } else {
-                // Finish start moving after identity action
-
-                if (alphaAction == currentBestAction) {
-                    // Metareasoning was beneficial
-                    LOG(INFO) << "Metawin after " << identCounter;
-
-                    identCounter = 0;
-                } else {
-                    // Metareasoning was not beneficial
-                    LOG(INFO) << "Metaloose after " << identCounter;
-
-                    identCounter = 0;
-                }
-            }
-        } else if (identityIndicator) {
-            identCounter++;
-        }
-//        // todo end remove
-
-        //        LOG_EVERY_N(1, INFO) << "Nano time: " << nano << " exp avg: " << avg;
-
-        // Update error counters if the exploration step is done
-        if (!identityIndicator) {
-            distanceError = nextDistanceError;
-            heuristicError = nextHeuristicError;
-
-            return extractPath(bestNode, nodes[startState]);
-        } else {
-            // Select identity action
+        std::vector<ActionBundle> path = extractPath(bestNode, nodes[startState]);
+        if (slowDown) {
+            // Search a little more
+//            terminationChecker.resetTo(path[0].actionDuration / 1000 * 2);
+//            bestNode = explore(startState, terminationChecker, true);
+//
+//            this->incrementIdentityActionCount();
+//                
+            // Update the path
+//            path = extractPath(bestNode, nodes[startState]);
+//            path[0].actionDuration = 0;
+            path[0].actionDuration = path[0].actionDuration * 2;
             this->incrementIdentityActionCount();
-            return std::vector<ActionBundle>{ActionBundle{Action::getIdentity(), domain.getActionDuration()}};
         }
+
+        return path;
     }
 
 private:
@@ -184,7 +151,9 @@ private:
         /** Depth in the search tree relative to the current source */
         unsigned int depth{0};
         /** Top level action label */
-        Action actionLabel{};
+        Action topLevelAction{};
+        /** Second level action label */
+        Action secondLevelAction{};
 
         /** List of all the predecessors that were discovered in the current exploration phase. */
         std::vector<Edge> predecessors;
@@ -242,9 +211,8 @@ private:
         }
     }
 
-    const Node* explore(const State& startState, TerminationChecker& terminationChecker) {
-        // Skip initialization if an identity action was applied
-        if (!identityIndicator) {
+    const Node* explore(const State& startState, TerminationChecker& terminationChecker, const bool continued = false) {
+        if (!continued) {
             ++iterationCounter;
             clearOpenList();
             openList.reorder(fHatComparator);
@@ -284,11 +252,9 @@ private:
         // Normal action - discovery failed - top is current
         // Identity - discovery should succeed.
 
-        assert(!identityIndicator || expanded);
-
         if (!expanded) {
             LOG(INFO) << "Take emergency step.";
-            return emergencyStep(popOpenList());
+//            return emergencyStep(popOpenList());
         }
 
         return openList.top();
@@ -335,6 +301,8 @@ private:
 
         sourceNode->expansion = ++expansionCounter;
 
+//        LOG(INFO);
+//        LOG(INFO) << "Expand node: " << sourceNode->toString();
         Node* bestChildNode{nullptr};
 
         for (auto successor : domain.successors(sourceNode->state)) {
@@ -345,6 +313,7 @@ private:
             if (successorNode == nullptr) {
                 successorNode = createNode(sourceNode, successor);
             }
+
 
             // If the node is outdated it should be updated.
             if (successorNode->iteration != iterationCounter) {
@@ -374,15 +343,22 @@ private:
 
                 double currentDistanceEstimate =
                         successorNode->distanceError / (1.0 - distanceError); // Dionne 2011 (3.8)
-                successorNode->fHat = successorNode->g + successorNode->h + heuristicError * currentDistanceEstimate;
+                successorNode->fHat = successorNode->g + successorNode->h; // TODO enable // + heuristicError *
+                // currentDistanceEstimate;
 
                 // Labeling
                 if (sourceNode->depth == 0) {
                     // This is a top level action
-                    successorNode->actionLabel = successor.action;
+                    successorNode->topLevelAction = successor.action;
                 } else {
                     // Inherit the top level action label
-                    successorNode->actionLabel = sourceNode->actionLabel;
+                    successorNode->topLevelAction = sourceNode->topLevelAction;
+                }
+
+                if (sourceNode->depth == 1) {
+                    // Second layer in the search graph
+                    successorNode->secondLevelAction = successor.action;
+                    //
                 }
 
                 // Open list management
@@ -391,6 +367,7 @@ private:
                 } else {
                     openList.update(*successorNode);
                 }
+//                LOG(INFO) << "suc: " << successorNode->toString();
             }
 
             if (bestChildNode == nullptr || bestChildNode->f() > successorNode->f()) {
@@ -412,41 +389,133 @@ private:
         }
     }
 
-    bool isBenefitialToSearch(const Node* sourceNode, const TerminationChecker& terminationChecker) {
+    bool findRobustPath(const Node* sourceNode, const TerminationChecker& terminationChecker) {
+//        LOG(INFO) << "Open list size after expansion: " << openList.getSize();
         if (openList.getSize() <= 1) {
-            return false; // No alternative actions
+            return false;
         }
 
         // Find best two actions
         const auto alphaTargetNode = openList.top();
-        const Action alphaAction = alphaTargetNode->actionLabel;
+        const Action alphaAction = alphaTargetNode->topLevelAction;
 
         Node* betaTargetNode{nullptr};
         openList.forEach([&](Node* node) {
-            if (node->actionLabel != alphaAction && (betaTargetNode == nullptr || betaTargetNode->fHat > node->fHat)) {
+            if (node->topLevelAction != alphaAction &&
+                    (betaTargetNode == nullptr || betaTargetNode->fHat > node->fHat)) {
                 betaTargetNode = node;
             }
         });
 
-        if (betaTargetNode == nullptr) {
-            // There are no alternative actions to take
-            LOG(INFO) << "No alternative actions are available";
+        const Node* alphaSourceNode = findFirstDescendant(sourceNode, alphaTargetNode);
+        const std::pair<Node*, Node*>& alphaTargets = findSecondLevelTargets(alphaAction);
+        Node* const alphaAlphaTarget = alphaTargets.first;
+        Node* const alphaBetaTarget = alphaTargets.second;
+
+        if (alphaAlphaTarget == nullptr || alphaBetaTarget == nullptr) {
             return false;
         }
+        
+        Cost alphaExpansionAdvance = alphaSourceNode->g - sourceNode->g;
+        double alphaFastExpectedValue =
+                computeBenefit(alphaSourceNode, alphaAlphaTarget, alphaBetaTarget, alphaExpansionAdvance);
+        double alphaSlowExpectedValue =
+                computeBenefit(alphaSourceNode, alphaAlphaTarget, alphaBetaTarget, alphaExpansionAdvance * 2, alphaExpansionAdvance);
 
-        // Calculate the expansion advance
-        unsigned int expectedExpansions = terminationChecker.expansionsPerAction(domain.getActionDuration());
+        const auto slowDown = alphaSlowExpectedValue < alphaFastExpectedValue;
+        if (slowDown) {
+//            LOG(INFO) << "E[fast]: " << alphaFastExpectedValue;
+//            LOG(INFO) << "E[slow]: " << alphaSlowExpectedValue;
+            LOG(INFO) << "E[fast - slow]: " << alphaFastExpectedValue - alphaSlowExpectedValue; 
+        }
+        return slowDown;
 
-        // Calculate the benefit
-        double benefit = computeBenefit(sourceNode, alphaTargetNode, betaTargetNode, expectedExpansions);
+        //        // Beta can be null if we can take alpha with two speeds
+        //        if (betaTargetNode == nullptr) {
+        //            // There are no alternative actions to take
+        //            LOG(INFO) << "No alternative actions are available";
+        //            return nullptr;
+        //        }
+        //
+        //        // Find the two top level nodes
+        //        const Node* alphaSourceNode = findFirstDescendant(sourceNode, alphaTargetNode);
+        //        const Node* betaSourceNode = findFirstDescendant(sourceNode, betaTargetNode);
+        //
+        //        assert(alphaAction == alphaSourceNode->action);
+        //        assert(alphaAction == alphaTargetNode->topLevelAction);
+        //
+        //        // Find two best actions under alpha and beta
+        //        const std::pair<Node*, Node*>& alphaTargets = findSecondLevelTargets(alphaAction);
+        //        const std::pair<Node*, Node*>& betaTargets = findSecondLevelTargets(betaSourceNode->action);
+        //
+        //        Node* const alphaAlphaTarget = alphaTargets.first;
+        //        Node* const alphaBetaTarget = alphaTargets.second;
+        //        Node* const betaAlphaTarget = betaTargets.first;
+        //        Node* const betaBetaTarget = betaTargets.second;
+        //
+        //        if (alphaAlphaTarget == nullptr || alphaBetaTarget == nullptr || betaAlphaTarget == nullptr ||
+        //                betaBetaTarget == nullptr) {
+        //            LOG(INFO) << "No 4 heads found";
+        //            return nullptr;
+        //        }
+        //
+        //        // Calculate the expansion advance
+        //        //        unsigned int expectedExpansions =
+        //        terminationChecker.expansionsPerAction(domain.getActionDuration());
+        //
+        //        Cost alphaExpansionAdvance = alphaSourceNode->g - sourceNode->g;
+        //        Cost betaExpansionAdvance = betaSourceNode->g - sourceNode->g;
+        //
+        //        // Calculate the benefit
+        //        double alphaBenefit = computeBenefit(sourceNode, alphaAlphaTarget, alphaBetaTarget,
+        //        alphaExpansionAdvance);
+        //        double betaBenefit = computeBenefit(sourceNode, betaAlphaTarget, betaBetaTarget,
+        //        betaExpansionAdvance);
+        //
+        //        LOG(INFO) << "Alpha benefit: " << alphaBenefit;
+        //        LOG(INFO) << "Beta benefit: " << betaBenefit;
+        //
+        //        if (alphaBenefit > betaBenefit) {
+        //            return alphaTargetNode;
+        //        }
+        //
+        //        return betaTargetNode;
+    }
 
-        Cost actionCost = domain.getActionDuration(); // Reconsider for identity actions
+    static const Node* findFirstDescendant(const Node* sourceNode, const Node* targetNode) {
+        if (sourceNode == targetNode) {
+            return nullptr;
+        }
 
-//                if (benefit > actionCost) {
-        LOG(INFO) << "Benefit:  " << benefit << " Cost " << actionCost;
-//                }
+        auto currentNode = targetNode;
+        while (sourceNode != currentNode->parent) {
+            currentNode = currentNode->parent;
+        }
 
-        return benefit > actionCost;
+        return currentNode;
+    }
+
+    /**
+     * Find the best two target nodes under a given top level action.
+     * @param action top level action
+     * @return pair of Node* first is alpha (lower/better), second is beta (second best)
+     */
+    std::pair<Node*, Node*> findSecondLevelTargets(Action action) {
+        Node* alphaTargetNode{nullptr};
+        Node* betaTargetNode{nullptr};
+
+        openList.forEach([&](Node* node) {
+            if (node->topLevelAction == action) {
+                if (alphaTargetNode == nullptr || alphaTargetNode->fHat > node->fHat) {
+                    betaTargetNode = alphaTargetNode;
+                    alphaTargetNode = node;
+                } else if (betaTargetNode == nullptr || betaTargetNode->fHat > node->fHat) {
+                    betaTargetNode = node;
+                }
+            }
+        });
+
+        return std::make_pair(alphaTargetNode, betaTargetNode);
     }
 
     double expansionDelay(const Node* source, const Node* target) const {
@@ -466,7 +535,7 @@ private:
     double computeBenefit(const Node* source,
             const Node* alpha,
             const Node* beta,
-            unsigned int expansionAdvance) const {
+            unsigned int expansionAdvance, const Cost delay = 0) const {
         // Calculate delay for alpha and beta path
         double alphaDelay{expansionDelay(source, alpha)};
         double betaDelay{expansionDelay(source, beta)};
@@ -477,18 +546,19 @@ private:
         // Estimated error to the goal
         // f difference between current and frontier node is the total error on the path divided by the length of the
         // path gives the per step error
-        const double bvarianceAlpha = pow((source->f() - alpha->f()) / (alpha->depth - source->depth) * alpha->distance,
-                                       2);
-        const double bvarianceBeta = pow((source->f() - beta->f()) / (beta->depth - source->depth) * beta->distance, 2);
+        const double bvarianceAlpha =
+                pow((source->f() - alpha->f() + delay) / (alpha->depth - source->depth) * alpha->distance, 2);
+        const double bvarianceBeta = pow((source->f() - beta->f() + delay) / (beta->depth - source->depth) * 
+            beta->distance, 2);
 
         // Mean
-        const double mu_alpha = alpha->f() + sqrt(bvarianceAlpha);
-        const double mu_beta = beta->f() + sqrt(bvarianceBeta);
+        const double mu_alpha = alpha->f() + delay + sqrt(bvarianceAlpha);
+        const double mu_beta = beta->f() + delay + sqrt(bvarianceBeta);
 
         // Number of expansion predicted on the alpha/beta path towards the goal
         // (can't be more than the predicted goal distance)
-        double expansionAdvanceOnAlpha = std::min((double)alpha->distance, expansionAdvance / alphaDelay);
-        double expansionAdvanceOnBeta = std::min((double)beta->distance, expansionAdvance / betaDelay);
+        double expansionAdvanceOnAlpha = std::min((double)alpha->distance, expansionAdvance / 1000 / alphaDelay);
+        double expansionAdvanceOnBeta = std::min((double)beta->distance, expansionAdvance / 1000 / betaDelay);
 
         // Variance' (eq. 3)
         double varianceAlpha = bvarianceAlpha * (expansionAdvanceOnAlpha / alpha->distance);
@@ -497,50 +567,46 @@ private:
         const double alphaStandardDeviation = sqrt(varianceAlpha);
         const double betaStandardDeviation = sqrt(varianceBeta);
 
-        double startAlpha = mu_alpha - 2.0 * alphaStandardDeviation;
-        double startBeta = mu_beta - 2.0 * betaStandardDeviation;
+        double startAlpha = mu_alpha - Statistic::SIGMA * alphaStandardDeviation;
+        double startBeta = mu_beta - Statistic::SIGMA * betaStandardDeviation;
 
-        double endAlpha = mu_alpha + 2.0 * alphaStandardDeviation;
-        double endBeta = mu_beta + 2.0 * betaStandardDeviation;
+        double endAlpha = mu_alpha + Statistic::SIGMA * alphaStandardDeviation;
+        double endBeta = mu_beta + Statistic::SIGMA * betaStandardDeviation;
 
-//        startAlpha = startBeta = std::min(startAlpha, startBeta);
-//        endAlpha = endBeta = std::max(startAlpha, startBeta);
+        //        startAlpha = startBeta = std::min(startAlpha, startBeta);
+        //        endAlpha = endBeta = std::max(startAlpha, startBeta);
 
-        if (endAlpha < startBeta || (alphaStandardDeviation < 0.00001 && betaStandardDeviation < 0.00001)) {
-            return 0;  // Not overlapping ranges or zero variance
-        }
+        //        if (endAlpha < startBeta || (alphaStandardDeviation < 0.00001 && betaStandardDeviation < 0.00001)) {
+        //            return 0; // Not overlapping ranges or zero variance
+        //        }
 
         // Integration step
         double benefit = 0.0;
         double alphaStep = (endAlpha - startAlpha) / 100.0;
         double betaStep = (endBeta - startBeta) / 100.0;
 
-        measureNanoTime([&]() {
+        double sum2{0};
 
-            int alphaIndex{0};
-            for (double a = startAlpha; a < endAlpha && alphaIndex < 100; a += alphaStep) {
-                double sum = 0.0;
+        int alphaIndex{0};
+        for (double a = startAlpha; alphaIndex < 100; a += alphaStep) {
+            double sum = 0.0;
 
-                int betaIndex{0};
-                for (double b = startBeta; b < endBeta && betaIndex < 100; b += betaStep) {
+            int betaIndex{0};
+            for (double b = startBeta; betaIndex < 100; b += betaStep) {
+                // PDF of normal distribution
+                sum += std::min(a, b) * Statistic::standardNormalTable100(betaIndex);
 
-                    // PDF of normal distribution
-                    sum += std::min(a, b) * Statistic::standardNormalTable100(betaIndex);
-
-                    ++betaIndex;
-                }
-
-                benefit += sum * Statistic::standardNormalTable100(alphaIndex);
-                ++alphaIndex;
+                ++betaIndex;
             }
 
-        });
+            benefit += sum * Statistic::standardNormalTable100(alphaIndex);
+            sum2 += Statistic::standardNormalTable100(alphaIndex);
+            ++alphaIndex;
+        }
+
+//        LOG(INFO) << "Benefit" << benefit;
 
         return benefit;
-    }
-
-    double normalPDF(double mean, double variance, double variable) const {
-        return std::exp(-pow(variable - mean, 2) / (2 * variance)) / (sqrt(2 * 3.1415 * variance));
     }
 
     Node* createNode(Node* sourceNode, SuccessorBundle<Domain> successor) {
@@ -584,11 +650,10 @@ private:
     }
 
     std::vector<ActionBundle> extractPath(const Node* targetNode, const Node* sourceNode) const {
-        if (targetNode == sourceNode) {
-            //            LOG(INFO) << "We didn't move:" << sourceNode->toString();
+        if (targetNode == sourceNode || targetNode == nullptr) {
             return std::vector<ActionBundle>();
         }
-
+        
         std::vector<ActionBundle> actionBundles;
         auto currentNode = targetNode;
 
@@ -636,12 +701,6 @@ private:
 
     double nextHeuristicError{0};
     double nextDistanceError{0};
-
-    /** True an identity action was taken and the search should continue where it was left of.
-     *  Learning step should be omitted when set.
-     */
-    bool identityIndicator{false};
-    Action alphaAction;
 };
 }
 

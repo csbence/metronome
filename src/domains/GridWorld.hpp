@@ -25,7 +25,16 @@ public:
         Action() : label{'~'} {};
 
         static std::vector<Action>& getActions() {
-            static std::vector<Action> actions{Action('N'), Action('S'), Action('W'), Action('E')};
+            static std::vector<Action> actions{
+                    Action('N'),
+                    Action('S'),
+                    Action('W'),
+                    Action('E'),
+                    Action('A'),
+                    Action('B'),
+                    Action('C'),
+                    Action('D'),
+            };
             return actions;
         }
 
@@ -35,9 +44,7 @@ public:
 
         char toChar() const { return label; }
 
-        static Action getIdentity() {
-            return Action('0');
-        }
+        static Action getIdentity() { return Action('0'); }
 
         std::string toString() const { return std::string{label}; }
 
@@ -88,7 +95,9 @@ public:
     };
     /*Entry point for using this Domain*/
     GridWorld(const Configuration& configuration, std::istream& input)
-            : actionDuration(configuration.getLongOrThrow(ACTION_DURATION)) {
+            : actionDuration{configuration.getLongOrThrow(ACTION_DURATION)},
+              octileMovement{configuration.hasMember(OCTILE_MOVEMENT) ? configuration.getBool(OCTILE_MOVEMENT) : false},
+              octileActionDuration{(const Cost)sqrt(2.0) * actionDuration} {
         obstacles = std::unordered_set<State, typename metronome::Hasher<State>>{};
         unsigned int currentHeight = 0;
         unsigned int currentWidth = 0;
@@ -119,8 +128,20 @@ public:
                 } else if (*it == '#') { // store the objects
                     State object = State(currentWidth, currentHeight);
                     obstacles.insert(object);
-                } else {
+                } else if (*it == '_') {
                     // its an open cell nothing needs to be done
+                } else if (*it == 'v') {
+                    State object = State(currentWidth, currentHeight);
+                    directions[object] = 'S';
+                } else if (*it == '^') {
+                    State object = State(currentWidth, currentHeight);
+                    directions[object] = 'N';
+                } else if (*it == '<') {
+                    State object = State(currentWidth, currentHeight);
+                    directions[object] = 'W';
+                } else if (*it == '>') {
+                    State object = State(currentWidth, currentHeight);
+                    directions[object] = 'E';
                 }
                 ++currentWidth; // at the end of the character parse move along
             }
@@ -172,6 +193,26 @@ public:
             if (isLegalLocation(newState)) {
                 targetState = newState;
             }
+        } else if (action.toChar() == 'A') {
+            State newState = State(sourceState.getX() + 1, sourceState.getY() + 1);
+            if (isLegalLocation(newState)) {
+                targetState = newState;
+            }
+        } else if (action.toChar() == 'B') {
+            State newState = State(sourceState.getX() + 1, sourceState.getY() - 1);
+            if (isLegalLocation(newState)) {
+                targetState = newState;
+            }
+        } else if (action.toChar() == 'C') {
+            State newState = State(sourceState.getX() - 1, sourceState.getY() - 1);
+            if (isLegalLocation(newState)) {
+                targetState = newState;
+            }
+        } else if (action.toChar() == 'D') {
+            State newState = State(sourceState.getX() - 1, sourceState.getY() + 1);
+            if (isLegalLocation(newState)) {
+                targetState = newState;
+            }
         } else if (action.toChar() == '0') {
             return boost::make_optional(sourceState);
         }
@@ -209,10 +250,12 @@ public:
     }
 
     Cost distance(const State& state) const {
-        unsigned int verticalDistance =
-                std::max(goalLocation.getY(), state.getY()) - std::min(goalLocation.getY(), state.getY());
-        unsigned int horizontalDistance =
-                std::max(goalLocation.getX(), state.getX()) - std::min(goalLocation.getX(), state.getX());
+        const int yDiff = goalLocation.getY() - state.getY();
+        unsigned int verticalDistance = std::max(yDiff, -yDiff); // FIXME
+        //                std::max(goalLocation.getY(), state.getY()) - std::min(goalLocation.getY(), state.getY());
+        const int xDiff = goalLocation.getX() - state.getX();
+        unsigned int horizontalDistance = std::max(xDiff, -xDiff);
+        //                std::max(goalLocation.getX(), state.getX()) - std::min(goalLocation.getX(), state.getX());
         unsigned int totalDistance = verticalDistance + horizontalDistance;
         Cost manhattanDistance = static_cast<Cost>(totalDistance);
         return manhattanDistance;
@@ -225,10 +268,32 @@ public:
     std::vector<SuccessorBundle<GridWorld>> successors(const State& state) const {
         std::vector<SuccessorBundle<GridWorld>> successors;
 
-        addValidSuccessor(successors, state, 0, 1, Action::getActions()[1]);
-        addValidSuccessor(successors, state, 0, -1, Action::getActions()[0]);
-        addValidSuccessor(successors, state, -1, 0, Action::getActions()[2]);
-        addValidSuccessor(successors, state, 1, 0, Action::getActions()[3]);
+        auto iterator = directions.find(state);
+        if (iterator != directions.end()) {
+            const auto direction = iterator->second;
+            if (direction == 'S') {
+                addValidSuccessor(successors, state, 0, 1, Action::getActions()[1], actionDuration); // South
+            } else if (direction == 'N') {
+                addValidSuccessor(successors, state, 0, -1, Action::getActions()[0], actionDuration); // North
+            } else if (direction == 'W') {
+                addValidSuccessor(successors, state, -1, 0, Action::getActions()[2], actionDuration); // West
+            } else if (direction == 'E') {
+                addValidSuccessor(successors, state, 1, 0, Action::getActions()[3], actionDuration); // East
+            }
+            return successors;
+        }
+
+        addValidSuccessor(successors, state, 0, 1, Action::getActions()[1], actionDuration); // South
+        addValidSuccessor(successors, state, 0, -1, Action::getActions()[0], actionDuration); // North
+        addValidSuccessor(successors, state, -1, 0, Action::getActions()[2], actionDuration); // West
+        addValidSuccessor(successors, state, 1, 0, Action::getActions()[3], actionDuration); // East
+
+        if (octileMovement) {
+            addValidSuccessor(successors, state, 1, 1, Action::getActions()[4], octileActionDuration);
+            addValidSuccessor(successors, state, 1, -1, Action::getActions()[5], octileActionDuration);
+            addValidSuccessor(successors, state, -1, -1, Action::getActions()[6], octileActionDuration);
+            addValidSuccessor(successors, state, -1, 1, Action::getActions()[7], octileActionDuration);
+        }
 
         return successors;
     }
@@ -251,16 +316,15 @@ public:
         display << "\n";
     }
 
-    Cost getActionDuration() const {
-        return actionDuration;
-    }
+    Cost getActionDuration() const { return actionDuration; }
 
 private:
     void addValidSuccessor(std::vector<SuccessorBundle<GridWorld>>& successors,
             const State& sourceState,
-            signed char relativeX,
-            signed char relativeY,
-            Action& action) const {
+            const signed char relativeX,
+            const signed char relativeY,
+            const Action& action,
+            const Cost cost) const {
         const boost::optional<State>& successor = getSuccessor(sourceState, relativeX, relativeY);
         if (successor.is_initialized()) {
             successors.emplace_back(successor.get(), action, actionDuration);
@@ -290,9 +354,12 @@ private:
     unsigned int width;
     unsigned int height;
     std::unordered_set<State, typename metronome::Hasher<State>> obstacles;
+    std::unordered_map<State, char, typename metronome::Hasher<State>> directions;
     State startLocation{};
     State goalLocation{};
     const Cost actionDuration;
+    const bool octileMovement;
+    const Cost octileActionDuration;
 };
 }
 #endif

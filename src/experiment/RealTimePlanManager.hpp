@@ -25,6 +25,8 @@ public:
             LOG(ERROR) << "Unknown lookahead type: " << lookaheadType << std::endl;
             return Result(configuration, "Unknown lookaheadType: " + lookaheadType);
         }
+        
+        const bool singleStepCommitment{isSingleStepCommitment(configuration)};
 
         std::vector<typename Domain::Action> actions;
         long long int planningTime{0};
@@ -36,21 +38,33 @@ public:
 
         long long int timeBound = firstIterationDuration;
         long long int previousTimeBound;
+        long long int totalActionExecutionTime{0};
 
         while (!domain.isGoal(currentState)) {
             auto planningIterationTime = measureNanoTime([&] {
                 if (dynamicLookahead) {
                     terminationChecker.resetTo(timeBound / actionExecutionTime);
+//                    LOG(INFO) << "Available steps: " << timeBound / actionExecutionTime;
                 } else {
                     terminationChecker.resetTo(firstIterationDuration);
                 }
 
-                auto actionBundles{planner.selectActions(currentState, terminationChecker)};
-
+                auto actionBundles{planner.selectActions(currentState, 
+                                                                                      terminationChecker)};
                 previousTimeBound = timeBound;
                 timeBound = 0;
 
-                LOG(INFO) << "Number of actions: " << actionBundles.size();
+//                LOG(INFO) << "Number of actions: " << actionBundles.size();
+                
+                if (actionBundles.empty()) {
+                    throw MetronomeException("Solution not found");
+                }
+                
+                if (singleStepCommitment && !actionBundles.empty()) {
+                    // Limit the number of actions to one
+                    actionBundles = std::vector<typename Planner::ActionBundle>{actionBundles[0]};
+                }
+                
                 for (auto& actionBundle : actionBundles) {
                     boost::optional<typename Domain::State> nextState =
                             domain.transition(currentState, actionBundle.action);
@@ -62,6 +76,8 @@ public:
                     actions.emplace_back(actionBundle.action);
                     timeBound += actionBundle.actionDuration;
                 }
+                
+                totalActionExecutionTime += timeBound; // Calculate total execution time
 
             });
 
@@ -86,14 +102,14 @@ public:
 
         for (auto& action : actions) {
             actionStrings.push_back(action.toString());
-            LOG(INFO) << action.toString();
+//            LOG(INFO) << action.toString();
         }
 
         return Result(configuration,
                 planner.getExpandedNodeCount(),
                 planner.getGeneratedNodeCount(),
                 planningTime, // Planning time
-                pathLength * configuration.getLong("actionDuration"), // Execution time
+                totalActionExecutionTime, // Execution time
                 domain.getActionDuration() + pathLength * configuration.getLong("actionDuration"), // GAT
                 domain.getActionDuration(), // Idle planning time
                 pathLength, // Path length
@@ -108,6 +124,14 @@ private:
         }
 
         return configuration.getLongOrThrow(ACTION_DURATION);
+    }
+    
+    bool isSingleStepCommitment(const Configuration& configuration) const {
+        if (configuration.hasMember(COMMITMENT_TYPE)) {
+            return configuration.getString(COMMITMENT_TYPE) == COMMITMENT_SINGLE;
+        }
+        
+        return false;
     }
 };
 }

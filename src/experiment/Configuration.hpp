@@ -14,6 +14,9 @@ static const std::string TERMINATION_CHECKER_TYPE{"terminationType"};
 static const std::string ACTION_DURATION{"actionDuration"};
 static const std::string TIME_LIMIT{"timeLimit"};
 static const std::string LOOKAHEAD_TYPE{"lookaheadType"};
+static const std::string COMMITMENT_TYPE{"commitmentType"};
+static const std::string FIRST_ITERATION_DURATION{"firstIterationDuration"};
+static const std::string OCTILE_MOVEMENT{"octileMovement"};
 
 static const std::string DOMAIN_GRID_WORLD{"GRID_WORLD"};
 static const std::string DOMAIN_TRAFFIC{"TRAFFIC"};
@@ -35,6 +38,9 @@ static const std::string TERMINATION_CHECKER_EXPANSION{"EXPANSION"};
 static const std::string LOOKAHEAD_STATIC{"STATIC"};
 static const std::string LOOKAHEAD_DYNAMIC{"DYNAMIC"};
 
+static const std::string COMMITMENT_SINGLE{"SINGLE"};
+static const std::string COMMITMENT_FRONTIER{"FRONTIER"};
+
 class Configuration {
 public:
     Configuration() : document{} {};
@@ -49,6 +55,12 @@ public:
 
     std::string getString(const std::string& key) const { return std::string{document[key.c_str()].GetString()}; }
     long long int getLong(const std::string& key) const { return document[key.c_str()].GetInt64(); }
+    long long int getLong(const std::string& key, const long long int defaultValue) const {
+        if (!hasMember(key)) {
+            return defaultValue;
+        }
+        return document[key.c_str()].GetInt64();
+    }
 
     std::string getStringOrThrow(const std::string& key) const {
         if (!hasMember(key)) {
@@ -65,6 +77,8 @@ public:
 
         return document[key.c_str()].GetInt64();
     }
+
+    bool getBool(const std::string& key) const { return document[key.c_str()].GetBool(); }
 
 private:
     rapidjson::Document document;

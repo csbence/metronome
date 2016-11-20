@@ -5,11 +5,11 @@
 #include <rapidjson/document.h>
 #include <MetronomeException.hpp>
 #include <algorithms/FRts.hpp>
+#include <algorithms/SlowRts.hpp>
 #include <domains/Graph.hpp>
 #include <domains/Traffic.hpp>
 #include <experiment/termination/ExpansionTerminationChecker.hpp>
 #include <string>
-#include <algorithms/SlowRts.hpp>
 #include "Configuration.hpp"
 #include "OfflinePlanManager.hpp"
 
@@ -56,12 +56,13 @@ private:
 
         if (domainName == DOMAIN_GRID_WORLD) {
             return executeDomain<GridWorld>(configuration, resourcesDir);
-        } else if (domainName == DOMAIN_TRAFFIC) {
-            return executeDomain<Traffic>(configuration, resourcesDir);
-        } else if (domainName == DOMAIN_TILES) {
-            return executeDomain<SlidingTilePuzzle>(configuration, resourcesDir);
-        } else if (domainName == DOMAIN_GRAPH) {
-            return executeDomain<Graph>(configuration, resourcesDir);
+            //        } else if (domainName == DOMAIN_TRAFFIC) {
+            //            return executeDomain<Traffic>(configuration, resourcesDir);
+            //        } else if (domainName == DOMAIN_TILES) {
+            //            return executeDomain<SlidingTilePuzzle>(configuration, resourcesDir);
+            //        } else
+            //    if (domainName == DOMAIN_GRAPH) {
+            //            return executeDomain<Graph>(configuration, resourcesDir);
         } else {
             LOG(ERROR) << "Unknown domain name: " << domainName << std::endl;
             return Result(configuration, "Unknown: domainName: " + domainName);
@@ -107,24 +108,26 @@ private:
         } else if (algorithmName == ALGORITHM_LSS_LRTA_STAR) {
             return executeRealTimePlanner<Domain, LssLrtaStar<Domain, TerminationChecker>, TerminationChecker>(
                     configuration, domain);
-        } else if (algorithmName == ALGORITHM_F_HAT) {
-            return executeRealTimePlanner<Domain, FHat<Domain, TerminationChecker>, TerminationChecker>(
-                    configuration, domain);
-        } else if (algorithmName == ALGORITHM_MO_RTS) {
-            return executeRealTimePlanner<Domain, MoRts<Domain, TerminationChecker>, TerminationChecker>(
-                    configuration, domain);
-        } else if (algorithmName == ALGORITHM_MO_RTS_OLD) {
-            return executeRealTimePlanner<Domain, MoRtsOld<Domain, TerminationChecker>, TerminationChecker>(
-                    configuration, domain);
-        } else if (algorithmName == ALGORITHM_SLOW_RTS) {
+        }
+        // else if (algorithmName == ALGORITHM_F_HAT) {
+        //            return executeRealTimePlanner<Domain, FHat<Domain, TerminationChecker>, TerminationChecker>(
+        //                    configuration, domain);
+        //        } else if (algorithmName == ALGORITHM_MO_RTS) {
+        //            return executeRealTimePlanner<Domain, MoRts<Domain, TerminationChecker>, TerminationChecker>(
+        //                    configuration, domain);
+        //        } else if (algorithmName == ALGORITHM_MO_RTS_OLD) {
+        //            return executeRealTimePlanner<Domain, MoRtsOld<Domain, TerminationChecker>, TerminationChecker>(
+        //                    configuration, domain);
+        //        } else
+        if (algorithmName == ALGORITHM_SLOW_RTS) {
             return executeRealTimePlanner<Domain, SlowRts<Domain, TerminationChecker>, TerminationChecker>(
-                configuration, domain);
-        } else if (algorithmName == ALGORITHM_F_RTS) {
-            return executeRealTimePlanner<Domain, FRts<Domain, TerminationChecker>, TerminationChecker>(
                     configuration, domain);
-        } else if (algorithmName == ALGORITHM_S_ZERO) {
-            return executeRealTimePlanner<Domain, SZero<Domain, TerminationChecker>, TerminationChecker>(
-                    configuration, domain);
+            //        } else if (algorithmName == ALGORITHM_F_RTS) {
+            //            return executeRealTimePlanner<Domain, FRts<Domain, TerminationChecker>, TerminationChecker>(
+            //                    configuration, domain);
+            //        } else if (algorithmName == ALGORITHM_S_ZERO) {
+            //            return executeRealTimePlanner<Domain, SZero<Domain, TerminationChecker>, TerminationChecker>(
+            //                    configuration, domain);
         } else {
             LOG(ERROR) << "Unknown algorithms name: " << algorithmName << std::endl;
             return Result(configuration, "Unknown: algorithmName: " + algorithmName);
