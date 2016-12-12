@@ -113,10 +113,11 @@ def generate_experiment_configurations(algorithms, domain_type, domains,
     configuration = {
         "timeLimit": 150000000000,
         "domainInstanceName": "Manual test instance",
-        "actionDuration": 11,
-        "firstIterationDuration": 15,
-        "domainName": "GRID_WORLD",
-        "terminationType": "EXPANSION",
+        "actionDuration": action_durations,
+        "firstIterationDuration": action_durations,
+        "domainName": domain_type,
+        "terminationType": termination_type,
+        "lookaheadType": "STATIC",
         "commitmentType": "SINGLE",
         "octileMovement": False,
         "actionExecutionTime": 1
@@ -144,23 +145,27 @@ def save_to_db(results):
 def main():
     print("Metronome python.")
 
+    domains = []
     # domains = ["/input/tiles/korf/4/all/{}".format(x) for x in range(1, 100)]
-    domains = ["/input/vacuum/bence/highways/highway_{}.vw".format(x) for x in range(10, 1001, 10)]
-    # domains.extend(["/input/vacuum/variants/wall-2/wall_{}.vw".format(x) for x in range(0, 100)])
-    # domains.extend(["/input/vacuum/variants/uniform-2/uniform_{}.vw".format(x) for x in range(0, 100)])
+    # domains = ["/input/vacuum/bence/highways/highway_{}.vw".format(x) for x in range(10, 1001, 10)]
+    domains.extend(["/input/vacuum/variants/wall/wall_{}.vw".format(x) for x in range(0, 100)])
+    domains.extend(["/input/vacuum/variants/slalom/slalom_{}.vw".format(x) for x in range(0, 100)])
+    domains.extend(["/input/vacuum/variants/uniform/uniform_{}.vw".format(x) for x in range(0, 100)])
+    domains.extend(["/input/vacuum/variants/cups/cups{}.vw".format(x) for x in range(0, 100)])
 
-    configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "SLOW_RTS"],
-                                                        "GRID_WORLD", domains, "EXPANSION", [], ["DYNAMIC"])
+    # configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "SLOW_RTS"],
+    #                                                     "GRID_WORLD", domains, "EXPANSION", [], ["DYNAMIC"])
 
-    # configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "MO_RTS"], "SLIDING_TILE_PUZZLE", 
+    configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "MO_RTS"], "SLIDING_TILE_PUZZLE",
+                                                        domains, "EXPANSION", [10, 50, 100])
     # domains, "EXPANSION", [100, 1000, 10000, 100000])
 
     results = run_experiments(list(reversed(configurations)))
     print("Execution completed")
 
     data = None
-    # db = MetronomeMongoClient()
-    # db.upload_results(results)
+    db = MetronomeMongoClient()
+    db.upload_results(results)
     #    data = db.get_results("A_STAR",
     #                          "GRID_WORLD",
     #                          "/input/vacuum/variants/cups-2/cups_",
