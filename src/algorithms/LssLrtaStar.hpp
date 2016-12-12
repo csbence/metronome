@@ -184,8 +184,6 @@ private:
     void expandNode(Node* sourceNode) {
         Planner::incrementExpandedNodeCount();
 
-        LOG(INFO);
-        LOG(INFO) << "Expand node: " << sourceNode->toString();
         for (auto successor : domain.successors(sourceNode->state)) {
             auto successorState = successor.state;
 
@@ -226,7 +224,6 @@ private:
                     openList.update(*successorNode);
                 }
             }
-            LOG(INFO) << "suc: " << successorNode->toString();
         }
     }
 
