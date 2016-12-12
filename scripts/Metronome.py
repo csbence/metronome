@@ -151,7 +151,7 @@ def main():
     domains.extend(["/input/vacuum/variants/wall/wall_{}.vw".format(x) for x in range(0, 100)])
     domains.extend(["/input/vacuum/variants/slalom/slalom_{}.vw".format(x) for x in range(0, 100)])
     domains.extend(["/input/vacuum/variants/uniform/uniform_{}.vw".format(x) for x in range(0, 100)])
-    domains.extend(["/input/vacuum/variants/cups/cups{}.vw".format(x) for x in range(0, 100)])
+    domains.extend(["/input/vacuum/variants/cups/cups_{}.vw".format(x) for x in range(0, 100)])
 
     # configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "SLOW_RTS"],
     #                                                     "GRID_WORLD", domains, "EXPANSION", [], ["DYNAMIC"])
