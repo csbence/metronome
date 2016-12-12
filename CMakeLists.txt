@@ -20,6 +20,7 @@ set(SOURCE_FILES
         src/algorithms/LssLrtaStar.hpp
         src/algorithms/FHat.hpp
         src/algorithms/MoRts.hpp
+        src/algorithms/SlowRts.hpp
         src/algorithms/OfflinePlanner.hpp
         src/algorithms/OnlinePlanner.hpp
         src/algorithms/Planner.hpp
@@ -29,6 +30,7 @@ set(SOURCE_FILES
         src/domains/TestDomain.hpp
         src/domains/Traffic.hpp
         src/domains/SuccessorBundle.hpp
+        src/domains/Graph.hpp
         src/utils/PriorityQueue.hpp
         src/utils/Hasher.hpp
         src/utils/Visualizer.hpp
@@ -45,7 +47,7 @@ set(SOURCE_FILES
         src/experiment/termination/ExpansionTerminationChecker.hpp
         src/utils/Statistic.hpp src/MemoryConfiguration.hpp
         src/utils/StaticVector.hpp
-        src/algorithms/FRts.hpp)
+        src/algorithms/FRts.hpp src/utils/String.hpp)
 
 set(TEST_FILES
         test/test.cpp
@@ -73,7 +75,7 @@ include_directories(
 )
 
 if (CAIRO_FOUND AND X11_FOUND)
-    add_definitions(-DGRAPHICS)
+#    add_definitions(-DGRAPHICS)
 endif()
 
 target_link_libraries(Metronome ${Boost_LIBRARIES} ${CAIRO_LIBRARIES} ${X11_LIBRARIES})

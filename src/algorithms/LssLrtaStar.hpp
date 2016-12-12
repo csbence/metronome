@@ -202,6 +202,7 @@ private:
                 // parent, action, and actionCost is outdated too, but not relevant.
             }
 
+
             // Add the current state as the predecessor of the child state
             successorNode->predecessors.emplace_back(sourceNode, successor.action, successor.actionCost);
 
@@ -257,7 +258,7 @@ private:
     }
 
     std::vector<ActionBundle> extractPath(const Node* targetNode, const Node* sourceNode) const {
-        if (targetNode == sourceNode) {
+        if (targetNode == sourceNode || targetNode == nullptr) {
             //                        LOG(INFO) << "We didn't move:" << sourceNode->toString();
             return std::vector<ActionBundle>();
         }

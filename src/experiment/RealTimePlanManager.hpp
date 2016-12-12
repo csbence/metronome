@@ -14,12 +14,8 @@ public:
     Result plan(const Configuration& configuration, const Domain& domain, Planner& planner) {
         using namespace std::chrono;
 
-        if (!configuration.hasMember(LOOKAHEAD_TYPE)) {
-            LOG(ERROR) << "Lookahead type not found." << std::endl;
-            return Result(configuration, "Missing: lookaheadType");
-        }
-
-        std::string lookaheadType{configuration.getString(LOOKAHEAD_TYPE)};
+        // Initialize parameters from configuration
+        std::string lookaheadType{configuration.getStringOrThrow(LOOKAHEAD_TYPE)};
 
         bool dynamicLookahead;
         if (lookaheadType == LOOKAHEAD_STATIC) {
@@ -30,29 +26,45 @@ public:
             LOG(ERROR) << "Unknown lookahead type: " << lookaheadType << std::endl;
             return Result(configuration, "Unknown lookaheadType: " + lookaheadType);
         }
+        
+        const bool singleStepCommitment{isSingleStepCommitment(configuration)};
 
         std::vector<typename Domain::Action> actions;
         long long int planningTime{0};
-        const auto actionDuration = configuration.getLong(ACTION_DURATION);
-        auto currentState = domain.getStartState();
+        const auto firstIterationDuration = this->getFirstIterationDuration(configuration);
+        const auto actionExecutionTime = configuration.getLong("actionExecutionTime", 1);
 
+        auto currentState = domain.getStartState();
         TerminationChecker terminationChecker;
 
-        long long int timeBound = actionDuration;
+        long long int timeBound = firstIterationDuration;
         long long int previousTimeBound;
+        long long int totalActionExecutionTime{0};
 
+        // Construct plan incrementally
         while (!domain.isGoal(currentState)) {
             auto planningIterationTime = measureNanoTime([&] {
                 if (dynamicLookahead) {
-                    terminationChecker.resetTo(timeBound);
+                    terminationChecker.resetTo(timeBound / actionExecutionTime);
+//                    LOG(INFO) << "Available steps: " << timeBound / actionExecutionTime;
                 } else {
-                    terminationChecker.resetTo(actionDuration);
+                    terminationChecker.resetTo(firstIterationDuration);
                 }
 
-                auto actionBundles{planner.selectActions(currentState, terminationChecker)};
-
+                auto actionBundles{planner.selectActions(currentState, 
+                                                                                      terminationChecker)};
                 previousTimeBound = timeBound;
                 timeBound = 0;
+
+                if (actionBundles.empty()) {
+                    throw MetronomeException("Solution not found");
+                }
+                
+                if (singleStepCommitment && !actionBundles.empty()) {
+                    // Limit the number of actions to one
+                    actionBundles = std::vector<typename Planner::ActionBundle>{actionBundles[0]};
+                }
+                
                 for (auto& actionBundle : actionBundles) {
                     boost::optional<typename Domain::State> nextState =
                             domain.transition(currentState, actionBundle.action);
@@ -60,10 +72,12 @@ public:
                         throw MetronomeException("Invalid action. Partial plan is corrupt.");
                     }
                     currentState = nextState.get();
-//                    LOG(INFO) << actionBundle.action << std::endl;
+//                    LOG(INFO) << actionBundle.actionDuration << std::endl;
                     actions.emplace_back(actionBundle.action);
                     timeBound += actionBundle.actionDuration;
                 }
+                
+                totalActionExecutionTime += timeBound; // Calculate total execution time
 
             });
 
@@ -88,18 +102,28 @@ public:
 
         for (auto& action : actions) {
             actionStrings.push_back(action.toString());
+//            LOG(INFO) << action.toString();
         }
 
         return Result(configuration,
                 planner.getExpandedNodeCount(),
                 planner.getGeneratedNodeCount(),
                 planningTime, // Planning time
-                pathLength * configuration.getLong("actionDuration"), // Execution time
-                domain.getActionDuration() + pathLength * configuration.getLong("actionDuration"), // GAT
-                domain.getActionDuration(), // Idle planning time
+                totalActionExecutionTime, // Execution time
+                firstIterationDuration + totalActionExecutionTime, // GAT
+                firstIterationDuration, // Idle planning time
                 pathLength, // Path length
                 actionStrings,
                 planner.getIdentityActionCount());
+    }
+
+private:
+    bool isSingleStepCommitment(const Configuration& configuration) const {
+        if (configuration.hasMember(COMMITMENT_TYPE)) {
+            return configuration.getString(COMMITMENT_TYPE) == COMMITMENT_SINGLE;
+        }
+        
+        return false;
     }
 };
 }

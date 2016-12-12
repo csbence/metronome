@@ -95,9 +95,10 @@ int main(int argc, char** argv) {
         document.ParseStream(streamWrapper);
     }
 
-    //        getchar(); // Wait for keypress
 
-    const Result result = ConfigurationExecutor::executeConfiguration(Configuration(std::move(document)), resourceDir);
+    auto configuration = Configuration(std::move(document));
+    LOG(INFO) << configuration.toString(); 
+    const Result result = ConfigurationExecutor::executeConfiguration(configuration, resourceDir);
 
     LOG(INFO) << "Execution completed in " << result.planningTime / 1000000 << "ms";
     LOG(INFO) << "Path length: " << result.pathLength;

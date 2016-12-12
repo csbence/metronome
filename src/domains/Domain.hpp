@@ -5,6 +5,7 @@
 #include <limits>
 #include <string>
 #include <vector>
+#include <boost/optional.hpp>
 #include "SuccessorBundle.hpp"
 
 namespace metronome {
@@ -20,8 +21,18 @@ public:
             // TODO
         }
 
+        bool operator==(const Action& action) const {
+            // TODO
+        }
+        
+        bool operator!=(const Action& rhs) const { return !(rhs == *this); }
+
         std::string toString() const {
             // TODO
+        }
+        
+        friend std::ostream& operator<<(std::ostream& stream, const Action& action) {
+            return stream; // TODO
         }
     };
 
@@ -30,6 +41,8 @@ public:
         bool operator==(const State& state) const {
             // TODO
         }
+        
+        bool operator!=(const State& rhs) const { return !(rhs == *this); }
 
         std::size_t hash() const {
             // TODO
@@ -38,13 +51,17 @@ public:
         std::string toString() const {
             // TODO
         }
+
+        friend std::ostream& operator<<(std::ostream& stream, const State& state) {
+            return stream; // TODO
+        }
     };
 
     Domain(const Configuration& configuration, std::istream& input) {
         // TODO
     }
 
-    const State transition(const State& state, const Action& action) const {
+    boost::optional<State> transition(const State& state, const Action& action) const {
         // TODO
     }
 

@@ -4,20 +4,23 @@
 #include <easylogging++.h>
 #include <rapidjson/document.h>
 #include <MetronomeException.hpp>
+#include <algorithms/FRts.hpp>
+#include <algorithms/SlowRts.hpp>
+#include <domains/Graph.hpp>
 #include <domains/Traffic.hpp>
 #include <experiment/termination/ExpansionTerminationChecker.hpp>
 #include <string>
-#include <algorithms/FRts.hpp>
 #include "Configuration.hpp"
 #include "OfflinePlanManager.hpp"
+
 #include "RealTimePlanManager.hpp"
 #include "Result.hpp"
 #include "algorithms/AStar.hpp"
 #include "algorithms/FHat.hpp"
 #include "algorithms/LssLrtaStar.hpp"
-#include "algorithms/SZero.hpp"
 #include "algorithms/MoRts.hpp"
 #include "algorithms/MoRtsOld.hpp"
+#include "algorithms/SZero.hpp"
 #include "domains/GridWorld.hpp"
 #include "domains/SlidingTilePuzzle.hpp"
 #include "domains/Traffic.hpp"
@@ -57,6 +60,8 @@ private:
             return executeDomain<Traffic>(configuration, resourcesDir);
         } else if (domainName == DOMAIN_TILES) {
             return executeDomain<SlidingTilePuzzle>(configuration, resourcesDir);
+        } else if (domainName == DOMAIN_GRAPH) {
+            return executeDomain<Graph>(configuration, resourcesDir);
         } else {
             LOG(ERROR) << "Unknown domain name: " << domainName << std::endl;
             return Result(configuration, "Unknown: domainName: " + domainName);
@@ -107,10 +112,13 @@ private:
                     configuration, domain);
         } else if (algorithmName == ALGORITHM_MO_RTS) {
             return executeRealTimePlanner<Domain, MoRts<Domain, TerminationChecker>, TerminationChecker>(
-                configuration, domain);
+                    configuration, domain);
         } else if (algorithmName == ALGORITHM_MO_RTS_OLD) {
             return executeRealTimePlanner<Domain, MoRtsOld<Domain, TerminationChecker>, TerminationChecker>(
-                configuration, domain);
+                    configuration, domain);
+        } else if (algorithmName == ALGORITHM_SLOW_RTS) {
+            return executeRealTimePlanner<Domain, SlowRts<Domain, TerminationChecker>, TerminationChecker>(
+                    configuration, domain);
         } else if (algorithmName == ALGORITHM_F_RTS) {
             return executeRealTimePlanner<Domain, FRts<Domain, TerminationChecker>, TerminationChecker>(
                     configuration, domain);
@@ -164,8 +172,6 @@ private:
         Planner planner{domain, configuration};
 
         RealTimePlanManager<Domain, Planner, TerminationChecker> realTimePlanManager;
-
-
 
         LOG(INFO) << "Configuration done.";
         return realTimePlanManager.plan(configuration, domain, planner);

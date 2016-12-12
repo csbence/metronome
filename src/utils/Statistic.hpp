@@ -6,6 +6,8 @@ namespace metronome {
 
 class Statistic {
 public:
+    constexpr static const double SIGMA{3.0};
+    
     static double normalPDF(double mean, double standardDeviation, double x) {
         return standardNormalPDF((x - mean) / standardDeviation);
     }
@@ -39,11 +41,11 @@ public:
     class StandardNormalTable {
     public:
         StandardNormalTable(int resolution) : table{new double[resolution]} {
-            const double step{6.0 / resolution}; // 6 = 2 * std dev
+            const double step{SIGMA * 2 / resolution};
 
             int i{0};
-            for (double x = -2; x < 2; x += step) {
-                table[i] = (standardNormalPDF(x) + standardNormalPDF(x + step)) / 2 * step;
+            for (double x = -SIGMA; x <= SIGMA; x += step) {
+                table[i] = (standardNormalPDF(x) + standardNormalPDF(x + step)) / 2.0 * step;
                 ++i;
             }
         }

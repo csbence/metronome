@@ -9,12 +9,7 @@ class OfflinePlanManager : PlanManager<Domain, Planner> {
 public:
     Result plan(const Configuration& configuration, const Domain& domain, Planner& planner) {
         std::vector<typename Domain::Action> actions;
-        //            long long int start = currentNanoTime();
-        //        logTime();
         auto planningTime = measureNanoTime([&] { actions = planner.plan(domain.getStartState()); });
-        //        long long int end = currentNanoTime();
-        //        LOG(DEBUG) << (end - start) / 1000000;
-
         auto pathLength = actions.size();
 
         std::vector<std::string> actionStrings;
@@ -39,6 +34,8 @@ public:
             calculatedPlanningTime = planner.getExpandedNodeCount();
         }
 
+        const auto firstIterationDuration = this->getFirstIterationDuration(configuration);
+        
         return Result(configuration,
                 planner.getExpandedNodeCount(),
                 planner.getGeneratedNodeCount(),

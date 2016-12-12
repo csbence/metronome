@@ -1,0 +1,47 @@
+# This is a graph comment
+# graph: <number of nodes> <start state> <goal state>
+graph 11 11 10
+
+# edge format: e <id> <source> <target> <cost>
+# node format: n <id> <h> <d>
+
+# Start
+n 11 7 7
+n 1 6 6 
+n 2 5 5
+n 3 5 4
+
+# Alpha
+n 4 3 3
+n 6 2 2 
+n 8 1 1
+
+# Beta
+n 5 6 3  
+n 7 4 2
+n 9 2 1
+
+# Goal
+n 10 0 0
+
+# Intro edge
+e 1 11 1 1
+
+# Start edge
+e 2 1 2 4 
+
+# Decision point
+e 3 2 3 1
+e 4 2 3 2
+
+# Alpha path
+e 5 3 4 1
+e 6 4 6 1
+e 7 6 8 1
+e 8 8 10 1
+
+# Beta path
+e 9 3 5 1
+e 10 5 7 2
+e 11 7 9 2
+e 12 9 10 2

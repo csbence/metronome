@@ -1,9 +1,14 @@
 {
   "timeLimit": 150000000000,
   "domainInstanceName": "Manual test instance",
-  "actionDuration": 100,
+  "domainPath": "input/vacuum/bence/highways/highway_1000.vw",
+  "actionDuration": 11,
+  "firstIterationDuration": 15,
   "domainName": "GRID_WORLD",
   "terminationType": "EXPANSION",
-  "algorithmName": "MO_RTS_OLD",
-  "lookaheadType": "STATIC"
+  "algorithmName": "SLOW_RTS",
+  "lookaheadType": "DYNAMIC",
+  "commitmentType": "SINGLE",
+  "octileMovement": false,
+  "actionExecutionTime": 1
 }
