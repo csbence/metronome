@@ -17,3 +17,8 @@ Optimal length: 31
 "actionDuration": 2000,
 "firstIterationDuration": 2000,
 "actionExecutionTime": 60 
+
+Highway_N:
+aD:11
+fID:15
+aET:1

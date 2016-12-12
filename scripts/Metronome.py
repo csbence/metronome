@@ -103,48 +103,72 @@ def cartesian_product(configurations, key, values):
 
 def generate_experiment_configurations(algorithms, domain_type, domains,
                                        termination_type, action_durations, lookahead_type):
+    # configuration = {
+    #     "timeLimit": 150000000000,
+    #     "domainInstanceName": "Manual test instance",
+    #     "domainName": domain_type,
+    #     "terminationType": termination_type
+    # }
+
     configuration = {
         "timeLimit": 150000000000,
         "domainInstanceName": "Manual test instance",
-        "domainName": domain_type,
-        "terminationType": termination_type
+        "actionDuration": 11,
+        "firstIterationDuration": 15,
+        "domainName": "GRID_WORLD",
+        "terminationType": "EXPANSION",
+        "commitmentType": "SINGLE",
+        "octileMovement": False,
+        "actionExecutionTime": 1
     }
 
     configurations = [configuration]
     configurations = cartesian_product(configurations, "algorithmName", algorithms)
     configurations = cartesian_product(configurations, "domainPath", domains)
-    configurations = cartesian_product(configurations, "actionDuration", action_durations)
+    # configurations = cartesian_product(configurations, "actionDuration", action_durations)
     configurations = cartesian_product(configurations, "lookaheadType", lookahead_type)
 
     return configurations
 
 
+def save_to_file(results, file_name):
+    with open(file_name, 'w') as outfile:
+        json.dump(results, outfile)
+
+
+def save_to_db(results):
+    db = MetronomeMongoClient()
+    db.upload_results(results)
+
+
 def main():
     print("Metronome python.")
 
-    #domains = ["/input/tiles/korf/4/all/{}".format(x) for x in range(1, 100)]
-    domains = ["/input/vacuum/variants/cups-2/cups_{}.vw".format(x) for x in range(0, 100)]
-    domains.extend(["/input/vacuum/variants/wall-2/wall_{}.vw".format(x) for x in range(0, 100)])
-    domains.extend(["/input/vacuum/variants/uniform-2/uniform_{}.vw".format(x) for x in range(0, 100)])
+    # domains = ["/input/tiles/korf/4/all/{}".format(x) for x in range(1, 100)]
+    domains = ["/input/vacuum/bence/highways/highway_{}.vw".format(x) for x in range(10, 1001, 10)]
+    # domains.extend(["/input/vacuum/variants/wall-2/wall_{}.vw".format(x) for x in range(0, 100)])
+    # domains.extend(["/input/vacuum/variants/uniform-2/uniform_{}.vw".format(x) for x in range(0, 100)])
 
-    configurations = generate_experiment_configurations(["A_STAR", "LSS_LRTA_STAR", "MO_RTS", "MO_RTS_OLD"], "GRID_WORLD", domains, "EXPANSION", [10], ["STATIC"])
+    configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "SLOW_RTS"],
+                                                        "GRID_WORLD", domains, "EXPANSION", [], ["DYNAMIC"])
 
-    # configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "MO_RTS"], "SLIDING_TILE_PUZZLE", domains, "EXPANSION", [100, 1000, 10000, 100000])
+    # configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "MO_RTS"], "SLIDING_TILE_PUZZLE", 
+    # domains, "EXPANSION", [100, 1000, 10000, 100000])
 
     results = run_experiments(list(reversed(configurations)))
-    # print("Execution completed")
+    print("Execution completed")
 
     data = None
-    db = MetronomeMongoClient()
-    db.upload_results(results)
-#    data = db.get_results("A_STAR",
-#                          "GRID_WORLD",
-#                          "/input/vacuum/variants/cups-2/cups_",
-#                          "EXPANSION",
-#                          100)
+    # db = MetronomeMongoClient()
+    # db.upload_results(results)
+    #    data = db.get_results("A_STAR",
+    #                          "GRID_WORLD",
+    #                          "/input/vacuum/variants/cups-2/cups_",
+    #                          "EXPANSION",
+    #                          100)
 
-#    for value in data:
-#        print(value)
+    #    for value in data:
+    #        print(value)
     print("Done")
 
 

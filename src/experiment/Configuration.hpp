@@ -1,6 +1,8 @@
 #ifndef METRONOME_CONFIGURATION_HPP
 #define METRONOME_CONFIGURATION_HPP
 
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 #include "MetronomeException.hpp"
 #include "rapidjson/document.h"
 namespace metronome {
@@ -79,7 +81,14 @@ public:
     }
 
     bool getBool(const std::string& key) const { return document[key.c_str()].GetBool(); }
-
+    
+    std::string toString() {
+        rapidjson::StringBuffer buffer;
+        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+        document.Accept(writer);
+        return buffer.GetString();
+    }
+    
 private:
     rapidjson::Document document;
 };

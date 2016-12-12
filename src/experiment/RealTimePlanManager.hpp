@@ -14,6 +14,7 @@ public:
     Result plan(const Configuration& configuration, const Domain& domain, Planner& planner) {
         using namespace std::chrono;
 
+        // Initialize parameters from configuration
         std::string lookaheadType{configuration.getStringOrThrow(LOOKAHEAD_TYPE)};
 
         bool dynamicLookahead;
@@ -30,16 +31,17 @@ public:
 
         std::vector<typename Domain::Action> actions;
         long long int planningTime{0};
-        const auto firstIterationDuration = getFirstIterationDuration(configuration);
+        const auto firstIterationDuration = this->getFirstIterationDuration(configuration);
         const auto actionExecutionTime = configuration.getLong("actionExecutionTime", 1);
-        auto currentState = domain.getStartState();
 
+        auto currentState = domain.getStartState();
         TerminationChecker terminationChecker;
 
         long long int timeBound = firstIterationDuration;
         long long int previousTimeBound;
         long long int totalActionExecutionTime{0};
 
+        // Construct plan incrementally
         while (!domain.isGoal(currentState)) {
             auto planningIterationTime = measureNanoTime([&] {
                 if (dynamicLookahead) {
@@ -54,8 +56,6 @@ public:
                 previousTimeBound = timeBound;
                 timeBound = 0;
 
-//                LOG(INFO) << "Number of actions: " << actionBundles.size();
-                
                 if (actionBundles.empty()) {
                     throw MetronomeException("Solution not found");
                 }
@@ -110,22 +110,14 @@ public:
                 planner.getGeneratedNodeCount(),
                 planningTime, // Planning time
                 totalActionExecutionTime, // Execution time
-                domain.getActionDuration() + pathLength * configuration.getLong("actionDuration"), // GAT
-                domain.getActionDuration(), // Idle planning time
+                firstIterationDuration + totalActionExecutionTime, // GAT
+                firstIterationDuration, // Idle planning time
                 pathLength, // Path length
                 actionStrings,
                 planner.getIdentityActionCount());
     }
 
 private:
-    long long int getFirstIterationDuration(const Configuration& configuration) const {
-        if (configuration.hasMember(FIRST_ITERATION_DURATION)) {
-            return configuration.getLong(FIRST_ITERATION_DURATION);
-        }
-
-        return configuration.getLongOrThrow(ACTION_DURATION);
-    }
-    
     bool isSingleStepCommitment(const Configuration& configuration) const {
         if (configuration.hasMember(COMMITMENT_TYPE)) {
             return configuration.getString(COMMITMENT_TYPE) == COMMITMENT_SINGLE;

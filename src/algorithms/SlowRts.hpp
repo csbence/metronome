@@ -426,7 +426,7 @@ private:
         if (slowDown) {
 //            LOG(INFO) << "E[fast]: " << alphaFastExpectedValue;
 //            LOG(INFO) << "E[slow]: " << alphaSlowExpectedValue;
-            LOG(INFO) << "E[fast - slow]: " << alphaFastExpectedValue - alphaSlowExpectedValue; 
+//            LOG(INFO) << "E[fast - slow]: " << alphaFastExpectedValue - alphaSlowExpectedValue; 
         }
         return slowDown;
 
