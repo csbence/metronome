@@ -102,7 +102,7 @@ def cartesian_product(configurations, key, values):
 
 
 def generate_experiment_configurations(algorithms, domain_type, domains,
-                                       termination_type, action_durations, lookahead_type):
+                                       termination_type, action_durations, lookahead_types):
     # configuration = {
     #     "timeLimit": 150000000000,
     #     "domainInstanceName": "Manual test instance",
@@ -112,12 +112,10 @@ def generate_experiment_configurations(algorithms, domain_type, domains,
 
     configuration = {
         "timeLimit": 150000000000,
-        "domainInstanceName": "Manual test instance",
-        "actionDuration": action_durations,
-        "firstIterationDuration": action_durations,
+        "domainInstanceName": "Generated instance",
+        # "firstIterationDuration": action_durations,
         "domainName": domain_type,
         "terminationType": termination_type,
-        "lookaheadType": lookahead_type,
         "commitmentType": "SINGLE",
         "octileMovement": False,
         "actionExecutionTime": 1
@@ -126,8 +124,8 @@ def generate_experiment_configurations(algorithms, domain_type, domains,
     configurations = [configuration]
     configurations = cartesian_product(configurations, "algorithmName", algorithms)
     configurations = cartesian_product(configurations, "domainPath", domains)
-    # configurations = cartesian_product(configurations, "actionDuration", action_durations)
-    configurations = cartesian_product(configurations, "lookaheadType", lookahead_type)
+    configurations = cartesian_product(configurations, "actionDuration", action_durations)
+    configurations = cartesian_product(configurations, "lookaheadType", lookahead_types)
 
     return configurations
 
@@ -160,7 +158,7 @@ def main():
                                                         domain_type="GRID_WORLD",
                                                         domains=domains,
                                                         termination_type="EXPANSION",
-                                                        lookahead_type="STATIC",
+                                                        lookahead_types=["STATIC"],
                                                         action_durations=[10, 50, 100])
     # domains, "EXPANSION", [100, 1000, 10000, 100000])
 
