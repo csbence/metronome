@@ -117,7 +117,7 @@ def generate_experiment_configurations(algorithms, domain_type, domains,
         "firstIterationDuration": action_durations,
         "domainName": domain_type,
         "terminationType": termination_type,
-        "lookaheadType": "STATIC",
+        "lookaheadType": lookahead_type,
         "commitmentType": "SINGLE",
         "octileMovement": False,
         "actionExecutionTime": 1
@@ -156,8 +156,12 @@ def main():
     # configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "SLOW_RTS"],
     #                                                     "GRID_WORLD", domains, "EXPANSION", [], ["DYNAMIC"])
 
-    configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "MO_RTS"], "SLIDING_TILE_PUZZLE",
-                                                        domains, "EXPANSION", [10, 50, 100])
+    configurations = generate_experiment_configurations(algorithms=["LSS_LRTA_STAR", "MO_RTS"],
+                                                        domain_type="GRID_WORLD",
+                                                        domains=domains,
+                                                        termination_type="EXPANSION",
+                                                        lookahead_type="STATIC",
+                                                        action_durations=[10, 50, 100])
     # domains, "EXPANSION", [100, 1000, 10000, 100000])
 
     results = run_experiments(list(reversed(configurations)))
