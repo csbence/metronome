@@ -192,7 +192,12 @@ private:
             if (successorNode == nullptr) {
                 successorNode = createNode(sourceNode, successor);
             }
-
+            
+            if (successorNode->h == Domain::COST_MAX) {
+                successorNode->predecessors.clear(); // Reduce the dead node's memory footprint
+                continue;
+            }
+            
             // If the node is outdated it should be updated.
             if (successorNode->iteration != iterationCounter) {
                 successorNode->iteration = iterationCounter;
@@ -201,8 +206,7 @@ private:
                 successorNode->open = false; // It is not on the open list yet, but it will be
                 // parent, action, and actionCost is outdated too, but not relevant.
             }
-
-
+            
             // Add the current state as the predecessor of the child state
             successorNode->predecessors.emplace_back(sourceNode, successor.action, successor.actionCost);
 
@@ -225,6 +229,9 @@ private:
                 }
             }
         }
+        
+        // The learning step will set the correct h-value
+        sourceNode->h = Domain::COST_MAX;
     }
 
     Node* createNode(Node* sourceNode, SuccessorBundle<Domain> successor) {
