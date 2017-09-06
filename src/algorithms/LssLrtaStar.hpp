@@ -168,11 +168,11 @@ private:
         addToOpenList(*startNode);
 
         while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
-            Node* const currentNode = popOpenList();
-
-            if (domain.isGoal(currentNode->state)) {
-                return currentNode;
+            if (domain.isGoal(openList.top()->state)) {
+                return openList.top();
             }
+            
+            Node* const currentNode = popOpenList();
 
             terminationChecker.notifyExpansion();
             expandNode(currentNode);
@@ -193,7 +193,8 @@ private:
                 successorNode = createNode(sourceNode, successor);
             }
             
-            if (successorNode->h == Domain::COST_MAX) {
+            // Skip old dead-end nodes
+            if (successorNode->h == Domain::COST_MAX and successorNode->iteration != iterationCounter) {
                 successorNode->predecessors.clear(); // Reduce the dead node's memory footprint
                 continue;
             }
