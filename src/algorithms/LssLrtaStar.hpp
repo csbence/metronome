@@ -168,7 +168,8 @@ private:
         addToOpenList(*startNode);
 
         while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
-            if (domain.isGoal(openList.top()->state)) {
+            const auto topNode = openList.top();
+            if (topNode != nullptr and domain.isGoal(topNode->state)) {
                 return openList.top();
             }
             
