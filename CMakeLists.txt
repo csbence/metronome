@@ -17,6 +17,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  ${CMAKE_CXX_FLAGS} -O3"
 set(SOURCE_FILES
         src/Metronome.cpp
         src/algorithms/AStar.hpp
+        src/algorithms/ClusterRts.hpp
         src/algorithms/LssLrtaStar.hpp
         src/algorithms/FHat.hpp
         src/algorithms/MoRts.hpp
