@@ -2,24 +2,14 @@
 #include <cairo.h>
 #endif
 #include "easylogging++.h"
-#include "rapidjson/document.h"
 #include "experiment/ConfigurationExecutor.hpp"
+#include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/istreamwrapper.h"
 #include "utils/File.hpp"
 
-//#include <iostream>
 #include <cstdio>
 #include <utils/Statistic.hpp>
-
-#ifdef GRAPHICS
-#include <X11/Xlib.h>
-#include <cairo/cairo-xlib.h>
-
-#include <X11/Xatom.h>
-#include <X11/Xutil.h>
-#include <cairo.h>
-#endif
 
 #define NDEBUG
 
@@ -27,36 +17,9 @@ INITIALIZE_EASYLOGGINGPP
 
 void printSplashScreen();
 
-#ifdef GRAPHICS
-cairo_surface_t* cairo_create_x11_surface(int x, int y) {
-    Display* dsp;
-    Drawable da;
-    int screen;
-    cairo_surface_t* sfc;
-
-    if ((dsp = XOpenDisplay(NULL)) == NULL)
-        exit(1);
-    screen = DefaultScreen(dsp);
-    da = XCreateSimpleWindow(dsp, DefaultRootWindow(dsp),
-                             0, 0, x, y, 0, 0, 0);
-    XSelectInput(dsp, da, ButtonPressMask | KeyPressMask);
-    XMapWindow(dsp, da);
-
-    sfc = cairo_xlib_surface_create(dsp, da,
-                                    DefaultVisual(dsp, screen), x, y);
-    cairo_xlib_surface_set_size(sfc, x, y);
-
-    return sfc;
-}
-#endif
-
 int main(int argc, char** argv) {
     using namespace metronome;
     printSplashScreen();
-
-#ifdef GRAPHICS
-    cairo_create_x11_surface(800,800);
-#endif
 
     Statistic::initialize();
     if (argc == 1) {
@@ -116,14 +79,14 @@ int main(int argc, char** argv) {
 
 void printSplashScreen() {
     std::cout << std::endl;
-    std::cout << " ___            ___     " << std::endl;
-    std::cout << "|###\\  ______  /###|   " << std::endl;
-    std::cout << "|#|\\#\\ \\    / /#/|#|   " << std::endl;
-    std::cout << "|#| \\#\\ \\  / /#/ |#|   " << std::endl;
-    std::cout << "|#|  \\#\\ \\/ /#/  |#|   " << std::endl;
-    std::cout << "|#|      /\\      |#|   " << std::endl;
-    std::cout << "|#|     /  \\     |#|   " << std::endl;
-    std::cout << "|#|    /____\\    |#|   " << std::endl;
-    std::cout << "---- Metronome  ----" << std::endl;
-    std::cout << " When time matters!" << std::endl << std::endl;
+    std::cout << R"( ___            ___    )" << std::endl;
+    std::cout << R"(|###\  ______  /###|   )" << std::endl;
+    std::cout << R"(|#|\#\ \    / /#/|#|   )" << std::endl;
+    std::cout << R"(|#| \#\ \  / /#/ |#|   )" << std::endl;
+    std::cout << R"(|#|  \#\ \/ /#/  |#|   )" << std::endl;
+    std::cout << R"(|#|      /\      |#|   )" << std::endl;
+    std::cout << R"(|#|     /  \     |#|   )" << std::endl;
+    std::cout << R"(|#|    /____\    |#|   )" << std::endl;
+    std::cout << R"(---- Metronome  ----   )" << std::endl;
+    std::cout << R"( When time matters!    )" << std::endl << std::endl;
 }
