@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  ${CMAKE_CXX_FLAGS} -O3")
 
 set(SOURCE_FILES
-        src/main.cpp
+        src/Metronome.cpp
         src/algorithms/AStar.hpp
         src/algorithms/LssLrtaStar.hpp
         src/algorithms/FHat.hpp
