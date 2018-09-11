@@ -6,8 +6,8 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 namespace cserna {
 
@@ -15,6 +15,15 @@ template <typename T, typename Hash = std::hash<T>, typename Equal = std::equal_
 class NonIntrusiveIndexFunction {
 public:
     std::size_t& operator()(const T& item) { return indexMap[item]; }
+
+    std::size_t operator()(const T& item) const {
+        const auto itemIterator = indexMap.find(item);
+        if (itemIterator == indexMap.cend()) {
+            return std::numeric_limits<std::size_t>::max();
+        } else {
+            return itemIterator->second;
+        }
+    }
 
 private:
     std::unordered_map<T, std::size_t, Hash, Equal> indexMap;
@@ -52,9 +61,7 @@ public:
     DynamicPriorityQueue(DynamicPriorityQueue&&) noexcept = default;
     ~DynamicPriorityQueue() = default;
 
-    void push(const T& item) {
-       push(T(item));
-    }
+    void push(const T& item) { push(T(item)); }
 
     void push(T&& item) {
         if (size == MAX_CAPACITY) {
@@ -129,9 +136,7 @@ public:
         }
     }
 
-    void update(const T& item) {
-        update(T(item));
-    }
+    void update(const T& item) { update(T(item)); }
 
     void update(T&& item) {
         auto index = indexFunction(item);
@@ -158,7 +163,7 @@ public:
 
     bool isNotEmpty() const { return size != 0; }
 
-    bool contains(T* item) const { return indexFunction(item) != std::numeric_limits<std::size_t>::max(); }
+    bool contains(const T& item) const { return indexFunction(item) != std::numeric_limits<std::size_t>::max(); }
 
 private:
     void siftUp(const std::size_t index, T& item) {
