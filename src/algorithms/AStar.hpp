@@ -12,7 +12,7 @@
 #include "Planner.hpp"
 #include "experiment/Configuration.hpp"
 #include "utils/Hasher.hpp"
-#include "utils/StaticVector.hpp"
+#include "utils/ObjectPool.hpp"
 
 namespace metronome {
 

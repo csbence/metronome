@@ -11,7 +11,7 @@
 #include "experiment/Configuration.hpp"
 #include "utils/Hasher.hpp"
 #include "utils/PriorityQueue.hpp"
-#include "utils/StaticVector.hpp"
+#include "utils/ObjectPool.hpp"
 #include "utils/TimeMeasurement.hpp"
 
 namespace metronome {

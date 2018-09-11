@@ -8,7 +8,7 @@
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
 #include "utils/Hasher.hpp"
-#include "utils/StaticVector.hpp"
+#include "utils/ObjectPool.hpp"
 #include "utils/PriorityQueue.hpp"
 
 namespace metronome {
