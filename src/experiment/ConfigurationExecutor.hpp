@@ -15,7 +15,6 @@
 #include "algorithms/AStar.hpp"
 #include "algorithms/FHat.hpp"
 #include "algorithms/LssLrtaStar.hpp"
-#include "algorithms/SZero.hpp"
 #include "algorithms/MoRts.hpp"
 #include "algorithms/MoRtsOld.hpp"
 #include "domains/GridWorld.hpp"
@@ -113,9 +112,6 @@ private:
                 configuration, domain);
         } else if (algorithmName == ALGORITHM_F_RTS) {
             return executeRealTimePlanner<Domain, FRts<Domain, TerminationChecker>, TerminationChecker>(
-                    configuration, domain);
-        } else if (algorithmName == ALGORITHM_S_ZERO) {
-            return executeRealTimePlanner<Domain, SZero<Domain, TerminationChecker>, TerminationChecker>(
                     configuration, domain);
         } else {
             LOG(ERROR) << "Unknown algorithms name: " << algorithmName << std::endl;
