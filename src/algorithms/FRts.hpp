@@ -5,7 +5,7 @@
 #include <MemoryConfiguration.hpp>
 #include <algorithm>
 #include <unordered_map>
-#include <utils/StaticVector.hpp>
+#include <utils/ObjectPool.hpp>
 #include <vector>
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"

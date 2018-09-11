@@ -45,7 +45,7 @@ set(SOURCE_FILES
         src/utils/File.hpp
         src/experiment/termination/ExpansionTerminationChecker.hpp
         src/utils/Statistic.hpp src/MemoryConfiguration.hpp
-        src/utils/StaticVector.hpp
+        src/utils/ObjectPool.hpp
         src/algorithms/FRts.hpp)
 
 set(TEST_FILES
