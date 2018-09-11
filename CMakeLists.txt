@@ -31,7 +31,7 @@ set(SOURCE_FILES
         src/domains/Traffic.hpp
         src/domains/SuccessorBundle.hpp
         src/utils/PriorityQueue.hpp
-        src/utils/Hasher.hpp
+        src/utils/Hash.hpp
         src/utils/Visualizer.hpp
         src/utils/Location2D.hpp
         src/experiment/termination/TimeTerminationChecker.hpp

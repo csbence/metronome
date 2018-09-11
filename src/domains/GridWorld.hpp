@@ -9,7 +9,7 @@
 #include <limits>
 #include <ostream>
 #include <unordered_set>
-#include <utils/Hasher.hpp>
+#include <utils/Hash.hpp>
 #include <vector>
 #include "MetronomeException.hpp"
 #include "SuccessorBundle.hpp"
@@ -89,7 +89,7 @@ public:
     /*Entry point for using this Domain*/
     GridWorld(const Configuration& configuration, std::istream& input)
             : actionDuration(configuration.getLongOrThrow(ACTION_DURATION)) {
-        obstacles = std::unordered_set<State, typename metronome::Hasher<State>>{};
+        obstacles = std::unordered_set<State, typename metronome::Hash<State>>{};
         unsigned int currentHeight = 0;
         unsigned int currentWidth = 0;
         std::string line;
@@ -289,7 +289,7 @@ private:
      */
     unsigned int width;
     unsigned int height;
-    std::unordered_set<State, typename metronome::Hasher<State>> obstacles;
+    std::unordered_set<State, typename metronome::Hash<State>> obstacles;
     State startLocation{};
     State goalLocation{};
     const Cost actionDuration;

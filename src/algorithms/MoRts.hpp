@@ -13,7 +13,7 @@
 #include "OnlinePlanner.hpp"
 #include "easylogging++.h"
 #include "experiment/Configuration.hpp"
-#include "utils/Hasher.hpp"
+#include "utils/Hash.hpp"
 #include "utils/PriorityQueue.hpp"
 #include "utils/TimeMeasurement.hpp"
 
@@ -627,7 +627,7 @@ private:
 
     const Domain& domain;
     PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fHatComparator};
-    std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
+    std::unordered_map<State, Node*, typename metronome::Hash<State>> nodes{};
     std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{
             std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
 

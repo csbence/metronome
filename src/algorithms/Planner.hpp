@@ -15,10 +15,11 @@ public:
 
     virtual ~Planner() = default;
 
-protected:
     virtual inline void incrementGeneratedNodeCount() final {
         ++generatedNodeCount;
     }
+
+protected:
 
     virtual inline void incrementExpandedNodeCount() final {
         ++expandedNodeCount;

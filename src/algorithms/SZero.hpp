@@ -7,7 +7,7 @@
 #include "MemoryConfiguration.hpp"
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
-#include "utils/Hasher.hpp"
+#include "utils/Hash.hpp"
 #include "utils/ObjectPool.hpp"
 #include "utils/PriorityQueue.hpp"
 
@@ -382,7 +382,7 @@ private:
     std::vector<Node*> safeNodes{Memory::NODE_LIMIT};
     const Domain& domain;
     PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fComparator};
-    std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
+    std::unordered_map<State, Node*, typename metronome::Hash<State>> nodes{};
     std::vector<Node*> safeTopLevelActionNodes{Memory::NODE_LIMIT};
 
     std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{
