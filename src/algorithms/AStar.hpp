@@ -22,10 +22,10 @@ class AStar final : public OfflinePlanner<Domain> {
 
  public:
   AStar(const Domain& domain, const Configuration&)
-      : domain(domain), openList(20000000, fValueComparator) {
+      : domain(domain), openList(Memory::OPEN_LIST_SIZE, fValueComparator) {
     // Initialize hash table
     nodes.max_load_factor(1);
-    nodes.reserve(100000000);
+    nodes.reserve(Memory::NODE_LIMIT);
   }
 
   std::vector<Action> plan(const State& startState) override {
