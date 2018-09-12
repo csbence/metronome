@@ -18,9 +18,12 @@ int main(int argc, char** argv) {
   using namespace metronome;
   printSplashScreen();
 
-  Statistic::initialize();
   if (argc == 1) {
-    std::cerr << "Resource path is not provided. :: arg: " << argv[0]
+    std::cerr << "Invalid arguments. Please use one of the following ways to invoke Metronome:\n"
+              << "Metronome <resource path> <json configuration path>\n"
+              << "OR\n"
+              << "Metronome <resource path> \n"
+                 "then provide the configuration using the standard input."
               << std::endl;
     return 1;
   }
@@ -31,6 +34,7 @@ int main(int argc, char** argv) {
 
   if (argc == 2) {
     std::stringstream jsonStream;
+    LOG(INFO) << "Parsing JSON configuration from stdin.";
 
     for (std::string line; std::getline(std::cin, line);) {
       if (line.find_first_not_of(" \t\n\v\f\r") == std::string::npos) {
@@ -45,17 +49,22 @@ int main(int argc, char** argv) {
     rapidjson::IStreamWrapper streamWrapper{jsonStream};
     document.ParseStream(streamWrapper);
   } else {
+    LOG(INFO) << "Parsing JSON configuration file.";
+
     std::string configurationPath{argv[2]};
 
     if (!fileExists(configurationPath)) {
       std::cerr << "Invalid configuration file: " << configurationPath
                 << std::endl;
+      return 1;
     }
 
     std::ifstream configurationFile{configurationPath};
     rapidjson::IStreamWrapper streamWrapper{configurationFile};
     document.ParseStream(streamWrapper);
   }
+
+  LOG(INFO) << "Configuration has been processed.";
 
   //        getchar(); // Wait for keypress
 
@@ -72,7 +81,7 @@ int main(int argc, char** argv) {
   //                    LOG(INFO) << action;
   //                }
 
-  std::cout << "\n\nResult:" << std::endl;
+  std::cout << "\n\nResult:\n#" << std::endl;
   std::cout << result.getJsonString();
   std::cout << std::flush;
 
