@@ -41,6 +41,10 @@ class ObjectPool {
     return reinterpret_cast<const T*>(storage + index);
   }
 
+  std::size_t index(const T* item) const {
+    return static_cast<std::size_t>(item - reinterpret_cast<T*>(storage));
+  }
+
   bool empty() const { return size == 0; }
 
  private:
