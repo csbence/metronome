@@ -33,7 +33,7 @@ public:
         Cost heuristic = domain.heuristic(startState);
         Node localStartNode = Node(nullptr, startState, Action(), 0, heuristic);
 
-        auto startNode = nodePool->construct(localStartNode);
+        auto startNode = nodePool.construct(localStartNode);
         Planner::incrementGeneratedNodeCount();
 
         nodes[localStartNode.state] = startNode;
@@ -77,7 +77,7 @@ public:
                             newCost,
                             newCost + domain.heuristic(successor.state));
 
-                    successorNode = nodePool->construct(std::move(tempSuccessorNode));
+                    successorNode = nodePool.construct(std::move(tempSuccessorNode));
 //                            LOG(INFO) << "addToOpen(NEW): " + successorNode->toString();
                     openList.push(*successorNode);
                 } else if (successorNode->g > newCost) {
@@ -143,7 +143,7 @@ private:
     const Domain& domain;
     PriorityQueue<Node> openList;
     std::unordered_map<State, Node*, typename metronome::Hash<State>> nodes;
-    std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
+    ObjectPool<Node, Memory::NODE_LIMIT> nodePool;
 };
 }
 

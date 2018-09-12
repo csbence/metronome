@@ -7,13 +7,11 @@
 #include <domains/Traffic.hpp>
 #include <experiment/termination/ExpansionTerminationChecker.hpp>
 #include <string>
-#include <algorithms/FRts.hpp>
 #include "Configuration.hpp"
 #include "OfflinePlanManager.hpp"
 #include "RealTimePlanManager.hpp"
 #include "Result.hpp"
 #include "algorithms/AStar.hpp"
-#include "algorithms/FHat.hpp"
 #include "algorithms/LssLrtaStar.hpp"
 #include "algorithms/MoRts.hpp"
 #include "algorithms/MoRtsOld.hpp"
@@ -101,18 +99,12 @@ private:
         } else if (algorithmName == ALGORITHM_LSS_LRTA_STAR) {
             return executeRealTimePlanner<Domain, LssLrtaStar<Domain, TerminationChecker>, TerminationChecker>(
                     configuration, domain);
-        } else if (algorithmName == ALGORITHM_F_HAT) {
-            return executeRealTimePlanner<Domain, FHat<Domain, TerminationChecker>, TerminationChecker>(
-                    configuration, domain);
         } else if (algorithmName == ALGORITHM_MO_RTS) {
             return executeRealTimePlanner<Domain, MoRts<Domain, TerminationChecker>, TerminationChecker>(
                 configuration, domain);
         } else if (algorithmName == ALGORITHM_MO_RTS_OLD) {
             return executeRealTimePlanner<Domain, MoRtsOld<Domain, TerminationChecker>, TerminationChecker>(
                 configuration, domain);
-        } else if (algorithmName == ALGORITHM_F_RTS) {
-            return executeRealTimePlanner<Domain, FRts<Domain, TerminationChecker>, TerminationChecker>(
-                    configuration, domain);
         } else {
             LOG(ERROR) << "Unknown algorithms name: " << algorithmName << std::endl;
             return Result(configuration, "Unknown: algorithmName: " + algorithmName);

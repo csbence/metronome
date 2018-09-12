@@ -19,7 +19,6 @@ set(SOURCE_FILES
         src/algorithms/AStar.hpp
         src/algorithms/ClusterRts.hpp
         src/algorithms/LssLrtaStar.hpp
-        src/algorithms/FHat.hpp
         src/algorithms/MoRts.hpp
         src/algorithms/OfflinePlanner.hpp
         src/algorithms/OnlinePlanner.hpp
@@ -46,7 +45,7 @@ set(SOURCE_FILES
         src/experiment/termination/ExpansionTerminationChecker.hpp
         src/utils/Statistic.hpp src/MemoryConfiguration.hpp
         src/utils/ObjectPool.hpp
-        src/algorithms/FRts.hpp)
+        )
 
 set(TEST_FILES
         test/test.cpp

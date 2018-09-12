@@ -11,9 +11,10 @@
 #include "MetronomeException.hpp"
 #include "OnlinePlanner.hpp"
 #include "Planner.hpp"
+#include "dynamic_priority_queue.hpp"
 #include "easylogging++.h"
 #include "experiment/Configuration.hpp"
-#include "utils/Hasher.hpp"
+#include "utils/Hash.hpp"
 #include "utils/ObjectPool.hpp"
 #include "utils/PriorityQueue.hpp"
 #include "utils/TimeMeasurement.hpp"
@@ -92,8 +93,6 @@ private:
             return stream.str();
         }
 
-        /** Index used by the priority queue */
-        mutable unsigned int index;
         /** Parent node */
         Node* parent;
         /** Internal state */
@@ -112,6 +111,24 @@ private:
         std::vector<Edge> predecessors;
 
         Cluster* containingCluster;
+    };
+
+    class NodeComparatorF {
+        int operator()(const Node* lhs, const Node* rhs) const {
+            if (lhs->f() < rhs->f())
+                return -1;
+            if (lhs->f() > rhs->f())
+                return 1;
+            if (lhs->g > rhs->g)
+                return -1;
+            if (lhs->g < rhs->g)
+                return 1;
+            return 0;
+        }
+    };
+
+    class NodeEquals {
+        bool operator()(const Node* lhs, const Node* rhs) const { lhs == rhs; }
     };
 
     class Edge {
@@ -139,55 +156,57 @@ private:
     class Cluster {
     public:
         Node& coreNode;
-        std::vector<ClusterEdge> reachableClusters;
-
-        PriorityQueue<Node> openList{CLUSTER_NODE_LIMIT, fComparator};
-        bool completed = false;
         std::size_t nodeCount;
+        bool completed = false;
+
+        std::vector<ClusterEdge> reachableClusters;
+        cserna::DynamicPriorityQueue<Node*,
+                cserna::NonIntrusiveIndexFunction<Node*, Hash<Node*>, NodeEquals>,
+                NodeComparatorF,
+                CLUSTER_NODE_LIMIT,
+                CLUSTER_NODE_LIMIT> openList;
     };
 
-//    void learn(TerminationChecker& terminationChecker) {
-//        ++iterationCounter;
-//
-//        // Reorder the open list based on the heuristic values
-//        openList.reorder(hComparator);
-//
-//        while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
-//            auto currentNode = popOpenList();
-//            currentNode->iteration = iterationCounter;
-//
-//            Cost currentHeuristicValue = currentNode->h;
-//
-//            // update heuristic actionDuration of each predecessor
-//            for (auto predecessor : currentNode->predecessors) {
-//                Node* predecessorNode = predecessor.predecessor;
-//
-//                if (predecessorNode->iteration == iterationCounter && !predecessorNode->open) {
-//                    // This node was already learned and closed in the current iteration
-//                    continue;
-//                    // TODO Review this. This could be incorrect if the action costs are not uniform
-//                }
-//
-//                if (!predecessorNode->open) {
-//                    // This node is not open yet, because it was not visited in the current planning iteration
-//
-//                    predecessorNode->h = currentHeuristicValue + predecessor.actionCost;
-//                    assert(predecessorNode->iteration == iterationCounter - 1);
-//                    predecessorNode->iteration = iterationCounter;
-//
-//                    addToOpenList(*predecessorNode);
-//                } else if (predecessorNode->h > currentHeuristicValue + predecessor.actionCost) {
-//                    // This node was visited in this learning phase, but the current path is better then the previous
-//                    predecessorNode->h = currentHeuristicValue + predecessor.actionCost;
-//                    openList.update(*predecessorNode);
-//                }
-//            }
-//        }
-//    }
+    //    void learn(TerminationChecker& terminationChecker) {
+    //        ++iterationCounter;
+    //
+    //        // Reorder the open list based on the heuristic values
+    //        openList.reorder(hComparator);
+    //
+    //        while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
+    //            auto currentNode = popOpenList();
+    //            currentNode->iteration = iterationCounter;
+    //
+    //            Cost currentHeuristicValue = currentNode->h;
+    //
+    //            // update heuristic actionDuration of each predecessor
+    //            for (auto predecessor : currentNode->predecessors) {
+    //                Node* predecessorNode = predecessor.predecessor;
+    //
+    //                if (predecessorNode->iteration == iterationCounter && !predecessorNode->open) {
+    //                    // This node was already learned and closed in the current iteration
+    //                    continue;
+    //                    // TODO Review this. This could be incorrect if the action costs are not uniform
+    //                }
+    //
+    //                if (!predecessorNode->open) {
+    //                    // This node is not open yet, because it was not visited in the current planning iteration
+    //
+    //                    predecessorNode->h = currentHeuristicValue + predecessor.actionCost;
+    //                    assert(predecessorNode->iteration == iterationCounter - 1);
+    //                    predecessorNode->iteration = iterationCounter;
+    //
+    //                    addToOpenList(*predecessorNode);
+    //                } else if (predecessorNode->h > currentHeuristicValue + predecessor.actionCost) {
+    //                    // This node was visited in this learning phase, but the current path is better then the
+    //                    previous predecessorNode->h = currentHeuristicValue + predecessor.actionCost;
+    //                    openList.update(*predecessorNode);
+    //                }
+    //            }
+    //        }
+    //    }
 
-    void insertStartState() {
-
-    }
+    void insertStartState() {}
 
     const Node* explore(const State& startState, TerminationChecker& terminationChecker) {
         ++iterationCounter;
@@ -197,7 +216,7 @@ private:
         Node*& startNode = nodes[startState];
 
         if (startNode == nullptr) {
-            startNode = nodePool->construct(Node{nullptr, startState, Action(), 0, domain.heuristic(startState), true});
+            startNode = nodePool.construct(Node{nullptr, startState, Action(), 0, domain.heuristic(startState), true});
         } else {
             startNode->g = 0;
             startNode->action = Action();
@@ -239,6 +258,12 @@ private:
         }
 
         auto currentNode = cluster->openList.pop();
+
+        if (currentNode->containingCluster != nullptr) {
+            return;
+        }
+
+        currentNode->containingCluster = cluster;
         expandNode(currentNode);
     }
 
@@ -255,13 +280,9 @@ private:
                 successorNode = createNode(sourceNode, successor);
             }
 
-            // If the node is outdated it should be updated.
-            if (successorNode->iteration != iterationCounter) {
-                successorNode->iteration = iterationCounter;
-                successorNode->predecessors.clear();
-                successorNode->g = Domain::COST_MAX;
-                successorNode->open = false; // It is not on the open list yet, but it will be
-                // parent, action, and actionCost is outdated too, but not relevant.
+            // This node is already taken by another cluster
+            if (successorNode->containingCluster != nullptr) {
+                continue;
             }
 
             // Add the current state as the predecessor of the child state
@@ -279,11 +300,7 @@ private:
                 successorNode->parent = sourceNode;
                 successorNode->action = successor.action;
 
-                if (!successorNode->open) {
-                    addToOpenList(*successorNode);
-                } else {
-                    openList.update(*successorNode);
-                }
+                sourceNode->containingCluster->openList.insertOrUpdate(successorNode);
             }
         }
     }
@@ -354,7 +371,7 @@ private:
 
     const Domain& domain;
     PriorityQueue<Cluster> openClusters{Memory::OPEN_LIST_SIZE, fComparator};
-    std::unordered_map<State, Node*, typename metronome::Hasher<State>> nodes{};
+    std::unordered_map<State, Node*, typename metronome::Hash<State>> nodes{};
     ObjectPool<Node, Memory::NODE_LIMIT> nodePool;
     ObjectPool<Cluster, Memory::NODE_LIMIT> clusterPool;
 

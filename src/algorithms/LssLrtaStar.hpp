@@ -156,7 +156,7 @@ private:
         Node*& startNode = nodes[startState];
 
         if (startNode == nullptr) {
-            startNode = nodePool->construct(Node{nullptr, startState, Action(), 0, domain.heuristic(startState), true});
+            startNode = nodePool.construct(Node{nullptr, startState, Action(), 0, domain.heuristic(startState), true});
         } else {
             startNode->g = 0;
             startNode->action = Action();
@@ -228,7 +228,7 @@ private:
 
     Node* createNode(Node* sourceNode, SuccessorBundle<Domain> successor) {
         Planner::incrementGeneratedNodeCount();
-        return nodePool->construct(Node{sourceNode,
+        return nodePool.construct(Node{sourceNode,
                 successor.state,
                 successor.action,
                 domain.COST_MAX,
@@ -298,8 +298,7 @@ private:
     const Domain& domain;
     PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fComparator};
     std::unordered_map<State, Node*, typename metronome::Hash<State>> nodes{};
-    std::unique_ptr<StaticVector<Node, Memory::NODE_LIMIT>> nodePool{
-            std::make_unique<StaticVector<Node, Memory::NODE_LIMIT>>()};
+    ObjectPool<Node, Memory::NODE_LIMIT> nodePool;
     unsigned int iterationCounter{0};
 };
 }
