@@ -1,5 +1,4 @@
-#ifndef METRONOME_HASHER_HPP
-#define METRONOME_HASHER_HPP
+#pragma once
 
 #include <cstdio>
 
@@ -7,15 +6,10 @@ namespace metronome {
 
 template <typename T>
 class Hash {
-public:
-    std::size_t operator()(const T& value) const {
-        return value.hash();
-    }
+ public:
+  std::size_t operator()(const T& value) const { return value.hash(); }
 
-    std::size_t operator()(const T* value) const {
-        return value->hash();
-    }
+  std::size_t operator()(const T* value) const { return value->hash(); }
 };
-}
 
-#endif // METRONOME_HASHER_HPP
+}  // namespace metronome

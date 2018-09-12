@@ -1,82 +1,86 @@
-#ifndef METRONOME_STATISTIC_HPP
-#define METRONOME_STATISTIC_HPP
+#pragma once
 
 #include <cmath>
 namespace metronome {
 
 class Statistic {
-public:
-    static double normalPDF(double mean, double standardDeviation, double x) {
-        return standardNormalPDF((x - mean) / standardDeviation);
+ public:
+  static double normalPDF(double mean, double standardDeviation, double x) {
+    return standardNormalPDF((x - mean) / standardDeviation);
+  }
+
+  static double standardNormalPDF(double z) {
+    return standardNormalCoefficient * std::exp(-z * z / 2);
+  }
+
+  //    double normalCDFBugby(double mean, double variance, double variable)
+  //    const {
+  //        double x = (variable - mean) / sqrt(variance);
+  //        return 0.5 * pow(1.0 - 1.0 / 30.0 * (7 * std::exp(-x * x / 2) + 16 *
+  //        std::exp(-x * x * (2 - sqrt(2.0))) + (7
+  //                             + 0.25 * PI * x * x) * std::exp(-x * x)),
+  //                         0.5) + 0.5;
+  //
+  //    }
+  //
+  //    double normalCDFLin1990(double mean, double variance, double variable)
+  //    const {
+  //        double x = (variable - mean) / sqrt(variance);
+  //        double cumulative = 1.0 / (1.0 + std::exp((4.2 * PI * x) / (9.0 -
+  //        x))); return cumulative;
+  //    }
+  //
+  //    double normalCDFLin1989(double mean, double variance, double variable)
+  //    const {
+  //        double x = (variable - mean) / sqrt(variance);
+  //        double cumulative = 0.5 * std::exp(-0.717 * x - 0.416 * x * x);
+  //        return cumulative;
+  //    }
+
+  /**
+   * Standard normal table for numerical integration.
+   */
+  class StandardNormalTable {
+   public:
+    StandardNormalTable(int resolution) : table{new double[resolution]} {
+      const double step{6.0 / resolution};  // 6 = 2 * std dev
+
+      int i{0};
+      for (double x = -2; x < 2; x += step) {
+        table[i] =
+            (standardNormalPDF(x) + standardNormalPDF(x + step)) / 2 * step;
+        ++i;
+      }
     }
 
-    static double standardNormalPDF(double z) { return standardNormalCoefficient * std::exp(-z * z / 2); }
+    ~StandardNormalTable() { delete[] table; }
 
-    //    double normalCDFBugby(double mean, double variance, double variable) const {
-    //        double x = (variable - mean) / sqrt(variance);
-    //        return 0.5 * pow(1.0 - 1.0 / 30.0 * (7 * std::exp(-x * x / 2) + 16 * std::exp(-x * x * (2 - sqrt(2.0))) +
-    //        (7
-    //                             + 0.25 * PI * x * x) * std::exp(-x * x)),
-    //                         0.5) + 0.5;
-    //
-    //    }
-    //
-    //    double normalCDFLin1990(double mean, double variance, double variable) const {
-    //        double x = (variable - mean) / sqrt(variance);
-    //        double cumulative = 1.0 / (1.0 + std::exp((4.2 * PI * x) / (9.0 - x)));
-    //        return cumulative;
-    //    }
-    //
-    //    double normalCDFLin1989(double mean, double variance, double variable) const {
-    //        double x = (variable - mean) / sqrt(variance);
-    //        double cumulative = 0.5 * std::exp(-0.717 * x - 0.416 * x * x);
-    //        return cumulative;
-    //    }
+    double operator[](int index) const { return table[index]; }
 
-    /**
-     * Standard normal table for numerical integration.
-     */
-    class StandardNormalTable {
-    public:
-        StandardNormalTable(int resolution) : table{new double[resolution]} {
-            const double step{6.0 / resolution}; // 6 = 2 * std dev
+   private:
+    double* table;
+  };
 
-            int i{0};
-            for (double x = -2; x < 2; x += step) {
-                table[i] = (standardNormalPDF(x) + standardNormalPDF(x + step)) / 2 * step;
-                ++i;
-            }
-        }
+  static double standardNormalTable100(int index) {
+    static const StandardNormalTable table{100};
+    return table[index];
+  }
 
-        ~StandardNormalTable() { delete[] table; }
+  static double standardNormalTable500(int index) {
+    static const StandardNormalTable table{500};
+    return table[index];
+  }
 
-        double operator[](int index) const { return table[index]; }
+  static void initialize() {
+    LOG(INFO) << "Init";
+    standardNormalTable100(0);
+    standardNormalTable500(0);
+  }
 
-    private:
-        double* table;
-    };
-
-    static double standardNormalTable100(int index) {
-        static const StandardNormalTable table{100};
-        return table[index];
-    }
-
-    static double standardNormalTable500(int index) {
-        static const StandardNormalTable table{500};
-        return table[index];
-    }
-
-    static void initialize() {
-        LOG(INFO) << "Init";
-        standardNormalTable100(0);
-        standardNormalTable500(0);
-    }
-
-private:
-    constexpr static const double PI{3.141592653589793};
-    constexpr static double standardNormalCoefficient{0.39894228040143}; // 1/ sqrt(2*PI)
+ private:
+  constexpr static const double PI{3.141592653589793};
+  constexpr static double standardNormalCoefficient{
+      0.39894228040143};  // 1/ sqrt(2*PI)
 };
 
-}
-
-#endif // METRONOME_STATISTIC_HPP
+}  // namespace metronome

@@ -1,5 +1,4 @@
-#ifndef METRONOME_LINEARMEMORYPOOL_HPP
-#define METRONOME_LINEARMEMORYPOOL_HPP
+#pragma once
 
 #include <cstdio>
 #include <memory>
@@ -49,6 +48,5 @@ class ObjectPool {
   Storage* storage;
   std::size_t size = 0;
 };
-}  // namespace metronome
 
-#endif  // METRONOME_LINEARMEMORYPOOL_HPP
+}  // namespace metronome
