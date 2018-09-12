@@ -4,6 +4,7 @@
   "domainInstanceName": "Manual test instance",
   "actionDuration": 6000000,
   "domainName": "GRID_WORLD",
-  "terminationType": "time",
-  "algorithmName": "LSS_LRTA_STAR"
+  "terminationType": "TIME",
+  "algorithmName": "A_STAR",
+  "lookaheadType": "DYNAMIC"
 }
