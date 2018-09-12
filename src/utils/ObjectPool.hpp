@@ -15,6 +15,7 @@ class ObjectPool {
 
   ~ObjectPool() {
     purge();
+
     delete[] storage;
   }
 
@@ -33,8 +34,6 @@ class ObjectPool {
     for (std::size_t i = 0; i < size; ++i) {
       reinterpret_cast<const T*>(storage + i)->~T();
     }
-
-    delete[] storage;
   }
 
   // Access an object in aligned storage
