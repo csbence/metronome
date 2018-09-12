@@ -11,6 +11,7 @@
 #include "experiment/Configuration.hpp"
 #include "utils/Hash.hpp"
 #include "utils/ObjectPool.hpp"
+#include "visualization/Visualizer.hpp"
 
 namespace metronome {
 
@@ -43,6 +44,8 @@ class AStar final : public OfflinePlanner<Domain> {
       Planner::incrementExpandedNodeCount();
       Node* currentNode = openList.pop();
 
+      visualizer.addNode(nodePool.index(currentNode));
+
       if (domain.isGoal(currentNode->state)) {
         std::vector<Action> actions;
         // Goal is reached
@@ -53,6 +56,7 @@ class AStar final : public OfflinePlanner<Domain> {
         }
 
         std::reverse(actions.begin(), actions.end());
+        visualizer.post();
         return actions;
       }
 
@@ -136,6 +140,8 @@ class AStar final : public OfflinePlanner<Domain> {
   PriorityQueue<Node> openList;
   std::unordered_map<State, Node*, typename metronome::Hash<State>> nodes;
   ObjectPool<Node, Memory::NODE_LIMIT> nodePool;
+
+  Visualizer visualizer;
 };
 
 }  // namespace metronome

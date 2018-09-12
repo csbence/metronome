@@ -17,6 +17,7 @@
 #include "utils/ObjectPool.hpp"
 #include "utils/PriorityQueue.hpp"
 #include "utils/TimeMeasurement.hpp"
+#include "visualization/Visualizer.hpp"
 
 namespace metronome {
 
@@ -44,7 +45,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       TerminationChecker& terminationChecker) override {
     if (domain.isGoal(agentState)) {
       // Goal is already reached
-      return {}; 
+      return {};
     }
 
     // ---    Initialize    ---
@@ -54,6 +55,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     // ---      Learn      ---
     // ???
+
+    visualizer.post();
 
     return extractPath();
   }
@@ -113,7 +116,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   };
 
   struct NodeEquals {
-    bool operator()(const Node* lhs, const Node* rhs) const { 
+    bool operator()(const Node* lhs, const Node* rhs) const {
       return lhs == rhs;
     }
   };
@@ -202,28 +205,20 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     Node*& initialNode = nodes[initialState];
 
-    if (initialNode == nullptr) {
-      initialNode = nodePool.construct(Node{
-          nullptr, initialState, Action(), 0, domain.heuristic(initialState)});
+    initialNode = nodePool.construct(Node{
+        nullptr, initialState, Action(), 0, domain.heuristic(initialState)});
 
-      auto spawnedCluster = clusterPool.construct();
-      spawnedCluster->coreNode = initialNode;
-      openClusters.push(spawnedCluster);
+    auto spawnedCluster = clusterPool.construct();
+    spawnedCluster->coreNode = initialNode;
+    openClusters.push(spawnedCluster);
 
-      initialNode->containingCluster = spawnedCluster;
-
-    } else {
-      initialNode->g = 0;
-      initialNode->action = Action();
-      initialNode->predecessors.clear();
-      initialNode->parent = nullptr;
-    }
+    initialNode->containingCluster = spawnedCluster;
   }
 
   void explore(const State& startState,
-                      TerminationChecker& terminationChecker) {
-
-    while (!terminationChecker.reachedTermination() && openClusters.isNotEmpty()) {
+               TerminationChecker& terminationChecker) {
+    while (!terminationChecker.reachedTermination() &&
+           openClusters.isNotEmpty()) {
       auto cluster = openClusters.pop();
       // todo check if the goal state was expanded
 
@@ -269,7 +264,17 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     ++(currentNode->containingCluster->nodeCount);
     expandNode(currentNode);
-    
+
+    auto gridState = static_cast<GridWorld::State>(currentNode->state);
+
+    std::size_t id = nodePool.index(currentNode);
+    visualizer.addNode(id, gridState.getX(), gridState.getY());
+    visualizer.addEdge(
+        id,
+        nodePool.index(currentNode->parent),
+        id,
+        "cluster:" + clusterPool.index(currentNode->containingCluster));
+
     return true;
   }
 
@@ -285,10 +290,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       if (successorNode == nullptr) {
         Planner::incrementGeneratedNodeCount();
         successorNode = nodePool.construct(sourceNode,
-                              successor.state,
-                              successor.action,
-                              std::numeric_limits<Cost>::max(),
-                              domain.heuristic(successor.state));
+                                           successor.state,
+                                           successor.action,
+                                           std::numeric_limits<Cost>::max(),
+                                           domain.heuristic(successor.state));
       }
 
       // This node is already taken by another cluster
@@ -323,7 +328,15 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     // 2. Find abstract path to goal via region centers
     // 3. Find last segment from region center to target node
     // If the path partially overlaps with the current path stitch
-    
+
+    for (auto const& s : states) {
+      for (auto const& a : s.get_actions()) {
+        for (auto const& t : a.get_outcomes()) {
+          if (!t.is_normalized()) return false;
+        }
+      }
+    }
+
     return {};
   }
 
@@ -342,6 +355,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   std::unordered_map<State, Node*, typename metronome::Hash<State>> nodes;
   ObjectPool<Node, Memory::NODE_LIMIT> nodePool;
   ObjectPool<Cluster, Memory::NODE_LIMIT> clusterPool;
+
+  Visualizer visualizer;
 };
 
 }  // namespace metronome

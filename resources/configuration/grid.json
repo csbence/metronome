@@ -1,10 +1,10 @@
 {
   "timeLimit": 150000000000,
-  "domainPath": "/input/vacuum/dylan/uniform.vw",
+  "domainPath": "/input/vacuum/hole_400.vw",
   "domainInstanceName": "Manual test instance",
   "actionDuration": 6000000,
   "domainName": "GRID_WORLD",
   "terminationType": "TIME",
-  "algorithmName": "A_STAR",
+  "algorithmName": "CLUSTER_RTS",
   "lookaheadType": "DYNAMIC"
 }

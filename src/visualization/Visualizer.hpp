@@ -1,5 +1,6 @@
 #pragma once
 
+#include <easylogging++.h>
 #include <iostream>
 #include <unordered_set>
 #include <vector>
@@ -9,10 +10,41 @@
 #endif
 
 namespace metronome {
-template <typename Domain>
 class Visualizer {
  public:
-  Visualizer(Domain& domain) : domain(domain) {}
+  void addNode(std::size_t nodeId,
+               std::size_t x = 0,
+               std::size_t y = 0,
+               std::size_t z = 1,
+               double size = 1,
+               std::string label = "") {
+#ifdef STREAM_GRAPH
+    std::ostringstream commandBuilder;
+
+    bool alreadyVisualized = nodeIds.find(nodeId) != edgeIds.end();
+    nodeIds.insert(nodeId);
+
+    double r = 0;
+    double g = 0;
+    double b = 0;
+
+    // clang-format off
+      commandBuilder << "{\"" << (alreadyVisualized ? "cn" : "an")
+                     << R"(":{")" << nodeId
+                     << R"(":{"label":")"  << label << "\""
+                     << R"(,"size":)"   << size
+                     << R"(,"r":)"      << r
+                     << R"(,"g":)"      << g
+                     << R"(,"b":)"      << b
+                     << R"(,"x":)"      << x
+                     << R"(,"y":)"      << y
+                     << R"(,"z":)"      << z
+                     << "}}}";
+    // clang-format on
+
+    commands.push_back(commandBuilder.str());
+#endif
+  }
 
   void addEdge(std::size_t edgeId,
                std::size_t sourceNodeId,
@@ -22,51 +54,17 @@ class Visualizer {
 #ifdef STREAM_GRAPH
     std::ostringstream commandBuilder;
 
-    bool alreadyVisualized = edgeIds.find(edgeId) == edgeIds.end();
+    bool alreadyVisualized = edgeIds.find(edgeId) != edgeIds.end();
     edgeIds.insert(edgeId);
 
     // clang-format off
     commandBuilder << "{\"" << (alreadyVisualized ? "ce" : "ae")
                    << R"(":{")" << edgeId
-                   << R"("":{source":")"      << sourceNodeId
+                   << R"(":{"source":")"      << sourceNodeId
                    << R"(", "target":")"      << targetNodeId
                    << R"(", "directed":true)"
                    << R"(", "label":")"       << label
                    << R"(", "weight":)"      << weight
-                   << "}}}";
-    // clang-format on
-
-    commands.push_back(commandBuilder.str());
-#endif
-  }
-
-  void addNode(std::size_t nodeId,
-               std::size_t x,
-               std::size_t y,
-               std::size_t z = 1,
-               double size = 1,
-               std::string label = "") {
-#ifdef STREAM_GRAPH
-    std::ostringstream commandBuilder;
-
-    bool alreadyVisualized = nodeIds.find(nodeId) == edgeIds.end();
-    nodeIds.insert(nodeId);
-
-    double r = 0;
-    double g = 0;
-    double b = 0;
-
-    // clang-format off
-    commandBuilder << "{\"" << (alreadyVisualized ? "cn" : "an")
-                   << R"(":{")" << nodeId
-                   << R"("":{label":")"  << label << "\""
-                   << R"(,"size":)"   << size
-                   << R"(,"r":)"      << r
-                   << R"(,"g":)"      << g
-                   << R"(,"b":)"      << b
-                   << R"(,"x":)"      << x
-                   << R"(,"y":)"      << y
-                   << R"(,"z":)"      << z
                    << "}}}";
     // clang-format on
 
@@ -85,10 +83,13 @@ class Visualizer {
     commandBuilder << std::endl;
     std::string commandString = commandBuilder.str();
 
+    LOG(INFO) << "Post commands: " << commands.size();
     commands.clear();
 
+    httplib::Client cli("localhost", 8080);
+
     const char* workspaceTarget = "/workspace1?operation=updateGraph";
-    auto res = cli.post(workspaceTarget, commandString, "plain/text");
+    auto res = cli.Post(workspaceTarget, commandString, "plain/text");
 
     //        std::cout << res->status << std::endl;
     //        std::cout << res->body << std::endl;
@@ -97,13 +98,11 @@ class Visualizer {
   }
 
  private:
-  Domain domain;
+#ifdef STREAM_GRAPH
   std::vector<std::string> commands;
   std::unordered_set<std::size_t> nodeIds;
   std::unordered_set<std::size_t> edgeIds;
 
-#ifdef STREAM_GRAPH
-  httplib::Client cli("localhost", 8080, 300, httplib::HttpVersion::v1_1);
 #endif
 };
 }  // namespace metronome
