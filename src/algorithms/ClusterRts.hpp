@@ -1,5 +1,4 @@
-#ifndef METRONOME_ONLINEPLANNER_HPP
-#define METRONOME_ONLINEPLANNER_HPP
+#pragma once
 
 #include "experiment/termination/TimeTerminationChecker.hpp"
 
@@ -339,6 +338,5 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   ObjectPool<Node, Memory::NODE_LIMIT> nodePool;
   ObjectPool<Cluster, Memory::NODE_LIMIT> clusterPool;
 };
-}  // namespace metronome
 
-#endif  // METRONOME_ONLINEPLANNER_HPP
+}  // namespace metronome
