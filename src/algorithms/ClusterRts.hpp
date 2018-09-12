@@ -24,12 +24,14 @@ namespace metronome {
 template <typename Domain, typename TerminationChecker>
 class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 public:
-    typedef typename Domain::State State;
-    typedef typename Domain::Action Action;
-    typedef typename Domain::Cost Cost;
-    typedef typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle ActionBundle;
+    using State = typename Domain::State;
+    using Action = typename Domain::Action;
+    using Cost = typename Domain::Cost;
+    using ActionBundle = typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle;
 
     static constexpr std::size_t CLUSTER_NODE_LIMIT = 1000;
+    static constexpr std::size_t CLUSTER_G_RADIUS = 10;
+    static constexpr std::size_t MAX_CLUSTER_COUNT = 1000;
 
     ClusterRts(const Domain& domain, const Configuration&) : domain{domain} {
         // Initialize hash table
@@ -66,14 +68,8 @@ private:
 
     class Node {
     public:
-        Node(Node* parent, const State& state, Action action, Cost g, Cost h, bool open, unsigned int iteration = 0)
-                : parent{parent},
-                  state{state},
-                  action{std::move(action)},
-                  g{g},
-                  h{h},
-                  open{open},
-                  iteration{iteration} {}
+        Node(Node* parent, const State& state, Action action, Cost g, Cost h, unsigned int iteration = 0)
+                : parent{parent}, state{state}, action{std::move(action)}, g{g}, h{h}, iteration{iteration} {}
 
         Cost f() const { return g + h; }
 
@@ -103,8 +99,6 @@ private:
         Cost g;
         /** Heuristic cost of the node */
         Cost h;
-        /** True if the node is in the open list */
-        bool open;
         /** Last iteration when the node was updated */
         unsigned int iteration;
         /** List of all the predecessors that were discovered in the current exploration phase. */
@@ -155,56 +149,58 @@ private:
 
     class Cluster {
     public:
-        Node& coreNode;
-        std::size_t nodeCount;
+        Node* coreNode;
+        std::size_t nodeCount = 0;
         bool completed = false;
+
+        Node* bestHNode;
 
         std::vector<ClusterEdge> reachableClusters;
         cserna::DynamicPriorityQueue<Node*,
                 cserna::NonIntrusiveIndexFunction<Node*, Hash<Node*>, NodeEquals>,
                 NodeComparatorF,
                 CLUSTER_NODE_LIMIT,
-                CLUSTER_NODE_LIMIT> openList;
+                CLUSTER_NODE_LIMIT>
+                openList;
+
+        std::size_t openListIndex = std::numeric_limits<std::size_t>::max();
     };
 
-    //    void learn(TerminationChecker& terminationChecker) {
-    //        ++iterationCounter;
-    //
-    //        // Reorder the open list based on the heuristic values
-    //        openList.reorder(hComparator);
-    //
-    //        while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
-    //            auto currentNode = popOpenList();
-    //            currentNode->iteration = iterationCounter;
-    //
-    //            Cost currentHeuristicValue = currentNode->h;
-    //
-    //            // update heuristic actionDuration of each predecessor
-    //            for (auto predecessor : currentNode->predecessors) {
-    //                Node* predecessorNode = predecessor.predecessor;
-    //
-    //                if (predecessorNode->iteration == iterationCounter && !predecessorNode->open) {
-    //                    // This node was already learned and closed in the current iteration
-    //                    continue;
-    //                    // TODO Review this. This could be incorrect if the action costs are not uniform
-    //                }
-    //
-    //                if (!predecessorNode->open) {
-    //                    // This node is not open yet, because it was not visited in the current planning iteration
-    //
-    //                    predecessorNode->h = currentHeuristicValue + predecessor.actionCost;
-    //                    assert(predecessorNode->iteration == iterationCounter - 1);
-    //                    predecessorNode->iteration = iterationCounter;
-    //
-    //                    addToOpenList(*predecessorNode);
-    //                } else if (predecessorNode->h > currentHeuristicValue + predecessor.actionCost) {
-    //                    // This node was visited in this learning phase, but the current path is better then the
-    //                    previous predecessorNode->h = currentHeuristicValue + predecessor.actionCost;
-    //                    openList.update(*predecessorNode);
-    //                }
-    //            }
-    //        }
-    //    }
+    struct ClusterIndex {
+        std::size_t& operator()(const Cluster* cluster) const { return cluster->openListIndex; }
+    };
+
+    struct ClusterHash {
+        std::size_t operator()(const Cluster* cluster) const { return cluster->coreNode->hash(); }
+    };
+
+    struct ClusterEquals {
+        bool operator()(const Cluster* lhs, const Cluster* rhs) const { return lhs == rhs; }
+    };
+
+    class ClusterComparatorH {
+        int operator()(const Cluster* lhs, const Cluster* rhs) const {
+            if (lhs->bestHNode->h < rhs->bestHNode->h)
+                return -1;
+            if (lhs->bestHNode->h > rhs->bestHNode->h)
+                return 1;
+            if (lhs->bestHNode->g < rhs->bestHNode->g)
+                return -1;
+            if (lhs->bestHNode->g > rhs->bestHNode->g)
+                return 1;
+            return 0;
+        }
+    };
+
+    class ClusterComparatorCoreH {
+        int operator()(const Cluster* lhs, const Cluster* rhs) const {
+            if (lhs->coreNode->h < rhs->coreNode->h)
+                return -1;
+            if (lhs->coreNode->h > rhs->coreNode->h)
+                return 1;
+            return 0;
+        }
+    };
 
     void insertStartState() {}
 
@@ -241,29 +237,40 @@ private:
         return openList.top();
     }
 
-    void expandCluster(Cluster* cluster) {
-        if (cluster->completed) {
+    void expandCluster(Cluster* sourceCluster) {
+        if (sourceCluster->completed) {
             return;
         }
 
-        // Check cluster node limit
-        if (cluster->nodeCount >= CLUSTER_NODE_LIMIT) {
-            cluster->completed = true;
+        if (sourceCluster->openList.isEmpty()) {
+            sourceCluster->completed = true;
             return;
         }
 
-        if (cluster->openList.isEmpty()) {
-            cluster->completed = true;
-            return;
-        }
+        // A new cluster core should be spawned in the following cases:
+        // * Cluster node limit is reached
+        // * Node is beyond a threshold cost (g) from the cluster core
+        // * Node is beyond a threshold distance (d) from the cluster core -> todo implement d
 
-        auto currentNode = cluster->openList.pop();
+        auto currentNode = sourceCluster->openList.pop();
 
         if (currentNode->containingCluster != nullptr) {
             return;
         }
 
-        currentNode->containingCluster = cluster;
+        bool spawnNewCore = sourceCluster->nodeCount >= CLUSTER_NODE_LIMIT || currentNode->g >= CLUSTER_G_RADIUS;
+
+        if (spawnNewCore) {
+            auto spawnedCluster = clusterPool.construct();
+            spawnedCluster->coreNode = currentNode;
+            openClusters.push(spawnedCluster);
+
+            currentNode->containingCluster = spawnedCluster;
+        } else {
+            currentNode->containingCluster = sourceCluster;
+        }
+
+        ++(currentNode->containingCluster->nodeCount);
         expandNode(currentNode);
     }
 
@@ -293,7 +300,6 @@ private:
                 continue;
             }
 
-            // only generate those state that are not visited yet or whose cost value are lower than this path
             Cost successorGValueFromCurrent{sourceNode->g + successor.actionCost};
             if (successorNode->g > successorGValueFromCurrent) {
                 successorNode->g = successorGValueFromCurrent;
@@ -313,21 +319,6 @@ private:
                 domain.COST_MAX,
                 domain.heuristic(successor.state),
                 true});
-    }
-
-    Node* popOpenList() {
-        if (openList.isEmpty()) {
-            throw MetronomeException("Open list was empty, goal not reachable.");
-        }
-
-        Node* node = openList.pop();
-        node->open = false;
-        return node;
-    }
-
-    void addToOpenList(Node& node) {
-        node.open = true;
-        openList.push(node);
     }
 
     std::vector<ActionBundle> extractPath(const Node* targetNode, const Node* sourceNode) const {
@@ -370,7 +361,9 @@ private:
     }
 
     const Domain& domain;
-    PriorityQueue<Cluster> openClusters{Memory::OPEN_LIST_SIZE, fComparator};
+    cserna::DynamicPriorityQueue<Cluster*, ClusterIndex, ClusterComparatorCoreH, MAX_CLUSTER_COUNT, MAX_CLUSTER_COUNT>
+            openClusters;
+
     std::unordered_map<State, Node*, typename metronome::Hash<State>> nodes{};
     ObjectPool<Node, Memory::NODE_LIMIT> nodePool;
     ObjectPool<Cluster, Memory::NODE_LIMIT> clusterPool;
