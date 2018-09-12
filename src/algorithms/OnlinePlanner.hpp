@@ -3,6 +3,7 @@
 #include <vector>
 #include "Planner.hpp"
 #include "experiment/termination/TimeTerminationChecker.hpp"
+
 namespace metronome {
 
 template <typename Domain, typename TerminationChecker>

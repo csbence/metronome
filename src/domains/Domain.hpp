@@ -1,5 +1,4 @@
-#ifndef METRONOME_DOMAIN_HPP
-#define METRONOME_DOMAIN_HPP
+#pragma once
 
 #include <experiment/Configuration.hpp>
 #include <limits>
@@ -10,75 +9,75 @@
 namespace metronome {
 
 class Domain {
-public:
-    typedef long long int Cost;
-    static constexpr Cost COST_MAX = std::numeric_limits<Cost>::max();
+ public:
+  typedef long long int Cost;
+  static constexpr Cost COST_MAX = std::numeric_limits<Cost>::max();
 
-    class Action {
-    public:
-        static Action getIdentity() {
-            // TODO
-        }
-
-        std::string toString() const {
-            // TODO
-        }
-    };
-
-    class State {
-    public:
-        bool operator==(const State& state) const {
-            // TODO
-        }
-
-        std::size_t hash() const {
-            // TODO
-        }
-
-        std::string toString() const {
-            // TODO
-        }
-    };
-
-    Domain(const Configuration& configuration, std::istream& input) {
-        // TODO
+  class Action {
+   public:
+    static Action getIdentity() {
+      // TODO
     }
 
-    const State transition(const State& state, const Action& action) const {
-        // TODO
+    std::string toString() const {
+      // TODO
+    }
+  };
+
+  class State {
+   public:
+    bool operator==(const State& state) const {
+      // TODO
     }
 
-    bool isGoal(const State& location) const {
-        // TODO
+    std::size_t hash() const {
+      // TODO
     }
 
-    Cost distance(const State& state) const {
-        // TODO
+    std::string toString() const {
+      // TODO
     }
+  };
 
-    Cost heuristic(const State& state) const {
-        // TODO
-    }
+  Domain(const Configuration& configuration, std::istream& input) {
+    // TODO
+  }
 
-    std::vector<SuccessorBundle<Domain>> successors(const State& state) const {
-        // TODO
-    }
+  const State transition(const State& state, const Action& action) const {
+    // TODO
+  }
 
-    const State getStartState() const {
-        // TODO
-    }
+  bool isGoal(const State& location) const {
+    // TODO
+  }
 
-    Cost getActionDuration() const {
-        //TODO
-    }
+  Cost distance(const State& state) const {
+    // TODO
+  }
 
-    Action getIdentityAction() const {
-        // TODO
-    }
+  Cost heuristic(const State& state) const {
+    // TODO
+  }
 
-    bool safetyPredicate(const State& state) const {
-        // TODO
-    }
+  std::vector<SuccessorBundle<Domain>> successors(const State& state) const {
+    // TODO
+  }
+
+  const State getStartState() const {
+    // TODO
+  }
+
+  Cost getActionDuration() const {
+    // TODO
+  }
+
+  Action getIdentityAction() const {
+    // TODO
+  }
+
+  bool safetyPredicate(const State& state) const {
+    // TODO
+  }
 };
-}
-#endif // METRONOME_DOMAIN_HPP
+
+}  // namespace metronome

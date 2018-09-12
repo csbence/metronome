@@ -1,5 +1,4 @@
-#ifndef METRONOME_CONFIGURATIONEXECUTOR_HPP
-#define METRONOME_CONFIGURATIONEXECUTOR_HPP
+#pragma once
 
 #include <easylogging++.h>
 #include <rapidjson/document.h>
@@ -173,5 +172,5 @@ class ConfigurationExecutor {
     return realTimePlanManager.plan(configuration, domain, planner);
   }
 };
+
 }  // namespace metronome
-#endif  // METRONOME_CONFIGURATIONEXECUTOR_HPP

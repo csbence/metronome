@@ -1,5 +1,4 @@
-#ifndef METRONOME_PLANMANAGER_HPP
-#define METRONOME_PLANMANAGER_HPP
+#pragma once
 
 #include "Configuration.hpp"
 #include "Result.hpp"
@@ -7,9 +6,8 @@ namespace metronome {
 
 template <typename Domain, typename Planner>
 class PlanManager {
-public:
-    virtual Result plan(const Configuration&, const Domain&, Planner&) = 0; //
+ public:
+  virtual Result plan(const Configuration&, const Domain&, Planner&) = 0;  //
 };
-}
 
-#endif // METRONOME_PLANMANAGER_HPP
+}  // namespace metronome

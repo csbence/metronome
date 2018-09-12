@@ -1,19 +1,20 @@
-#ifndef METRONOME_SUCCESSORBUNDLE_HPP
-#define METRONOME_SUCCESSORBUNDLE_HPP
+#pragma once
+
+namespace metronome {
+
 template <typename Domain>
 class SuccessorBundle {
-public:
+ public:
+  typedef typename Domain::State State;
+  typedef typename Domain::Action Action;
+  typedef typename Domain::Cost Cost;
 
-    typedef typename Domain::State State;
-    typedef typename Domain::Action Action;
-    typedef typename Domain::Cost Cost;
+  SuccessorBundle(State state, Action action, Cost actionCost)
+      : state(state), action(action), actionCost(actionCost) {}
 
-    SuccessorBundle(State state, Action action, Cost actionCost)
-            : state(state), action(action), actionCost(actionCost) {
-    }
-
-    const State state;
-    const Action action;
-    const Cost actionCost;
+  const State state;
+  const Action action;
+  const Cost actionCost;
 };
-#endif // METRONOME_SUCCESSORBUNDLE_HPP
+
+}  // namespace metronome

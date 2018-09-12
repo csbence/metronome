@@ -1,5 +1,4 @@
-#ifndef METRONOME_REALTIMEPLANMANAGER_HPP
-#define METRONOME_REALTIMEPLANMANAGER_HPP
+#pragma once
 
 #include <boost/optional.hpp>
 #include <chrono>
@@ -102,6 +101,5 @@ public:
                 planner.getIdentityActionCount());
     }
 };
-}
 
-#endif // METRONOME_REALTIMEPLANMANAGER_HPP
+}
