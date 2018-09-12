@@ -60,8 +60,8 @@ class Result {
 
     auto& allocator = resultDocument.GetAllocator();
 
-    //        resultDocument.AddMember("configuration", Value{configuration},
-    //        allocator);
+    const rapidjson::Document& document = configuration.getJsonDocument();
+    rapidjson::Value configurationValue;
 
     Value errorMessageValue;
     errorMessageValue.SetString(errorMessage.c_str(), errorMessage.size());
@@ -96,6 +96,9 @@ class Result {
         "identityActions", Value{}.SetInt(identityActions), allocator);
     resultDocument.AddMember(
         "timestamp", Value{}.SetInt64(timestamp), allocator);
+
+    configurationValue.CopyFrom(document, allocator);
+    resultDocument.AddMember("configuration", configurationValue, allocator);
 
     StringBuffer buffer;
     Writer<StringBuffer> writer(buffer);
