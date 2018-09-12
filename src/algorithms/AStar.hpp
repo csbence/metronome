@@ -42,8 +42,6 @@ class AStar final : public OfflinePlanner<Domain> {
     while (!openList.isEmpty()) {
       Planner::incrementExpandedNodeCount();
       Node* currentNode = openList.pop();
-      //            LOG_EVERY_N(100000, INFO) << "\nFrom: " <<
-      //            currentNode->toString();
 
       if (domain.isGoal(currentNode->state)) {
         std::vector<Action> actions;
@@ -59,7 +57,6 @@ class AStar final : public OfflinePlanner<Domain> {
       }
 
       for (auto successor : domain.successors(currentNode->state)) {
-        //                LOG(INFO) << "successor" << successor << std::endl;
         if (successor.state == currentNode->state) {
           continue;  // Skip parent TODO this might be unnecessary
         }
@@ -79,8 +76,6 @@ class AStar final : public OfflinePlanner<Domain> {
               newCost + domain.heuristic(successor.state));
 
           successorNode = nodePool.construct(std::move(tempSuccessorNode));
-          //                            LOG(INFO) << "addToOpen(NEW): " +
-          //                            successorNode->toString();
           openList.push(*successorNode);
         } else if (successorNode->g > newCost) {
           // Better path found to an existing state
@@ -93,9 +88,6 @@ class AStar final : public OfflinePlanner<Domain> {
         } else {
           // The new path is not better than the existing
         }
-
-        //                LOG(INFO) << "\n\tSuccessor: " <<
-        //                successorNode->toString();
       }
     }
 
