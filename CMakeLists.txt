@@ -30,7 +30,7 @@ set(SOURCE_FILES
         src/domains/SuccessorBundle.hpp
         src/utils/PriorityQueue.hpp
         src/utils/Hash.hpp
-        src/utils/Visualizer.hpp
+        src/visualization/Visualizer.hpp
         src/utils/Location2D.hpp
         src/experiment/termination/TimeTerminationChecker.hpp
         src/experiment/PlanManager.hpp
@@ -68,7 +68,8 @@ include_directories(
         src
 )
 
-#    add_definitions(-DGRAPHICS)
+# Comment the following line out to disable Gephi (Stream Graph HTTP) visualization
+add_definitions(-DSTREAM_GRAPH)
 
 target_link_libraries(Metronome ${Boost_LIBRARIES} ${X11_LIBRARIES})
 target_link_libraries(MetronomeTest ${Boost_LIBRARIES} ${X11_LIBRARIES})

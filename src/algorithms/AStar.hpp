@@ -5,7 +5,6 @@
 #include <domains/Traffic.hpp>
 #include <unordered_map>
 #include <utils/PriorityQueue.hpp>
-#include <utils/Visualizer.hpp>
 #include <vector>
 #include "OfflinePlanner.hpp"
 #include "Planner.hpp"
