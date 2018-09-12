@@ -97,8 +97,7 @@ public:
                 domain.getActionDuration() + pathLength * configuration.getLong("actionDuration"), // GAT
                 domain.getActionDuration(), // Idle planning time
                 pathLength, // Path length
-                actionStrings,
-                planner.getIdentityActionCount());
+                actionStrings);
     }
 };
 

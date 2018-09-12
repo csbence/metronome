@@ -15,7 +15,6 @@ namespace metronome {
 class Traffic {
  public:
   typedef long long int Cost;
-  static constexpr Cost COST_MAX = std::numeric_limits<Cost>::max();
   static const short MAX_VELOCITY = 4;
 
   class Action {

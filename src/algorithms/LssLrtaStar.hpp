@@ -219,7 +219,7 @@ class LssLrtaStar final : public OnlinePlanner<Domain, TerminationChecker> {
       if (successorNode->iteration != iterationCounter) {
         successorNode->iteration = iterationCounter;
         successorNode->predecessors.clear();
-        successorNode->g = Domain::COST_MAX;
+        successorNode->g = std::numeric_limits<Cost>::max();
         successorNode->open =
             false;  // It is not on the open list yet, but it will be
         // parent, action, and actionCost is outdated too, but not relevant.
@@ -257,7 +257,7 @@ class LssLrtaStar final : public OnlinePlanner<Domain, TerminationChecker> {
     return nodePool.construct(Node{sourceNode,
                                    successor.state,
                                    successor.action,
-                                   domain.COST_MAX,
+                                   std::numeric_limits<Cost>::max(),
                                    domain.heuristic(successor.state),
                                    true});
   }

@@ -16,7 +16,6 @@ namespace metronome {
 class SlidingTilePuzzle {
  public:
   typedef long long int Cost;
-  static constexpr Cost COST_MAX = std::numeric_limits<Cost>::max();
 
   class Action {
    public:

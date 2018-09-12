@@ -82,7 +82,6 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       } else {
         stream << parent->state;
       }
-      stream << (open ? " Open" : " Not Open");
       return stream.str();
     }
 
@@ -103,7 +102,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     Cluster* containingCluster;
   };
 
-  class NodeComparatorF {
+  struct NodeComparatorF {
     int operator()(const Node* lhs, const Node* rhs) const {
       if (lhs->f() < rhs->f()) return -1;
       if (lhs->f() > rhs->f()) return 1;
@@ -113,8 +112,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     }
   };
 
-  class NodeEquals {
-    bool operator()(const Node* lhs, const Node* rhs) const { lhs == rhs; }
+  struct NodeEquals {
+    bool operator()(const Node* lhs, const Node* rhs) const { 
+      return lhs == rhs;
+    }
   };
 
   class Edge {
@@ -151,7 +152,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     std::vector<ClusterEdge> reachableClusters;
     cserna::DynamicPriorityQueue<
         Node*,
-        cserna::NonIntrusiveIndexFunction<Node*, Hash<Node*>, NodeEquals>,
+        cserna::NonIntrusiveIndexFunction<Node*, Hash<Node>, NodeEquals>,
         NodeComparatorF,
         CLUSTER_NODE_LIMIT,
         CLUSTER_NODE_LIMIT>
@@ -161,7 +162,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   };
 
   struct ClusterIndex {
-    std::size_t& operator()(const Cluster* cluster) const {
+    std::size_t& operator()(Cluster* cluster) const {
       return cluster->openListIndex;
     }
   };
@@ -178,7 +179,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     }
   };
 
-  class ClusterComparatorH {
+  struct ClusterComparatorH {
     int operator()(const Cluster* lhs, const Cluster* rhs) const {
       if (lhs->bestHNode->h < rhs->bestHNode->h) return -1;
       if (lhs->bestHNode->h > rhs->bestHNode->h) return 1;
@@ -188,7 +189,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     }
   };
 
-  class ClusterComparatorCoreH {
+  struct ClusterComparatorCoreH {
     int operator()(const Cluster* lhs, const Cluster* rhs) const {
       if (lhs->coreNode->h < rhs->coreNode->h) return -1;
       if (lhs->coreNode->h > rhs->coreNode->h) return 1;
@@ -286,7 +287,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
         successorNode = nodePool.construct(sourceNode,
                               successor.state,
                               successor.action,
-                              domain.COST_MAX,
+                              std::numeric_limits<Cost>::max(),
                               domain.heuristic(successor.state));
       }
 
@@ -325,6 +326,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     
     return {};
   }
+
+#ifdef VISUALIZER
+
+#endif
 
   const Domain& domain;
   cserna::DynamicPriorityQueue<Cluster*,
