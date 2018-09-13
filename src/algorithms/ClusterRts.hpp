@@ -329,14 +329,6 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     // 3. Find last segment from region center to target node
     // If the path partially overlaps with the current path stitch
 
-    for (auto const& s : states) {
-      for (auto const& a : s.get_actions()) {
-        for (auto const& t : a.get_outcomes()) {
-          if (!t.is_normalized()) return false;
-        }
-      }
-    }
-
     return {};
   }
 
