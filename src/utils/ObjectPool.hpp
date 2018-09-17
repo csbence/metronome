@@ -26,9 +26,10 @@ class ObjectPool {
   // Create an object in aligned storage
   template <typename... Args>
   T* construct(Args&&... args) {
-    if (size >= N)  // possible error handling
-      throw std::bad_alloc{};
-    
+    if (size >= N) {
+      throw std::overflow_error("ObjectPool: Maximum capacity has reached.");
+    }
+
     std::size_t freeIndex = getFreeIndex();
     T* const t = new (storage + freeIndex) T(std::forward<Args>(args)...);
     freeIndices[freeIndex] = false;
@@ -78,6 +79,8 @@ class ObjectPool {
         return i;
       }
     }
+
+    throw std::overflow_error("ObjectPool: No free indices are available.");
   }
   
   Storage* storage;
