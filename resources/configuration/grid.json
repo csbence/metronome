@@ -1,8 +1,8 @@
 {
   "timeLimit": 150000000000,
-  "domainPath": "/input/vacuum/hole_400.vw",
+  "domainPath": "/input/vacuum/openBox_25.vw",
   "domainInstanceName": "Manual test instance",
-  "actionDuration": 10,
+  "actionDuration": 100,
   "domainName": "GRID_WORLD",
   "terminationType": "EXPANSION",
   "algorithmName": "CLUSTER_RTS",
