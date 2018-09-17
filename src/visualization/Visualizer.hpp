@@ -27,6 +27,8 @@ class Visualizer {
     double r = 0;
     double g = 0;
     double b = 0;
+    
+    std::size_t scale = 10;
 
     // clang-format off
       commandBuilder << "{\"" << (alreadyVisualized ? "cn" : "an")
@@ -36,9 +38,9 @@ class Visualizer {
                      << R"(,"r":)"      << r
                      << R"(,"g":)"      << g
                      << R"(,"b":)"      << b
-                     << R"(,"x":)"      << x
-                     << R"(,"y":)"      << y
-                     << R"(,"z":)"      << z
+                     << R"(,"x":)"      << x * scale
+                     << R"(,"y":)"      << y * scale
+                     << R"(,"z":)"      << z * scale
                      << "}}}";
     // clang-format on
 
@@ -61,10 +63,10 @@ class Visualizer {
     commandBuilder << "{\"" << (alreadyVisualized ? "ce" : "ae")
                    << R"(":{")" << edgeId
                    << R"(":{"source":")"      << sourceNodeId
-                   << R"(", "target":")"      << targetNodeId
-                   << R"(", "directed":true)"
-                   << R"(", "label":")"       << label
-                   << R"(", "weight":)"      << weight
+                   << R"(","target":")"      << targetNodeId
+                   << R"(","label2":")"       << label
+                   << R"(","directed":true)"
+                   << R"( ,"weight":)"      << weight
                    << "}}}";
     // clang-format on
 
