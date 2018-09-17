@@ -12,6 +12,7 @@ class RealTimePlanManager : PlanManager<Domain, Planner> {
 public:
     Result plan(const Configuration& configuration, const Domain& domain, Planner& planner) {
         using namespace std::chrono;
+        LOG(INFO) << "Begin real-time planning iterations";
 
         if (!configuration.hasMember(LOOKAHEAD_TYPE)) {
             LOG(ERROR) << "Lookahead type not found." << std::endl;
