@@ -76,6 +76,10 @@ class Visualizer {
 
   void post() {
 #ifdef STREAM_GRAPH
+    if (commands.empty()) {
+      return;
+    }
+
     std::ostringstream commandBuilder;
 
     for (const auto& command : commands) {
