@@ -14,7 +14,17 @@ namespace cserna {
 template <typename T, typename Hash = std::hash<T>, typename Equal = std::equal_to<T>>
 class NonIntrusiveIndexFunction {
  public:
-  std::size_t& operator()(const T& item) { return indexMap[item]; }
+  std::size_t& operator()(T& item) {
+      const auto itemIterator = indexMap.find(item);
+
+      if (itemIterator == indexMap.cend()) {
+          std::size_t& index = indexMap[item];
+          index = std::numeric_limits<std::size_t>::max();
+          return index;
+      } else {
+          return itemIterator->second;
+      }
+  }
 
   std::size_t operator()(const T& item) const {
       const auto itemIterator = indexMap.find(item);
@@ -85,6 +95,8 @@ class DynamicPriorityQueue {
       auto top_item(std::move(queue[0]));
 
       if (queue.size() == 1) {
+          indexFunction(top_item) = std::numeric_limits<std::size_t>::max();
+          queue.pop_back();
           return top_item;
       }
 
@@ -117,9 +129,7 @@ class DynamicPriorityQueue {
       return queue[0];
   }
 
-  void remove(const T& item) {
-      remove(T(item));
-  }
+  void remove(const T& item) { remove(T(item)); }
 
   void remove(T&& item) {
       if (!contains(item)) {
@@ -194,7 +204,7 @@ class DynamicPriorityQueue {
       auto currentIndex = index;
       while (currentIndex > 0) {
           const auto parentIndex = (currentIndex - 1) / 2;
-          const auto parentItem = queue[parentIndex];
+          auto parentItem = queue[parentIndex];
 
           if (comparator(item, parentItem) >= 0) {
               break;
@@ -210,7 +220,7 @@ class DynamicPriorityQueue {
       indexFunction(item) = currentIndex;
   }
 
-  void siftDown(const std::size_t index, const T& item) {
+  void siftDown(const std::size_t index, T& item) {
       auto currentIndex = index;
       const std::size_t half = queue.size() / 2;
 
