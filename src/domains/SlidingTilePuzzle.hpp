@@ -96,6 +96,10 @@ class SlidingTilePuzzle {
       return os;
     }
 
+    // To ensure compatibility with the visualizer
+    unsigned int getX() const { return 0; }
+    unsigned int getY() const { return 0; }
+
    private:
     unsigned char zeroIndex{0};
     unsigned long long int tiles{0};
@@ -190,7 +194,7 @@ class SlidingTilePuzzle {
     return distance(state) * actionDuration;
   }
 
-  bool safetyPredicate(const State& state) const { return true; }
+  bool safetyPredicate(const State&) const { return true; }
 
   std::vector<SuccessorBundle<SlidingTilePuzzle>> successors(
       const State& state) const {

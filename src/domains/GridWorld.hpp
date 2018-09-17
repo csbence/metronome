@@ -240,7 +240,7 @@ class GridWorld {
     return distance(state) * actionDuration;
   }
 
-  bool safetyPredicate(const State& state) const { return true; }
+  bool safetyPredicate(const State&) const { return true; }
 
   std::vector<SuccessorBundle<GridWorld>> successors(const State& state) const {
     std::vector<SuccessorBundle<GridWorld>> successors;
@@ -297,7 +297,7 @@ class GridWorld {
 
     return boost::none;
   }
-
+  
   /*
    * maxActions <- maximum number of actions
    * width/height <- internal size representation of world

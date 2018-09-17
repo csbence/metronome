@@ -74,17 +74,18 @@ class Traffic {
 
   class Obstacle {
    public:
-    Obstacle(int x, int y, int xVelocity, int yVelocity)
+    Obstacle(unsigned int x, unsigned  int y, int xVelocity, int yVelocity)
         : x{x}, y{y}, xVelocity{xVelocity}, yVelocity{yVelocity} {}
-    Obstacle() : x{-1}, y{-1}, xVelocity{0}, yVelocity{0} {}
-    Obstacle(int x, int y) : x{x}, y{y}, xVelocity{0}, yVelocity{0} {}
+    Obstacle() : x{0}, y{0}, xVelocity{0}, yVelocity{0} {}
+    Obstacle(unsigned int x, unsigned int y) : x{x}, y{y}, xVelocity{0}, 
+    yVelocity{0} {}
     Obstacle& operator=(Obstacle toCopy) {
       swap(*this, toCopy);
       return *this;
     }
-    int getX() const { return x; }
+    unsigned int getX() const { return x; }
 
-    int getY() const { return y; }
+    unsigned int getY() const { return y; }
 
     std::size_t hash() const {
       return static_cast<unsigned int>(x ^ y << 16 ^ y >> 16);
@@ -118,8 +119,8 @@ class Traffic {
     }
 
    private:
-    int x;
-    int y;
+    unsigned int x;
+    unsigned int y;
     int xVelocity;
     int yVelocity;
 
@@ -227,8 +228,8 @@ class Traffic {
 
     bunkers = std::vector<std::vector<bool>>{width, std::vector<bool>(height)};
 
-    for (auto i = 0; i < width; ++i) {
-      for (auto j = 0; j < height; ++j) {
+    for (unsigned i = 0; i < width; ++i) {
+      for (unsigned j = 0; j < height; ++j) {
         bunkers[i][j] = false;
       }
     }
@@ -304,8 +305,8 @@ class Traffic {
                  const Action& action) const {
     display << "WORLD taking " << action.toChar() << "\n";
 
-    for (auto i = 0; i < height; ++i) {
-      for (auto j = 0; j < width; ++j) {
+    for (unsigned int i = 0; i < height; ++i) {
+      for (unsigned int j = 0; j < width; ++j) {
         if (state.getX() == j && state.getY() == i) {
           display << '@';
         } else if (goalLocation.getX() == j && goalLocation.getY() == i) {
@@ -369,7 +370,7 @@ class Traffic {
     return boost::none;
   }
 
-  const bool isObstacle(const State& state, int x, int y) const {
+  bool isObstacle(const State& state, unsigned int x, unsigned int y) const {
     for (auto obstacle : state.getObstacleMap()) {
       if (obstacle.getX() == x && obstacle.getY() == y) {
         return true;
@@ -377,9 +378,10 @@ class Traffic {
     }
     return false;
   }
-  const bool isBunker(int x, int y) const { return bunkers[x][y]; }
+  
+  bool isBunker(int x, int y) const { return bunkers[x][y]; }
 
-  const bool isLegalLocation(const State& location) const {
+  bool isLegalLocation(const State& location) const {
     return location.getX() < width && location.getY() < height &&
            !isObstacle(location, location.getX(), location.getY());
   }
@@ -430,7 +432,7 @@ class Traffic {
     return distance(state) * actionDuration;
   }
 
-  const bool isGoal(const State& location) const {
+  bool isGoal(const State& location) const {
     return goalLocation.getX() == location.getX() &&
            goalLocation.getY() == location.getY();
   }
@@ -446,20 +448,17 @@ class Traffic {
       int xVelocity = curObstacle.getXVelocity();
       int yVelocity = curObstacle.getYVelocity();
 
-      int newXLocation = curObstacle.getX() + xVelocity;
-      int newYLocation = curObstacle.getY() + yVelocity;
+      unsigned int newXLocation = curObstacle.getX() + xVelocity;
+      unsigned int newYLocation = curObstacle.getY() + yVelocity;
 
       if (newXLocation > width - 1 || newXLocation < 0) {
         xVelocity *= -1;
         newXLocation = curObstacle.getX();  // + xVelocity;
       }
+      
       if (newYLocation > height - 1 || newYLocation <= 0) {
         yVelocity *= -1;
         newYLocation = curObstacle.getY();  // + yVelocity;
-      }
-
-      if (newXLocation == -1 || newYLocation == -1) {
-        throw MetronomeException("Obstacle data structure corrupted...");
       }
 
       if (newXLocation != curObstacle.getX() ||
