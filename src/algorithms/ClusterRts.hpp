@@ -30,8 +30,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   using ActionBundle =
       typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle;
 
-  static constexpr std::size_t CLUSTER_NODE_LIMIT = 1000;
-  static constexpr std::size_t CLUSTER_G_RADIUS = 10;
+  static constexpr std::size_t CLUSTER_NODE_LIMIT = 20;
+  static constexpr std::size_t CLUSTER_G_RADIUS = 10000;
   static constexpr std::size_t MAX_CLUSTER_COUNT = 1000;
 
   ClusterRts(const Domain& domain, const Configuration&) : domain{domain} {
@@ -102,7 +102,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
      * exploration phase. */
     std::vector<Edge> predecessors;
 
-    Cluster* containingCluster;
+    Cluster* containingCluster = nullptr;
   };
 
   struct NodeComparatorF {
@@ -146,20 +146,21 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
   class Cluster {
    public:
-    Node* coreNode;
+    Node* coreNode = nullptr;
     std::size_t nodeCount = 0;
     bool depleted = false;
 
-    Node* bestHNode;
+    Node* bestHNode = nullptr;
 
     std::vector<ClusterEdge> reachableClusters;
     cserna::DynamicPriorityQueue<
         Node*,
         cserna::NonIntrusiveIndexFunction<Node*, Hash<Node>, NodeEquals>,
         NodeComparatorF,
-        CLUSTER_NODE_LIMIT,
-        CLUSTER_NODE_LIMIT>
+        CLUSTER_NODE_LIMIT * 4,
+        CLUSTER_NODE_LIMIT * 4>
         openList;
+    std::unordered_map<State, Node*, typename metronome::Hash<State>> nodes;
 
     std::size_t openListIndex = std::numeric_limits<std::size_t>::max();
   };
@@ -203,23 +204,23 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   void createInitialCluster(const State& initialState) {
     Planner::incrementGeneratedNodeCount();
 
-    Node*& initialNode = nodes[initialState];
+    auto initialCluster = clusterPool.construct();
+    Node*& initialNode = initialCluster->nodes[initialState];
 
     initialNode = nodePool.construct(Node{
         nullptr, initialState, Action(), 0, domain.heuristic(initialState)});
 
-    auto spawnedCluster = clusterPool.construct();
-    spawnedCluster->coreNode = initialNode;
-    openClusters.push(spawnedCluster);
+    initialCluster->coreNode = initialNode;
+    initialCluster->openList.push(initialNode);
 
-    initialNode->containingCluster = spawnedCluster;
+    openClusters.push(initialCluster);
   }
 
   void explore(const State& startState,
                TerminationChecker& terminationChecker) {
     while (!terminationChecker.reachedTermination() &&
-           openClusters.isNotEmpty()) {
-      auto cluster = openClusters.pop();
+           !openClusters.empty()) {
+      auto cluster = openClusters.top();
       // todo check if the goal state was expanded
 
       bool expanded = expandCluster(cluster);
@@ -232,7 +233,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       return false;
     }
 
-    if (sourceCluster->openList.isEmpty()) {
+    if (sourceCluster->openList.empty()) {
       sourceCluster->depleted = true;
       return false;
     }
@@ -245,9 +246,13 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     auto currentNode = sourceCluster->openList.pop();
 
-    if (currentNode->containingCluster != nullptr) {
+    if (nodes[currentNode->state] != nullptr) {
+      // Another cluster already claimed this node
+      nodePool.destruct(currentNode);
       return false;
     }
+    
+    nodes[currentNode->state] = currentNode;
 
     bool spawnNewCore = sourceCluster->nodeCount >= CLUSTER_NODE_LIMIT ||
                         currentNode->g >= CLUSTER_G_RADIUS;
@@ -265,15 +270,16 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     ++(currentNode->containingCluster->nodeCount);
     expandNode(currentNode);
 
-    auto gridState = static_cast<GridWorld::State>(currentNode->state);
-
     std::size_t id = nodePool.index(currentNode);
-    visualizer.addNode(id, gridState.getX(), gridState.getY());
-    visualizer.addEdge(
-        id,
-        nodePool.index(currentNode->parent),
-        id,
-        "cluster:" + clusterPool.index(currentNode->containingCluster));
+    visualizer.addNode(id, currentNode->state.getX(), currentNode->state.getY());
+    if (currentNode->parent != nullptr) {
+      visualizer.addEdge(
+          id,
+          nodePool.index(currentNode->parent),
+          id,
+          "cluster:" + std::to_string(clusterPool.index
+              (currentNode->containingCluster)));
+    }
 
     return true;
   }
@@ -285,7 +291,25 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     for (auto successor : domain.successors(sourceNode->state)) {
       auto successorState = successor.state;
 
-      Node*& successorNode = nodes[successorState];
+      const Node* globalSuccessorNode = nodes[successorState];
+      Node*& successorNode = containingCluster->nodes[successorState];
+      
+      if (globalSuccessorNode != nullptr) {
+        // Another cluster already claimed this node
+        if (successorNode == nullptr) {
+          // This node is not on the open list of this cluster, no cleanup is
+          // necessary.
+          continue;
+        } else {
+          containingCluster->openList.remove(successorNode);
+          nodePool.destruct(successorNode);
+        }
+      }
+      
+      // todo This should be a local lookup
+      // Let's first check if another cluster claimed this node
+      // if it was claimed then either just not create a node or destroy the 
+      // local node
 
       if (successorNode == nullptr) {
         Planner::incrementGeneratedNodeCount();
@@ -294,11 +318,6 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
                                            successor.action,
                                            std::numeric_limits<Cost>::max(),
                                            domain.heuristic(successor.state));
-      }
-
-      // This node is already taken by another cluster
-      if (successorNode->containingCluster != nullptr) {
-        continue;
       }
 
       // Add the current state as the predecessor of the child state
@@ -317,7 +336,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
         successorNode->parent = sourceNode;
         successorNode->action = successor.action;
 
-        sourceNode->containingCluster->openList.insertOrUpdate(successorNode);
+        containingCluster->openList.insertOrUpdate(successorNode);
       }
     }
   }
