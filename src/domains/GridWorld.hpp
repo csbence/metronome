@@ -244,6 +244,7 @@ class GridWorld {
 
   std::vector<SuccessorBundle<GridWorld>> successors(const State& state) const {
     std::vector<SuccessorBundle<GridWorld>> successors;
+    successors.reserve(4);
 
     addValidSuccessor(successors, state, 0, 1, Action::getActions()[1]);
     addValidSuccessor(successors, state, 0, -1, Action::getActions()[0]);
@@ -276,8 +277,8 @@ class GridWorld {
  private:
   void addValidSuccessor(std::vector<SuccessorBundle<GridWorld>>& successors,
                          const State& sourceState,
-                         signed char relativeX,
-                         signed char relativeY,
+                         const int relativeX,
+                         const int relativeY,
                          Action& action) const {
     const boost::optional<State>& successor =
         getSuccessor(sourceState, relativeX, relativeY);
@@ -287,17 +288,20 @@ class GridWorld {
   }
 
   boost::optional<State> getSuccessor(const State& sourceState,
-                                      signed char relativeX,
-                                      signed char relativeY) const {
-    State newState =
-        State(sourceState.getX() + relativeX, sourceState.getY() + relativeY);
+                                      int relativeX,
+                                      int relativeY) const {
+    auto newX = static_cast<unsigned int>(static_cast<int>(sourceState.getX()) + relativeX);
+    auto newY = static_cast<unsigned int>(static_cast<int>(sourceState.getY()) + relativeY);
+
+    State newState = State(newX, newY);
+
     if (isLegalLocation(newState)) {
       return boost::make_optional(newState);
     }
 
     return boost::none;
   }
-  
+
   /*
    * maxActions <- maximum number of actions
    * width/height <- internal size representation of world
