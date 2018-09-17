@@ -157,10 +157,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
         Node*,
         cserna::NonIntrusiveIndexFunction<Node*, Hash<Node>, NodeEquals>,
         NodeComparatorF,
-        CLUSTER_NODE_LIMIT * 4,
+        CLUSTER_NODE_LIMIT * 10,
         CLUSTER_NODE_LIMIT * 4>
         openList;
-    std::unordered_map<State, Node*, typename metronome::Hash<State>> nodes;
+    std::unordered_map<State, Node*, typename metronome::Hash<State>> nodes; // pre-allocate?
 
     std::size_t openListIndex = std::numeric_limits<std::size_t>::max();
   };
@@ -212,29 +212,38 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     initialCluster->coreNode = initialNode;
     initialCluster->openList.push(initialNode);
+    // Do not add to the local nodes set. Will be added when expanded.
 
     openClusters.push(initialCluster);
   }
 
   void explore(const State& startState,
                TerminationChecker& terminationChecker) {
-    while (!terminationChecker.reachedTermination() &&
-           !openClusters.empty()) {
+    while (!terminationChecker.reachedTermination() && !openClusters.empty()) {
       auto cluster = openClusters.top();
+
       // todo check if the goal state was expanded
 
       bool expanded = expandCluster(cluster);
-      if (expanded) terminationChecker.notifyExpansion();
+
+      terminationChecker.notifyExpansion();
     }
   }
 
   bool expandCluster(Cluster* sourceCluster) {
     if (sourceCluster->depleted) {
-      return false;
+      LOG(ERROR) << "Expanding depleted cluster: " << clusterPool.index(sourceCluster);
+      throw MetronomeException(
+          "Trying to expand a depleted cluster. Such clusters should not be on "
+          "open.");
     }
 
     if (sourceCluster->openList.empty()) {
+      LOG(ERROR) << "Cluster depleted: " << clusterPool.index(sourceCluster);
       sourceCluster->depleted = true;
+
+      openClusters.remove(sourceCluster);
+
       return false;
     }
 
@@ -245,13 +254,20 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     // todo implement d
 
     auto currentNode = sourceCluster->openList.pop();
+    assert(!sourceCluster->openList.contains(currentNode));
+//    assert(currentNode->containingCluster == sourceCluster && "Containing cluster: " + std::to_string(currentNode->containingCluster));
 
     if (nodes[currentNode->state] != nullptr) {
       // Another cluster already claimed this node
-      nodePool.destruct(currentNode);
+      LOG(INFO) << "Expanding cluster: " << clusterPool.index(sourceCluster)
+                << " removing node: " << nodePool.index(currentNode)
+                << " as it was already claimed by: " << clusterPool.index(nodes[currentNode->state]->containingCluster);
+
+      sourceCluster->nodes.erase(currentNode->state);
+//      nodePool.destruct(currentNode);
       return false;
     }
-    
+
     nodes[currentNode->state] = currentNode;
 
     bool spawnNewCore = sourceCluster->nodeCount >= CLUSTER_NODE_LIMIT ||
@@ -271,14 +287,14 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     expandNode(currentNode);
 
     std::size_t id = nodePool.index(currentNode);
-    visualizer.addNode(id, currentNode->state.getX(), currentNode->state.getY());
+    visualizer.addNode(
+        id, currentNode->state.getX(), currentNode->state.getY());
     if (currentNode->parent != nullptr) {
-      visualizer.addEdge(
-          id,
-          nodePool.index(currentNode->parent),
-          id,
-          "cluster:" + std::to_string(clusterPool.index
-              (currentNode->containingCluster)));
+      visualizer.addEdge(id,
+                         nodePool.index(currentNode->parent),
+                         id,
+                         "cluster:" + std::to_string(clusterPool.index(
+                                          currentNode->containingCluster)));
     }
 
     return true;
@@ -288,28 +304,36 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     Planner::incrementExpandedNodeCount();
     auto containingCluster = sourceNode->containingCluster;
 
+    if (domain.isGoal(sourceNode->state)) {
+      goalNode = sourceNode;
+    }
+
     for (auto successor : domain.successors(sourceNode->state)) {
       auto successorState = successor.state;
 
       const Node* globalSuccessorNode = nodes[successorState];
       Node*& successorNode = containingCluster->nodes[successorState];
-      
+
       if (globalSuccessorNode != nullptr) {
-        // Another cluster already claimed this node
-        if (successorNode == nullptr) {
-          // This node is not on the open list of this cluster, no cleanup is
-          // necessary.
-          continue;
-        } else {
+        // This node was already claimed
+
+        if (globalSuccessorNode->containingCluster == containingCluster) {
+          // It was claimed by the current cluster. No action is necessary
+        } else if (successorNode != nullptr && successorNode->containingCluster == containingCluster) {
+          LOG(INFO) << "Expanding successors from cluster: " << clusterPool.index(containingCluster)
+                    << " removing node: " << nodePool.index(successorNode)
+                    << " as it was already claimed by: " << clusterPool.index(globalSuccessorNode->containingCluster);
+
           containingCluster->openList.remove(successorNode);
+          containingCluster->nodes.erase(successorNode->state);
           nodePool.destruct(successorNode);
         }
+
+        // else: this node is not on the open list of this cluster, no cleanup is
+        // necessary.
+
+        continue;
       }
-      
-      // todo This should be a local lookup
-      // Let's first check if another cluster claimed this node
-      // if it was claimed then either just not create a node or destroy the 
-      // local node
 
       if (successorNode == nullptr) {
         Planner::incrementGeneratedNodeCount();
@@ -366,6 +390,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   std::unordered_map<State, Node*, typename metronome::Hash<State>> nodes;
   ObjectPool<Node, Memory::NODE_LIMIT> nodePool;
   ObjectPool<Cluster, Memory::NODE_LIMIT> clusterPool;
+
+  Node* goalNode = nullptr;
 
   Visualizer visualizer;
 };
