@@ -231,6 +231,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   }
 
   bool expandCluster(Cluster* sourceCluster) {
+    LOG(INFO) << "Expanding cluster: " << clusterPool.index(sourceCluster);
+    
     if (sourceCluster->depleted) {
       LOG(ERROR) << "Expanding depleted cluster: " << clusterPool.index(sourceCluster);
       throw MetronomeException(
@@ -276,6 +278,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     if (spawnNewCore) {
       auto spawnedCluster = clusterPool.construct();
       spawnedCluster->coreNode = currentNode;
+      LOG(INFO) << "Creating cluster: " << clusterPool.index(spawnedCluster);
       openClusters.push(spawnedCluster);
 
       currentNode->containingCluster = spawnedCluster;
