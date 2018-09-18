@@ -17,7 +17,7 @@ class Visualizer {
                std::size_t y = 0,
                std::size_t z = 1,
                double size = 1,
-               std::string label = "") {
+               const std::string& label = "") {
 #ifdef STREAM_GRAPH
     std::ostringstream commandBuilder;
 
