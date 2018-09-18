@@ -71,9 +71,7 @@ class DynamicPriorityQueue {
   DynamicPriorityQueue(DynamicPriorityQueue&&) noexcept = default;
   ~DynamicPriorityQueue() = default;
 
-  void push(const T& item) { push(T(item)); }
-
-  void push(T&& item) {
+  void push(T item) {
       if (queue.size() == MAX_CAPACITY) {
           throw std::overflow_error("Priority queue reached its maximum capacity:" + std::to_string(MAX_CAPACITY));
       }
@@ -83,7 +81,7 @@ class DynamicPriorityQueue {
           queue.push_back(item);
       } else {
           queue.push_back(item);
-          siftUp(queue.size() - 1, item);
+          siftUp(queue.size() - 1, std::move(item));
       }
   }
 
@@ -103,7 +101,7 @@ class DynamicPriorityQueue {
       auto last_item(std::move(queue[queue.size() - 1]));
 
       queue.pop_back();
-      siftDown(0, last_item);
+      siftDown(0, std::move(last_item));
 
       assert(indexFunction(top_item) == 0 &&
           "Internal index of top item was "
@@ -129,9 +127,7 @@ class DynamicPriorityQueue {
       return queue[0];
   }
 
-  void remove(const T& item) { remove(T(item)); }
-
-  void remove(T&& item) {
+  void remove(T item) {
       if (!contains(item)) {
           return;
       }
@@ -152,7 +148,7 @@ class DynamicPriorityQueue {
       queue.pop_back();
 
       // The heap property might've been violated by the swap. Let's fix it.
-      siftDown(index, queue[index]);
+      siftDown(index, std::move(queue[index]));
   }
 
   void clear() {
@@ -162,27 +158,25 @@ class DynamicPriorityQueue {
       queue.clear();
   }
 
-  void insertOrUpdate(T& item) {
+  void insertOrUpdate(T item) {
       if (indexFunction(item) == std::numeric_limits<std::size_t>::max()) {
           // Item is not in the queue yet
-          push(item);
+          push(std::move(item));
       } else {
           // Already in the queue
-          update(item);
+          update(std::move(item));
       }
   }
 
-  void update(const T& item) { update(T(item)); }
+  void update(T item) {
+      const std::size_t originalIndex = indexFunction(item);
+      assert(originalIndex != std::numeric_limits<std::size_t>::max() &&
+          "Cannot update a node that is not in the queue!");
 
-  void update(T&& item) {
-      auto index = indexFunction(item);
+      const bool moved = siftUp(originalIndex, std::move(item));
 
-      assert(index != std::numeric_limits<std::size_t>::max() && "Cannot update a node that is not in the queue!");
-
-      siftUp(indexFunction(item), item);
-
-      if (indexFunction(item) == index) {
-          siftDown(indexFunction(item), item);
+      if (!moved) {
+          siftDown(originalIndex, std::move(queue[originalIndex]));
       }
   }
 
@@ -200,7 +194,7 @@ class DynamicPriorityQueue {
   bool contains(const T& item) const { return indexFunction(item) != std::numeric_limits<std::size_t>::max(); }
 
  private:
-  void siftUp(const std::size_t index, T& item) {
+  bool siftUp(const std::size_t index, T item) {
       auto currentIndex = index;
       while (currentIndex > 0) {
           const auto parentIndex = (currentIndex - 1) / 2;
@@ -216,18 +210,20 @@ class DynamicPriorityQueue {
           currentIndex = parentIndex;
       }
 
-      queue[currentIndex] = item;
       indexFunction(item) = currentIndex;
+      queue[currentIndex] = std::move(item);
+
+      return currentIndex == index;
   }
 
-  void siftDown(const std::size_t index, T& item) {
-      auto currentIndex = index;
+  bool siftDown(const std::size_t index, T item) {
+      std::size_t currentIndex = index;
       const std::size_t half = queue.size() / 2;
 
       while (currentIndex < half) {
-          auto childIndex = (currentIndex * 2) + 1;
-          auto childItem = queue[childIndex];
-          auto rightIndex = childIndex + 1;
+          std::size_t childIndex = (currentIndex * 2) + 1;
+          T& childItem = queue[childIndex];
+          std::size_t rightIndex = childIndex + 1;
 
           if (rightIndex < queue.size() && comparator(childItem, queue[rightIndex]) > 0) {
               childIndex = rightIndex;
@@ -243,8 +239,10 @@ class DynamicPriorityQueue {
           currentIndex = childIndex;
       }
 
-      queue[currentIndex] = item;
       indexFunction(item) = currentIndex;
+      queue[currentIndex] = std::move(item);
+
+      return currentIndex == index;
   }
 
   const ThreeWayComparator comparator;
