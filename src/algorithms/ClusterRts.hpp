@@ -138,6 +138,13 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       return bestSourceFrontierNode->g + bestTargetFrontierNode->g;
     }
 
+    std::vector<ActionBundle> actions() const {
+      if (actionsTowardsCluster.empty()) {
+      }
+
+      return actionsTowardsCluster;
+    }
+
     Cluster* cluster;
     Node* bestSourceFrontierNode;
     Node* bestTargetFrontierNode;
@@ -147,7 +154,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
      * Should be reset when the best frontier node toward the cluster is
      * changed.
      */
-    std::vector<Action> actionsTowardsCluster;
+    std::vector<ActionBundle> actionsTowardsCluster;
   };
 
   class Cluster {
@@ -173,8 +180,9 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     std::size_t goalOpenListIndex = std::numeric_limits<std::size_t>::max();
 
     // Node properties
-    Cost goalDistance;
+    Cost costToAgent;
     Cluster* parentCluster;
+    ClusterEdge inEdge;
     std::size_t iteration = 0;
   };
 
@@ -183,7 +191,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       return cluster->openListIndex;
     }
   };
-  
+
   struct ClusterGoalIndex {
     std::size_t& operator()(Cluster* cluster) const {
       return cluster->goalOpenListIndex;
@@ -222,8 +230,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
   struct ClusterComparatorGoalCost {
     int operator()(const Cluster* lhs, const Cluster* rhs) const {
-      if (lhs->goalDistance < rhs->goalDistance) return -1;
-      if (lhs->goalDistance > rhs->goalDistance) return 1;
+      if (lhs->costToAgent < rhs->costToAgent) return -1;
+      if (lhs->costToAgent > rhs->costToAgent) return 1;
       return 0;
     }
   };
@@ -239,7 +247,6 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     initialCluster->coreNode = initialNode;
     initialCluster->openList.push(initialNode);
-    // Do not add to the local nodes set. Will be added when expanded.
 
     openClusters.push(initialCluster);
   }
@@ -431,6 +438,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
           // Keep the better connection
           existingEdge.bestSourceFrontierNode = lhs;
           existingEdge.bestTargetFrontierNode = rhs;
+          existingEdge.actionsTowardsCluster.clear();
           lhsConnectionFound = true;
         }
 
@@ -446,6 +454,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
           // Keep the better connection
           existingEdge.bestSourceFrontierNode = rhs;
           existingEdge.bestTargetFrontierNode = lhs;
+          existingEdge.actionsTowardsCluster.clear();
           rhsConnectionFound = true;
         }
 
@@ -476,54 +485,42 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   }
 
   std::vector<ActionBundle> extractPath(const State& agentState) {
-    goalSearchClustersOpen.clear();
+    Node* agentNode = nodes[agentState];
+    assert(agentNode != nullptr);
+    Cluster* agentCluster = agentNode->containingCluster;
 
-    // Initialize path search
+    Cluster* targetCluster = nullptr;
     if (goalNode != nullptr) {
-      goalSearchClustersOpen.push(goalNode->containingCluster);
+      targetCluster = goalNode->containingCluster;
     } else {
       assert(!openClusters.empty());
-      auto top = openClusters.top();
-      goalSearchClustersOpen.push(top);
+      targetCluster = openClusters.top();
     }
+    Node* targetNode = targetCluster->openList.top();
 
-    goalSearchClustersOpen.top()->goalDistance = 0;
-    goalSearchClustersOpen.top()->iteration = iteration;
+    populateAgentToClusterCosts(agentCluster, targetCluster);
+    auto skeletonPath = extractSkeletonPath(agentCluster, targetCluster);
 
-    auto agentNode = nodes[agentState];
-    assert(agentNode != nullptr);
-    auto agentCluster = agentNode->containingCluster;
+    auto sourceClusterPath = extractSourceClusterPath(agentNode, agentCluster);
+    auto interClusterPath = extractInterClusterPath(skeletonPath);
+    auto targetClusterPath =
+        extractTargetClusterPath(targetCluster, targetNode);
 
-    if (agentCluster == goalSearchClustersOpen.top()) {
-      // The agent is currently in the target cluster
-      return {};
-    }
+    std::vector<ActionBundle> path;
+    path.reserve(sourceClusterPath.size() + interClusterPath.size() +
+                 targetClusterPath.size());
 
-    while (goalSearchClustersOpen.top() != agentCluster) {
-      auto sourceCluster = goalSearchClustersOpen.pop();
+    path.insert(std::begin(path),
+                make_move_iterator(std::begin(sourceClusterPath)),
+                make_move_iterator(std::end(sourceClusterPath)));
 
-      for (ClusterEdge& edge : sourceCluster->reachableClusters) {
-        const auto targetCluster =
-            edge.bestTargetFrontierNode->containingCluster;
+    path.insert(std::begin(path),
+                make_move_iterator(std::begin(interClusterPath)),
+                make_move_iterator(std::end(interClusterPath)));
 
-        const auto newCost = sourceCluster->goalDistance + edge.cost();
-        
-        if (targetCluster->iteration != iteration) {
-          targetCluster->iteration = iteration;
-          targetCluster->parentCluster = sourceCluster;
-          targetCluster->goalDistance = newCost;
-          
-          goalSearchClustersOpen.push(targetCluster);
-        } else if (targetCluster->goalDistance > newCost) {
-          targetCluster->parentCluster = sourceCluster;
-          targetCluster->goalDistance = newCost;
-          
-          goalSearchClustersOpen.update(targetCluster);
-        }
-      }
-    }
-    
-    // Build inter-cluster path
+    path.insert(std::begin(path),
+                make_move_iterator(std::begin(targetClusterPath)),
+                make_move_iterator(std::end(targetClusterPath)));
 
     // Find abstract path to goal
     // 1. Find path to containing region center
@@ -531,7 +528,108 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     // 3. Find last segment from region center to target node
     // If the path partially overlaps with the current path stitch
 
-    return {};
+    return path;
+  }
+  std::vector<ActionBundle> extractTargetClusterPath(
+      const Cluster* targetCluster,
+      Node* targetNode) const {  // Extract local path in the target cluster
+    std::__1::vector<ActionBundle> targetClusterActions;
+    {
+      auto currentNode = targetNode;
+      while (currentNode != targetCluster->coreNode) {
+        targetClusterActions.emplace_back(
+            currentNode->action, currentNode->g - currentNode->parent->g);
+        currentNode = currentNode->parent;
+      }
+      std::__1::reverse(begin(targetClusterActions), end(targetClusterActions));
+    }
+    return targetClusterActions;
+  }
+
+  std::vector<ActionBundle> extractInterClusterPath(
+      const std::vector<ClusterEdge>& skeletonPath) const {
+    std::vector<ActionBundle> interClusterActions;
+
+    for (auto& skeletonPathSegment : skeletonPath) {
+      auto segmentActions = skeletonPathSegment.actions();
+      interClusterActions.insert(begin(interClusterActions),
+                                 make_move_iterator(std::begin(segmentActions)),
+                                 make_move_iterator(std::end(segmentActions)));
+    }
+
+    return interClusterActions;
+  }
+
+  std::vector<ActionBundle> extractSourceClusterPath(
+      Node* agentNode, const Cluster* agentCluster) const {
+    std::vector<ActionBundle> sourceClusterActions;
+
+    auto currentNode = agentNode;
+    while (currentNode != agentCluster->coreNode) {
+      sourceClusterActions.emplace_back(
+          currentNode->action, currentNode->g - currentNode->parent->g);
+      currentNode = currentNode->parent;
+    }
+
+    return sourceClusterActions;
+  }
+
+  std::vector<ClusterEdge> extractSkeletonPath(const Cluster* agentCluster,
+                                               Cluster* targetCluster) const {
+    auto currentCluster = targetCluster;
+    std::vector<ClusterEdge> skeletonPath;
+
+    while (currentCluster != agentCluster) {
+      skeletonPath.push_back(currentCluster->inEdge);
+      currentCluster = currentCluster->parentCluster;
+    }
+
+    std::reverse(begin(skeletonPath), end(skeletonPath));
+    return skeletonPath;
+  }
+
+  /**
+   * Run Dijkstra on the skeleton network to calculate the agent-cluster to
+   * target-cluster distance.
+   *
+   * Note: Not all clusters will be touched nor updated by the search.
+   *
+   * @param agentCluster - Cluster that contains the agent.
+   * @param targetCluster - Cluster that terminates the search when reached.
+   */
+  void populateAgentToClusterCosts(Cluster* agentCluster,
+                                   const Cluster* targetCluster) {
+    agentCluster->costToAgent = 0;
+    agentCluster->iteration = iteration;
+
+    goalSearchClustersOpen.clear();
+    goalSearchClustersOpen.push(agentCluster);
+
+    while (goalSearchClustersOpen.top() != targetCluster) {
+      auto sourceCluster = goalSearchClustersOpen.pop();
+
+      for (ClusterEdge& edge : sourceCluster->reachableClusters) {
+        const auto targetCluster =
+            edge.bestTargetFrontierNode->containingCluster;
+
+        const auto newCost = sourceCluster->costToAgent + edge.cost();
+
+        if (targetCluster->iteration != iteration) {
+          targetCluster->iteration = iteration;
+          targetCluster->parentCluster = sourceCluster;
+          targetCluster->costToAgent = newCost;
+          targetCluster->inEdge = edge;
+
+          goalSearchClustersOpen.push(targetCluster);
+        } else if (targetCluster->costToAgent > newCost) {
+          targetCluster->parentCluster = sourceCluster;
+          targetCluster->costToAgent = newCost;
+          targetCluster->inEdge = edge;
+
+          goalSearchClustersOpen.update(targetCluster);
+        }
+      }
+    }
   }
 
 #ifdef VISUALIZER
