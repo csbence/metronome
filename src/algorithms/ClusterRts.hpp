@@ -43,6 +43,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   std::vector<ActionBundle> selectActions(
       const State& agentState,
       TerminationChecker& terminationChecker) override {
+    ++iteration;
     if (domain.isGoal(agentState)) {
       // Goal is already reached
       return {};
@@ -58,7 +59,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     visualizer.post();
 
-    return extractPath();
+    return extractPath(agentState);
   }
 
  private:
@@ -133,8 +134,13 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
   class ClusterEdge {
    public:
+    Cost cost() const {
+      return bestSourceFrontierNode->g + bestTargetFrontierNode->g;
+    }
+
     Cluster* cluster;
-    Node* bestFrontierNode;
+    Node* bestSourceFrontierNode;
+    Node* bestTargetFrontierNode;
 
     /**
      * Actions leading toward a cluster. Only populated on demand.
@@ -160,14 +166,27 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
         CLUSTER_NODE_LIMIT * 10,
         CLUSTER_NODE_LIMIT * 4>
         openList;
-    std::unordered_map<State, Node*, typename metronome::Hash<State>> nodes; // pre-allocate?
+    std::unordered_map<State, Node*, typename metronome::Hash<State>>
+        nodes;  // pre-allocate?
 
     std::size_t openListIndex = std::numeric_limits<std::size_t>::max();
+    std::size_t goalOpenListIndex = std::numeric_limits<std::size_t>::max();
+
+    // Node properties
+    Cost goalDistance;
+    Cluster* parentCluster;
+    std::size_t iteration = 0;
   };
 
   struct ClusterIndex {
     std::size_t& operator()(Cluster* cluster) const {
       return cluster->openListIndex;
+    }
+  };
+  
+  struct ClusterGoalIndex {
+    std::size_t& operator()(Cluster* cluster) const {
+      return cluster->goalOpenListIndex;
     }
   };
 
@@ -197,6 +216,14 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     int operator()(const Cluster* lhs, const Cluster* rhs) const {
       if (lhs->coreNode->h < rhs->coreNode->h) return -1;
       if (lhs->coreNode->h > rhs->coreNode->h) return 1;
+      return 0;
+    }
+  };
+
+  struct ClusterComparatorGoalCost {
+    int operator()(const Cluster* lhs, const Cluster* rhs) const {
+      if (lhs->goalDistance < rhs->goalDistance) return -1;
+      if (lhs->goalDistance > rhs->goalDistance) return 1;
       return 0;
     }
   };
@@ -232,9 +259,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
   bool expandCluster(Cluster* sourceCluster) {
     LOG(INFO) << "Expanding cluster: " << clusterPool.index(sourceCluster);
-    
+
     if (sourceCluster->depleted) {
-      LOG(ERROR) << "Expanding depleted cluster: " << clusterPool.index(sourceCluster);
+      LOG(ERROR) << "Expanding depleted cluster: "
+                 << clusterPool.index(sourceCluster);
       throw MetronomeException(
           "Trying to expand a depleted cluster. Such clusters should not be on "
           "open.");
@@ -257,16 +285,21 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     auto currentNode = sourceCluster->openList.pop();
     assert(!sourceCluster->openList.contains(currentNode));
-//    assert(currentNode->containingCluster == sourceCluster && "Containing cluster: " + std::to_string(currentNode->containingCluster));
+    //    assert(currentNode->containingCluster == sourceCluster && "Containing
+    //    cluster: " + std::to_string(currentNode->containingCluster));
 
     if (nodes[currentNode->state] != nullptr) {
       // Another cluster already claimed this node
       LOG(INFO) << "Expanding cluster: " << clusterPool.index(sourceCluster)
                 << " removing node: " << nodePool.index(currentNode)
-                << " as it was already claimed by: " << clusterPool.index(nodes[currentNode->state]->containingCluster);
+                << " as it was already claimed by: "
+                << clusterPool.index(
+                       nodes[currentNode->state]->containingCluster);
 
+      // Remove local node
       sourceCluster->nodes.erase(currentNode->state);
-//      nodePool.destruct(currentNode);
+      nodePool.destruct(currentNode);
+
       return false;
     }
 
@@ -308,13 +341,14 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     auto containingCluster = sourceNode->containingCluster;
 
     if (domain.isGoal(sourceNode->state)) {
+      LOG(INFO) << "Goal was expanded!";
       goalNode = sourceNode;
     }
 
     for (auto successor : domain.successors(sourceNode->state)) {
       auto successorState = successor.state;
 
-      const Node* globalSuccessorNode = nodes[successorState];
+      Node* globalSuccessorNode = nodes[successorState];
       Node*& successorNode = containingCluster->nodes[successorState];
 
       if (globalSuccessorNode != nullptr) {
@@ -322,18 +356,27 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
         if (globalSuccessorNode->containingCluster == containingCluster) {
           // It was claimed by the current cluster. No action is necessary
-        } else if (successorNode != nullptr && successorNode->containingCluster == containingCluster) {
-          LOG(INFO) << "Expanding successors from cluster: " << clusterPool.index(containingCluster)
+          continue;
+        }
+
+        // This is a neighboring cluster
+        connectClusters(globalSuccessorNode, sourceNode);
+
+        if (successorNode != nullptr) {
+          LOG(INFO) << "Expanding successors from cluster: "
+                    << clusterPool.index(containingCluster)
                     << " removing node: " << nodePool.index(successorNode)
-                    << " as it was already claimed by: " << clusterPool.index(globalSuccessorNode->containingCluster);
+                    << " as it was already claimed by: "
+                    << clusterPool.index(
+                           globalSuccessorNode->containingCluster);
 
           containingCluster->openList.remove(successorNode);
           containingCluster->nodes.erase(successorNode->state);
           nodePool.destruct(successorNode);
         }
 
-        // else: this node is not on the open list of this cluster, no cleanup is
-        // necessary.
+        // else: this node is not on the open list of this cluster, no cleanup
+        // is necessary.
 
         continue;
       }
@@ -368,7 +411,120 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     }
   }
 
-  std::vector<ActionBundle> extractPath() const {
+  void connectClusters(Node* lhs, Node* rhs) {
+    assert(nodes[lhs->state] != nullptr && nodes[rhs->state] != nullptr &&
+           "can't connect dangling nodes");
+    const auto lhsCluster = lhs->containingCluster;
+    const auto rhsCluster = rhs->containingCluster;
+    const Cost connectionCost = lhs->g + rhs->g;
+
+    bool lhsConnectionFound = false;
+    bool rhsConnectionFound = false;
+
+    // fixme simplify command flow
+
+    for (ClusterEdge& existingEdge : lhsCluster->reachableClusters) {
+      if (existingEdge.cluster == rhsCluster) {
+        const auto existingConnectionCost = existingEdge.cost();
+
+        if (connectionCost < existingConnectionCost) {
+          // Keep the better connection
+          existingEdge.bestSourceFrontierNode = lhs;
+          existingEdge.bestTargetFrontierNode = rhs;
+          lhsConnectionFound = true;
+        }
+
+        break;
+      }
+    }
+
+    for (ClusterEdge& existingEdge : rhsCluster->reachableClusters) {
+      if (existingEdge.cluster == lhsCluster) {
+        const auto existingConnectionCost = existingEdge.cost();
+
+        if (connectionCost < existingConnectionCost) {
+          // Keep the better connection
+          existingEdge.bestSourceFrontierNode = rhs;
+          existingEdge.bestTargetFrontierNode = lhs;
+          rhsConnectionFound = true;
+        }
+
+        break;
+      }
+    }
+
+    assert(lhsConnectionFound == rhsConnectionFound && "not synced edges");
+
+    if (!lhsConnectionFound) {
+      ClusterEdge lhsEdge;
+      lhsEdge.cluster = rhsCluster;
+      lhsEdge.bestSourceFrontierNode = lhs;
+      lhsEdge.bestTargetFrontierNode = rhs;
+      lhsCluster->reachableClusters.push_back(std::move(lhsEdge));
+
+      ClusterEdge rhsEdge;
+      rhsEdge.cluster = lhsCluster;
+      rhsEdge.bestSourceFrontierNode = rhs;
+      rhsEdge.bestTargetFrontierNode = lhs;
+      rhsCluster->reachableClusters.push_back(std::move(rhsEdge));
+    }
+
+    LOG(INFO) << (lhsConnectionFound ? "Connection updated"
+                                     : "new connection found")
+              << " between cluster: " << clusterPool.index(lhsCluster)
+              << " and cluster: " << clusterPool.index(rhsCluster);
+  }
+
+  std::vector<ActionBundle> extractPath(const State& agentState) {
+    goalSearchClustersOpen.clear();
+
+    // Initialize path search
+    if (goalNode != nullptr) {
+      goalSearchClustersOpen.push(goalNode->containingCluster);
+    } else {
+      assert(!openClusters.empty());
+      auto top = openClusters.top();
+      goalSearchClustersOpen.push(top);
+    }
+
+    goalSearchClustersOpen.top()->goalDistance = 0;
+    goalSearchClustersOpen.top()->iteration = iteration;
+
+    auto agentNode = nodes[agentState];
+    assert(agentNode != nullptr);
+    auto agentCluster = agentNode->containingCluster;
+
+    if (agentCluster == goalSearchClustersOpen.top()) {
+      // The agent is currently in the target cluster
+      return {};
+    }
+
+    while (goalSearchClustersOpen.top() != agentCluster) {
+      auto sourceCluster = goalSearchClustersOpen.pop();
+
+      for (ClusterEdge& edge : sourceCluster->reachableClusters) {
+        const auto targetCluster =
+            edge.bestTargetFrontierNode->containingCluster;
+
+        const auto newCost = sourceCluster->goalDistance + edge.cost();
+        
+        if (targetCluster->iteration != iteration) {
+          targetCluster->iteration = iteration;
+          targetCluster->parentCluster = sourceCluster;
+          targetCluster->goalDistance = newCost;
+          
+          goalSearchClustersOpen.push(targetCluster);
+        } else if (targetCluster->goalDistance > newCost) {
+          targetCluster->parentCluster = sourceCluster;
+          targetCluster->goalDistance = newCost;
+          
+          goalSearchClustersOpen.update(targetCluster);
+        }
+      }
+    }
+    
+    // Build inter-cluster path
+
     // Find abstract path to goal
     // 1. Find path to containing region center
     // 2. Find abstract path to goal via region centers
@@ -393,6 +549,14 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   std::unordered_map<State, Node*, typename metronome::Hash<State>> nodes;
   ObjectPool<Node, Memory::NODE_LIMIT> nodePool;
   ObjectPool<Cluster, Memory::NODE_LIMIT> clusterPool;
+
+  cserna::DynamicPriorityQueue<Cluster*,
+                               ClusterGoalIndex,
+                               ClusterComparatorGoalCost,
+                               MAX_CLUSTER_COUNT,
+                               MAX_CLUSTER_COUNT>
+      goalSearchClustersOpen;
+  std::size_t iteration = 0;
 
   Node* goalNode = nullptr;
 
