@@ -46,8 +46,10 @@ class ObjectPool {
   
   void purge() {
     for (std::size_t i = 0; i < size; ++i) {
-      reinterpret_cast<const T*>(storage + i)->~T();
-      freeIndices[i] = true;
+      if (!freeIndices[i]) {
+        reinterpret_cast<const T*>(storage + i)->~T();
+        freeIndices[i] = true;
+      }
     }
     
     size = 0;
