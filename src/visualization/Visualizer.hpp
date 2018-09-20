@@ -33,7 +33,7 @@ class Visualizer {
     // clang-format off
       commandBuilder << "{\"" << (alreadyVisualized ? "cn" : "an")
                      << R"(":{")" << nodeId
-                     << R"(":{"label":")"  << label << "\""
+                     << R"(":{"label_":")"  << label << "\""
                      << R"(,"size":)"   << size
                      << R"(,"r":)"      << r
                      << R"(,"g":)"      << g
@@ -64,7 +64,7 @@ class Visualizer {
                    << R"(":{")" << edgeId
                    << R"(":{"source":")"      << sourceNodeId
                    << R"(","target":")"      << targetNodeId
-                   << R"(","label2":")"       << label
+                   << R"(","label_":")"       << label
                    << R"(","directed":true)"
                    << R"( ,"weight":)"      << weight
                    << "}}}";
