@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <MemoryConfiguration.hpp>
 #include <domains/SuccessorBundle.hpp>
+#include <ostream>
 #include <unordered_map>
 #include <vector>
 #include "MetronomeException.hpp"
@@ -57,9 +58,11 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     // ---      Learn      ---
     // ???
 
+    auto path = extractPath(agentState);
+
     visualizer.post();
 
-    return extractPath(agentState);
+    return path;
   }
 
  private:
@@ -87,6 +90,16 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
         stream << parent->state;
       }
       return stream.str();
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Node& node) {
+      os << "state: " << node.state << " action: " << node.action
+         << " g: " << node.g << " h: " << node.h;
+      return os;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Node* node) {
+      return operator<<(os, *node);
     }
 
     /** Parent node */
@@ -138,8 +151,23 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       return bestSourceFrontierNode->g + bestTargetFrontierNode->g;
     }
 
-    std::vector<ActionBundle> actions() const {
+    std::vector<ActionBundle> actions() {
       if (actionsTowardsCluster.empty()) {
+        auto coreToNodePath = extractCoreToNodePath(bestSourceFrontierNode);
+        auto nodeToCorePath = extractNodeToCorePath(bestTargetFrontierNode);
+
+        actionsTowardsCluster.reserve(coreToNodePath.size() +
+                                      nodeToCorePath.size());
+
+        actionsTowardsCluster.insert(
+            std::begin(actionsTowardsCluster),
+            make_move_iterator(std::begin(coreToNodePath)),
+            make_move_iterator(std::end(coreToNodePath)));
+
+        actionsTowardsCluster.insert(
+            std::begin(actionsTowardsCluster),
+            make_move_iterator(std::begin(nodeToCorePath)),
+            make_move_iterator(std::end(nodeToCorePath)));
       }
 
       return actionsTowardsCluster;
@@ -330,14 +358,21 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     expandNode(currentNode);
 
     std::size_t id = nodePool.index(currentNode);
-    visualizer.addNode(
-        id, currentNode->state.getX(), currentNode->state.getY());
+
+    auto clusterLabel =
+        "cluster:" +
+        std::to_string(clusterPool.index(currentNode->containingCluster));
+
+    visualizer.addNode(id,
+                       currentNode->state.getX(),
+                       currentNode->state.getY(),
+                       0,
+                       1,
+                       clusterLabel);
+
     if (currentNode->parent != nullptr) {
-      visualizer.addEdge(id,
-                         nodePool.index(currentNode->parent),
-                         id,
-                         "cluster:" + std::to_string(clusterPool.index(
-                                          currentNode->containingCluster)));
+      visualizer.addEdge(
+          id, nodePool.index(currentNode->parent), id, clusterLabel);
     }
 
     return true;
@@ -485,26 +520,31 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   }
 
   std::vector<ActionBundle> extractPath(const State& agentState) {
+    LOG(INFO) << "Extracting path from: " << agentState;
     Node* agentNode = nodes[agentState];
     assert(agentNode != nullptr);
     Cluster* agentCluster = agentNode->containingCluster;
 
     Cluster* targetCluster = nullptr;
+    Node* targetNode = nullptr;
+
     if (goalNode != nullptr) {
       targetCluster = goalNode->containingCluster;
+      targetNode = goalNode;
+      LOG(INFO) << "to the goal: " << goalNode;
     } else {
       assert(!openClusters.empty());
       targetCluster = openClusters.top();
+      targetNode = targetCluster->openList.top()->parent;
+      LOG(INFO) << "to: " << targetNode;
     }
-    Node* targetNode = targetCluster->openList.top();
 
     populateAgentToClusterCosts(agentCluster, targetCluster);
     auto skeletonPath = extractSkeletonPath(agentCluster, targetCluster);
 
-    auto sourceClusterPath = extractSourceClusterPath(agentNode, agentCluster);
+    auto sourceClusterPath = extractNodeToCorePath(agentNode);
     auto interClusterPath = extractInterClusterPath(skeletonPath);
-    auto targetClusterPath =
-        extractTargetClusterPath(targetCluster, targetNode);
+    auto targetClusterPath = extractCoreToNodePath(targetNode);
 
     std::vector<ActionBundle> path;
     path.reserve(sourceClusterPath.size() + interClusterPath.size() +
@@ -530,24 +570,27 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     return path;
   }
-  std::vector<ActionBundle> extractTargetClusterPath(
-      const Cluster* targetCluster,
-      Node* targetNode) const {  // Extract local path in the target cluster
-    std::__1::vector<ActionBundle> targetClusterActions;
-    {
-      auto currentNode = targetNode;
-      while (currentNode != targetCluster->coreNode) {
-        targetClusterActions.emplace_back(
-            currentNode->action, currentNode->g - currentNode->parent->g);
-        currentNode = currentNode->parent;
-      }
-      std::__1::reverse(begin(targetClusterActions), end(targetClusterActions));
+
+  static std::vector<ActionBundle> extractCoreToNodePath(Node* targetNode) {
+    std::vector<ActionBundle> coreToNodePath;
+
+    auto currentNode = targetNode;
+    const auto coreNode = targetNode->containingCluster->coreNode;
+
+    while (currentNode != coreNode) {
+      coreToNodePath.emplace_back(currentNode->action,
+                                  currentNode->g - currentNode->parent->g);
+
+      currentNode = currentNode->parent;
     }
-    return targetClusterActions;
+
+    std::reverse(std::begin(coreToNodePath), std::end(coreToNodePath));
+
+    return coreToNodePath;
   }
 
-  std::vector<ActionBundle> extractInterClusterPath(
-      const std::vector<ClusterEdge>& skeletonPath) const {
+  static std::vector<ActionBundle> extractInterClusterPath(
+      std::vector<ClusterEdge>& skeletonPath) {
     std::vector<ActionBundle> interClusterActions;
 
     for (auto& skeletonPathSegment : skeletonPath) {
@@ -560,18 +603,21 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     return interClusterActions;
   }
 
-  std::vector<ActionBundle> extractSourceClusterPath(
-      Node* agentNode, const Cluster* agentCluster) const {
-    std::vector<ActionBundle> sourceClusterActions;
+  static std::vector<ActionBundle> extractNodeToCorePath(Node* sourceNode) {
+    std::vector<ActionBundle> nodeToCorePath;
 
-    auto currentNode = agentNode;
-    while (currentNode != agentCluster->coreNode) {
-      sourceClusterActions.emplace_back(
-          currentNode->action, currentNode->g - currentNode->parent->g);
+    auto currentNode = sourceNode;
+    const auto coreNode = sourceNode->containingCluster->coreNode;
+
+    while (currentNode != coreNode) {
+      // Note that the stored actions are towards the frontier
+      // thus they have to be inverted
+      nodeToCorePath.emplace_back(currentNode->action.inverse(),
+                                  currentNode->g - currentNode->parent->g);
       currentNode = currentNode->parent;
     }
 
-    return sourceClusterActions;
+    return nodeToCorePath;
   }
 
   std::vector<ClusterEdge> extractSkeletonPath(const Cluster* agentCluster,

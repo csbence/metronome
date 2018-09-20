@@ -28,6 +28,13 @@ class GridWorld {
       return actions;
     }
 
+    Action inverse() {
+      if (label == 'N') return Action('S');
+      if (label == 'S') return Action('N');
+      if (label == 'W') return Action('E');
+      if (label == 'E') return Action('W');
+    }
+    
     bool operator==(const Action& rhs) const { return label == rhs.label; }
 
     bool operator!=(const Action& rhs) const { return !(rhs == *this); }
