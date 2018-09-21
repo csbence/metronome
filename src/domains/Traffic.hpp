@@ -37,6 +37,10 @@ class Traffic {
       }
     }
 
+    Action inverse() {
+      throw MetronomeException("Unable to invert Traffic domain Actions.");
+    }
+
     bool operator==(const Action& rhs) const { return value == rhs.value; }
 
     bool operator!=(const Action& rhs) const { return !(rhs == *this); }
