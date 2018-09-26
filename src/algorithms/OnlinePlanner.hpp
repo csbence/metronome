@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 #include "Planner.hpp"
 #include "experiment/termination/TimeTerminationChecker.hpp"
 
@@ -17,6 +18,8 @@ class OnlinePlanner : public Planner {
 
     typename Domain::Action action;
     typename Domain::Cost actionDuration;
+    typename Domain::State expectedTargetState;
+    std::string label;
   };
 
   virtual ~OnlinePlanner() = default;
