@@ -196,7 +196,7 @@ class Traffic {
   };
 
   Traffic(const Configuration& configuration, std::istream& input)
-      : actionDuration(configuration.getLongOrThrow(ACTION_DURATION)) {
+      : actionDuration(configuration.getLong(ACTION_DURATION)) {
     if (randomSeedFlag) {
       std::srand(randomSeed);
     } else {

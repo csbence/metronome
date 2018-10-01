@@ -28,13 +28,16 @@ class GridWorld {
       return actions;
     }
 
-    Action inverse() {
+    Action inverse() const {
       if (label == 'N') return Action('S');
       if (label == 'S') return Action('N');
       if (label == 'W') return Action('E');
       if (label == 'E') return Action('W');
+
+      throw MetronomeException("Unknown action to invert: " +
+                               std::to_string(label));
     }
-    
+
     bool operator==(const Action& rhs) const { return label == rhs.label; }
 
     bool operator!=(const Action& rhs) const { return !(rhs == *this); }
@@ -97,7 +100,7 @@ class GridWorld {
   };
   /*Entry point for using this Domain*/
   GridWorld(const Configuration& configuration, std::istream& input)
-      : actionDuration(configuration.getLongOrThrow(ACTION_DURATION)) {
+      : actionDuration(configuration.getLong(ACTION_DURATION)) {
     obstacles = std::unordered_set<State, typename metronome::Hash<State>>{};
     unsigned int currentHeight = 0;
     unsigned int currentWidth = 0;
@@ -297,8 +300,10 @@ class GridWorld {
   boost::optional<State> getSuccessor(const State& sourceState,
                                       int relativeX,
                                       int relativeY) const {
-    auto newX = static_cast<unsigned int>(static_cast<int>(sourceState.getX()) + relativeX);
-    auto newY = static_cast<unsigned int>(static_cast<int>(sourceState.getY()) + relativeY);
+    auto newX = static_cast<unsigned int>(static_cast<int>(sourceState.getX()) +
+                                          relativeX);
+    auto newY = static_cast<unsigned int>(static_cast<int>(sourceState.getY()) +
+                                          relativeY);
 
     State newState = State(newX, newY);
 

@@ -8,7 +8,7 @@
 #include <string>
 #include "Configuration.hpp"
 #include "OfflinePlanManager.hpp"
-#include "RealTimePlanManager.hpp"
+#include "RealTimeExperiment.hpp"
 #include "Result.hpp"
 #include "algorithms/AStar.hpp"
 #include "algorithms/ClusterRts.hpp"
@@ -51,10 +51,10 @@ class ConfigurationExecutor {
 
     if (domainName == DOMAIN_GRID_WORLD) {
       return executeDomain<GridWorld>(configuration, resourcesDir);
-    } else if (domainName == DOMAIN_TRAFFIC) {
-      return executeDomain<Traffic>(configuration, resourcesDir);
-    } else if (domainName == DOMAIN_TILES) {
-      return executeDomain<SlidingTilePuzzle>(configuration, resourcesDir);
+//    } else if (domainName == DOMAIN_TRAFFIC) {
+//      return executeDomain<Traffic>(configuration, resourcesDir);
+//    } else if (domainName == DOMAIN_TILES) {
+//      return executeDomain<SlidingTilePuzzle>(configuration, resourcesDir);
     } else {
       LOG(ERROR) << "Unknown domain name: " << domainName << std::endl;
       return Result(configuration, "Unknown: domainName: " + domainName);
@@ -107,10 +107,10 @@ class ConfigurationExecutor {
     if (algorithmName == ALGORITHM_A_STAR) {
       return executeOfflinePlanner<Domain, AStar<Domain>>(configuration,
                                                           domain);
-    } else if (algorithmName == ALGORITHM_LSS_LRTA_STAR) {
-      return executeRealTimePlanner<Domain,
-                                    LssLrtaStar<Domain, TerminationChecker>,
-                                    TerminationChecker>(configuration, domain);
+//    } else if (algorithmName == ALGORITHM_LSS_LRTA_STAR) {
+//      return executeRealTimePlanner<Domain,
+//                                    LssLrtaStar<Domain, TerminationChecker>,
+//                                    TerminationChecker>(configuration, domain);
     } else if (algorithmName == ALGORITHM_CLUSTER_RTS) {
       return executeRealTimePlanner<Domain,
                                     ClusterRts<Domain, TerminationChecker>,
@@ -165,8 +165,8 @@ class ConfigurationExecutor {
                                        const Domain& domain) {
     Planner planner{domain, configuration};
 
-    RealTimePlanManager<Domain, Planner, TerminationChecker>
-        realTimePlanManager;
+    RealTimeExperiment<Domain, Planner, TerminationChecker>
+        realTimePlanManager(configuration);
 
     LOG(INFO) << "Configuration done.";
     return realTimePlanManager.plan(configuration, domain, planner);
