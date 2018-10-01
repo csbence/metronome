@@ -34,9 +34,9 @@ set(SOURCE_FILES
         src/visualization/Visualizer.hpp
         src/utils/Location2D.hpp
         src/experiment/termination/TimeTerminationChecker.hpp
-        src/experiment/PlanManager.hpp
+        src/experiment/Experiment.hpp
         src/experiment/OfflinePlanManager.hpp
-        src/experiment/RealTimePlanManager.hpp
+        src/experiment/RealTimeExperiment.hpp
         src/experiment/Configuration.hpp
         src/experiment/Result.hpp
         src/experiment/ConfigurationExecutor.hpp

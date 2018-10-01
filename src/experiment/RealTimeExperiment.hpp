@@ -2,37 +2,43 @@
 
 #include <boost/optional.hpp>
 #include <chrono>
+#include "Experiment.hpp"
 #include "MetronomeException.hpp"
-#include "PlanManager.hpp"
+#include "easylogging++.h"
 #include "utils/TimeMeasurement.hpp"
 
 namespace metronome {
 template <typename Domain, typename Planner, typename TerminationChecker>
-class RealTimePlanManager : PlanManager<Domain, Planner> {
+class RealTimeExperiment : Experiment<Domain, Planner> {
  public:
-  Result plan(const Configuration& configuration,
-              const Domain& domain,
-              Planner& planner) {
-    using namespace std::chrono;
-    LOG(INFO) << "Begin real-time planning iterations";
+  RealTimeExperiment(const Configuration& configuration) {
+    std::string lookaheadType = configuration.getString(LOOKAHEAD_TYPE);
 
-    if (!configuration.hasMember(LOOKAHEAD_TYPE)) {
-      LOG(ERROR) << "Lookahead type not found." << std::endl;
-      return Result(configuration, "Missing: lookaheadType");
-    }
-
-    std::string lookaheadType{configuration.getString(LOOKAHEAD_TYPE)};
-
-    bool dynamicLookahead;
-    
     if (lookaheadType == LOOKAHEAD_STATIC) {
       dynamicLookahead = false;
     } else if (lookaheadType == LOOKAHEAD_DYNAMIC) {
       dynamicLookahead = true;
     } else {
-      LOG(ERROR) << "Unknown lookahead type: " << lookaheadType << std::endl;
-      return Result(configuration, "Unknown lookaheadType: " + lookaheadType);
+      throw MetronomeException("Unknown lookaheadType: " + lookaheadType);
     }
+
+    std::string commitmentStrategy =
+        configuration.getString(COMMITMENT_STRATEGY);
+
+    if (commitmentStrategy == COMMITMENT_SINGLE) {
+      singleStep = true;
+    } else if (commitmentStrategy == COMMITMENT_MULTIPLE) {
+      singleStep = false;
+    } else {
+      throw MetronomeException("Unknown commitment strategy: " + lookaheadType);
+    }
+  }
+
+  Result plan(const Configuration& configuration,
+              const Domain& domain,
+              Planner& planner) {
+    using namespace std::chrono;
+    LOG(INFO) << "Begin real-time planning iterations";
 
     std::vector<typename Domain::Action> actions;
     long long int planningTime{0};
@@ -52,8 +58,12 @@ class RealTimePlanManager : PlanManager<Domain, Planner> {
           terminationChecker.resetTo(actionDuration);
         }
 
-        auto actionBundles{
-            planner.selectActions(currentState, terminationChecker)};
+        auto actionBundles =
+            planner.selectActions(currentState, terminationChecker);
+        
+        if (singleStep && actionBundles.size() > 1) {
+          actionBundles.resize(1);
+        }
 
         previousTimeBound = timeBound;
         timeBound = 0;
@@ -63,14 +73,13 @@ class RealTimePlanManager : PlanManager<Domain, Planner> {
 
           if (!nextState.is_initialized()) {
             LOG(ERROR) << "Invalid action from: " << currentState
-                       << "Expected target: " << actionBundle
-                       .expectedTargetState;
+                       << "Expected target: "
+                       << actionBundle.expectedTargetState;
             throw MetronomeException(
                 "Invalid action. Partial plan is corrupt.");
           }
           LOG(INFO) << "> action from: " << currentState
-                     << " expected target: " << actionBundle
-                         .expectedTargetState;
+                    << " expected target: " << actionBundle.expectedTargetState;
 
           currentState = nextState.get();
           //                    LOG(INFO) << actionBundle.action << std::endl;
@@ -115,6 +124,10 @@ class RealTimePlanManager : PlanManager<Domain, Planner> {
         pathLength,                  // Path length
         actionStrings);
   }
+
+ private:
+  bool dynamicLookahead;
+  bool singleStep;
 };
 
 }  // namespace metronome

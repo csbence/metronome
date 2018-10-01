@@ -1,10 +1,10 @@
 #pragma once
 
-#include "PlanManager.hpp"
+#include "Experiment.hpp"
 #include "utils/TimeMeasurement.hpp"
 namespace metronome {
 template <typename Domain, typename Planner>
-class OfflinePlanManager : PlanManager<Domain, Planner> {
+class OfflinePlanManager : Experiment<Domain, Planner> {
  public:
   Result plan(const Configuration& configuration,
               const Domain& domain,
