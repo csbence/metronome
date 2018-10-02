@@ -11,6 +11,7 @@ namespace metronome {
 template <typename Domain, typename Planner, typename TerminationChecker>
 class RealTimeExperiment : Experiment<Domain, Planner> {
  public:
+
   RealTimeExperiment(const Configuration& configuration) {
     std::string lookaheadType = configuration.getString(LOOKAHEAD_TYPE);
 
