@@ -104,14 +104,15 @@ class ConfigurationExecutor {
 
     std::string algorithmName{configuration.getString(ALGORITHM_NAME)};
 
-    if (algorithmName == ALGORITHM_A_STAR) {
-      return executeOfflinePlanner<Domain, AStar<Domain>>(configuration,
-                                                          domain);
+//    if (algorithmName == ALGORITHM_A_STAR) {
+//      return executeOfflinePlanner<Domain, AStar<Domain>>(configuration,
+//                                                          domain);
 //    } else if (algorithmName == ALGORITHM_LSS_LRTA_STAR) {
 //      return executeRealTimePlanner<Domain,
 //                                    LssLrtaStar<Domain, TerminationChecker>,
 //                                    TerminationChecker>(configuration, domain);
-    } else if (algorithmName == ALGORITHM_CLUSTER_RTS) {
+//    } else
+    if (algorithmName == ALGORITHM_CLUSTER_RTS) {
       return executeRealTimePlanner<Domain,
                                     ClusterRts<Domain, TerminationChecker>,
                                     TerminationChecker>(configuration, domain);
