@@ -700,7 +700,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
       ActionBundle actionBundle(currentNode->action.inverse(),
                                 currentNode->g - currentNode->parent->g);
-      actionBundle.expectedTargetState = currentNode->state;
+      actionBundle.expectedTargetState = currentNode->parent->state;
       nodeToCorePath.push_back(std::move(actionBundle));
 
       currentNode = currentNode->parent;
