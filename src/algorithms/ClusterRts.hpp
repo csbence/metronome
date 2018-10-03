@@ -593,7 +593,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
           LOG(INFO) << "<<<<<<<<<<<<<<<<<<<<<<< CUT >>>>>>>>>>>>>>>>>>>>>";
           sourceClusterPath.clear();
-          decltype(interClusterPath)(it, std::end(interClusterPath)).swap(interClusterPath);
+          decltype(interClusterPath)(it + 1, std::end(interClusterPath)).swap
+          (interClusterPath);
           break;
       }
     }
@@ -605,8 +606,12 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
         if (it->expectedTargetState == agentState) {
 
           LOG(INFO) << "<<<<<<<<<<<<<<<<<<<<<<< CUT >>>>>>>>>>>>>>>>>>>>>";
+          // The source and the target are in the same cluster and the 
+          // core-target path contains the source thus the agent can dirctly 
+          // go to the target
           sourceClusterPath.clear();
-          decltype(targetClusterPath)(it, std::end(targetClusterPath)).swap(targetClusterPath);
+          decltype(targetClusterPath)(it + 1, std::end(targetClusterPath)).swap
+          (targetClusterPath);
           break;
         }
       }
