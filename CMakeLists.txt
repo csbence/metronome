@@ -69,8 +69,21 @@ include_directories(
         src
 )
 
+# The following options can enable algorithms and domains.
+# These options have a large impact on the compilation speed.
+
 # Comment the following line out to disable Gephi (Stream Graph HTTP) visualization
 add_definitions(-DSTREAM_GRAPH)
+
+# Select the possible algorithms.
+#add_definitions(-DENABLE_A_STAR)
+#add_definitions(-DENABLE_LSS_LRTA_STAR)
+add_definitions(-DENABLE_CLUSTER_RTS)
+
+# Select the possible domains
+add_definitions(-DENABLE_GRID_WORLD)
+#add_definitions(-DENABLE_SLIDING_TILE_PUZZLE)
+#add_definitions(-DENABLE_TRAFFIC_WORLD)
 
 target_link_libraries(Metronome ${Boost_LIBRARIES} ${X11_LIBRARIES})
 target_link_libraries(MetronomeTest ${Boost_LIBRARIES} ${X11_LIBRARIES})
