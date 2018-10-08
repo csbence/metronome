@@ -40,8 +40,12 @@ class ConfigurationExecutor {
                                      const std::string& resourcesDir) {
     try {
       return unsafeExecuteConfiguration(configuration, resourcesDir);
-    } catch (MetronomeException exception) {
+    } catch (const MetronomeException& exception) {
       return Result(configuration, exception.what());
+    } catch (const std::exception& exception) {
+      return Result(configuration, exception.what());
+    } catch (...) {
+      return Result(configuration, "Unexpected exception.");
     }
   }
 
