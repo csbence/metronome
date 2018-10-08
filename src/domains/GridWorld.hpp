@@ -134,9 +134,11 @@ class GridWorld {
         } else {
           // its an open cell nothing needs to be done
         }
+        if (currentWidth == width) break;
+        
         ++currentWidth;  // at the end of the character parse move along
       }
-      if (currentWidth != width) {
+      if (currentWidth < width) {
         throw MetronomeException(
             "GridWorld is not complete. Width doesn't match input "
             "configuration.");
