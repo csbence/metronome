@@ -31,9 +31,9 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   using ActionBundle =
       typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle;
 
-  static constexpr std::size_t CLUSTER_NODE_LIMIT = 3;
+  static constexpr std::size_t CLUSTER_NODE_LIMIT = 100;
   static constexpr std::size_t CLUSTER_G_RADIUS = 10000;
-  static constexpr std::size_t MAX_CLUSTER_COUNT = 1000;
+  static constexpr std::size_t MAX_CLUSTER_COUNT = 100000;
 
   ClusterRts(const Domain& domain, const Configuration&) : domain{domain} {
     // Initialize hash table
