@@ -1,9 +1,11 @@
 {
-  "timeLimit": 150000000000,
+  "timeLimit": 300000000000,
   "domainInstanceName": "Manual test instance",
-  "actionDuration": 100,
+  "actionDuration": 10000000,
   "domainName": "GRID_WORLD",
+  "domainPath": "input/vacuum/minima1500/minima1500_1500-0.vw",
   "terminationType": "EXPANSION",
-  "algorithmName": "MO_RTS_OLD",
-  "lookaheadType": "STATIC"
+  "algorithmName": "CLUSTER_RTS",
+  "lookaheadType": "DYNAMIC",
+  "commitmentStrategy": "SINGLE"
 }
