@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <boost/assert.hpp>
 #include <boost/optional.hpp>
 #include <cstdlib>
@@ -209,8 +210,8 @@ class GridWorld {
            !isObstacle(location);
   }
   /*Standard getters for the (width,height) of the domain*/
-  unsigned int getWidth() { return width; }
-  unsigned int getHeight() { return height; }
+  unsigned int getWidth() const { return width; }
+  unsigned int getHeight() const { return height; }
   /*Adding an obstacle to the domain*/
   bool addObstacle(const State& toAdd) {
     if (isLegalLocation(toAdd)) {
