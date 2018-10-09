@@ -113,7 +113,7 @@ class SlidingTilePuzzle {
   };
 
   SlidingTilePuzzle(const Configuration& configuration, std::istream& input)
-      : actionDuration(configuration.getLongOrThrow(ACTION_DURATION)) {
+      : actionDuration(configuration.getLong(ACTION_DURATION)) {
     using namespace std;
 
     unsigned char dimension{0};

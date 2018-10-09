@@ -41,9 +41,9 @@ set(SOURCE_FILES
         src/visualization/Visualizer.hpp
         src/utils/Location2D.hpp
         src/experiment/termination/TimeTerminationChecker.hpp
-        src/experiment/PlanManager.hpp
+        src/experiment/Experiment.hpp
         src/experiment/OfflinePlanManager.hpp
-        src/experiment/RealTimePlanManager.hpp
+        src/experiment/RealTimeExperiment.hpp
         src/experiment/Configuration.hpp
         src/experiment/Result.hpp
         src/experiment/ConfigurationExecutor.hpp
@@ -76,8 +76,21 @@ include_directories(
         src
 )
 
+# The following options can enable algorithms and domains.
+# These options have a large impact on the compilation speed.
+
 # Comment the following line out to disable Gephi (Stream Graph HTTP) visualization
 add_definitions(-DSTREAM_GRAPH)
+
+# Select the possible algorithms.
+#add_definitions(-DENABLE_A_STAR)
+#add_definitions(-DENABLE_LSS_LRTA_STAR)
+add_definitions(-DENABLE_CLUSTER_RTS)
+
+# Select the possible domains
+add_definitions(-DENABLE_GRID_WORLD)
+#add_definitions(-DENABLE_SLIDING_TILE_PUZZLE)
+#add_definitions(-DENABLE_TRAFFIC_WORLD)
 
 if (MINGW OR WIN32)
     target_link_libraries(Metronome ws2_32)

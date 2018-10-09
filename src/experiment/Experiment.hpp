@@ -5,7 +5,7 @@
 namespace metronome {
 
 template <typename Domain, typename Planner>
-class PlanManager {
+class Experiment {
  public:
   virtual Result plan(const Configuration&, const Domain&, Planner&) = 0;  //
 };

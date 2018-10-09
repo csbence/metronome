@@ -1,10 +1,11 @@
 {
   "timeLimit": 150000000000,
-  "domainPath": "/input/vacuum/openBox_25.vw",
+  "domainPath": "/input/vacuum/slalom_02.vw",
   "domainInstanceName": "Manual test instance",
   "actionDuration": 100,
   "domainName": "GRID_WORLD",
   "terminationType": "EXPANSION",
   "algorithmName": "CLUSTER_RTS",
-  "lookaheadType": "DYNAMIC"
+  "lookaheadType": "DYNAMIC",
+  "commitmentStrategy": "SINGLE"
 }

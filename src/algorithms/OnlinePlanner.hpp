@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 #include "Planner.hpp"
 #include "experiment/termination/TimeTerminationChecker.hpp"
 
@@ -11,12 +12,19 @@ class OnlinePlanner : public Planner {
  public:
   class ActionBundle final {
    public:
+    ActionBundle() = default;
     ActionBundle(typename Domain::Action action,
                  typename Domain::Cost actionDuration)
         : action{action}, actionDuration{actionDuration} {}
-
+    ActionBundle(const ActionBundle&) = default;
+    ActionBundle(ActionBundle&&) = default;
+    ActionBundle& operator=(const ActionBundle&) = default;
+    ~ActionBundle() = default;
+    
     typename Domain::Action action;
     typename Domain::Cost actionDuration;
+    typename Domain::State expectedTargetState;
+    std::string label;
   };
 
   virtual ~OnlinePlanner() = default;

@@ -16,6 +16,7 @@ static const std::string TERMINATION_CHECKER_TYPE{"terminationType"};
 static const std::string ACTION_DURATION{"actionDuration"};
 static const std::string TIME_LIMIT{"timeLimit"};
 static const std::string LOOKAHEAD_TYPE{"lookaheadType"};
+static const std::string COMMITMENT_STRATEGY{"commitmentStrategy"};
 
 static const std::string DOMAIN_GRID_WORLD{"GRID_WORLD"};
 static const std::string DOMAIN_TRAFFIC{"TRAFFIC"};
@@ -30,6 +31,9 @@ static const std::string TERMINATION_CHECKER_EXPANSION{"EXPANSION"};
 
 static const std::string LOOKAHEAD_STATIC{"STATIC"};
 static const std::string LOOKAHEAD_DYNAMIC{"DYNAMIC"};
+
+static const std::string COMMITMENT_SINGLE{"SINGLE"};
+static const std::string COMMITMENT_MULTIPLE{"MULTIPLE"};
 
 class Configuration {
  public:
@@ -54,26 +58,33 @@ class Configuration {
   }
 
   std::string getString(const std::string& key) const {
+    checkKey(key);
+    
     return std::string{document[key.c_str()].GetString()};
   }
+  
   long long int getLong(const std::string& key) const {
+    checkKey(key);
+    
     return document[key.c_str()].GetInt64();
   }
+  
+  double getDouble(const std::string& key) const {
+    checkKey(key);
+    
+    return document[key.c_str()].GetDouble();
+  }
+  
+  double getBool(const std::string& key) const {
+    checkKey(key);
+    
+    return document[key.c_str()].GetBool();
+  }
 
-  std::string getStringOrThrow(const std::string& key) const {
+  void checkKey(const std::string& key) const {
     if (!hasMember(key)) {
       throw metronome::MetronomeException("Invalid key: " + key);
     }
-
-    return std::string{document[key.c_str()].GetString()};
-  }
-
-  long long int getLongOrThrow(const std::string& key) const {
-    if (!hasMember(key)) {
-      throw metronome::MetronomeException("Invalid key: " + key);
-    }
-
-    return document[key.c_str()].GetInt64();
   }
 
   const rapidjson::Document& getJsonDocument() const { return document; }

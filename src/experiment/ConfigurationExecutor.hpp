@@ -8,15 +8,29 @@
 #include <string>
 #include "Configuration.hpp"
 #include "OfflinePlanManager.hpp"
-#include "RealTimePlanManager.hpp"
+#include "RealTimeExperiment.hpp"
 #include "Result.hpp"
-#include "algorithms/AStar.hpp"
-#include "algorithms/ClusterRts.hpp"
-#include "algorithms/LssLrtaStar.hpp"
-#include "domains/GridWorld.hpp"
-#include "domains/SlidingTilePuzzle.hpp"
-#include "domains/Traffic.hpp"
 #include "utils/File.hpp"
+
+#ifdef ENABLE_GRID_WORLD
+#include "domains/GridWorld.hpp"
+#endif
+#ifdef ENABLE_SLIDING_TILE_PUZZLE
+#include "domains/SlidingTilePuzzle.hpp"
+#endif
+#ifdef ENABLE_TRAFFIC_WORLD
+#include "domains/Traffic.hpp"
+#endif
+
+#ifdef ENABLE_A_STAR
+#include "algorithms/AStar.hpp"
+#endif
+#ifdef ENABLE_LSS_LRTA_STAR
+#include "algorithms/LssLrtaStar.hpp"
+#endif
+#ifdef ENABLE_CLUSTER_RTS
+#include "algorithms/ClusterRts.hpp"
+#endif
 
 namespace metronome {
 
@@ -49,16 +63,26 @@ class ConfigurationExecutor {
 
     std::string domainName{configuration.getString(DOMAIN_NAME)};
 
+#ifdef ENABLE_GRID_WORLD
     if (domainName == DOMAIN_GRID_WORLD) {
       return executeDomain<GridWorld>(configuration, resourcesDir);
-    } else if (domainName == DOMAIN_TRAFFIC) {
-      return executeDomain<Traffic>(configuration, resourcesDir);
-    } else if (domainName == DOMAIN_TILES) {
-      return executeDomain<SlidingTilePuzzle>(configuration, resourcesDir);
-    } else {
-      LOG(ERROR) << "Unknown domain name: " << domainName << std::endl;
-      return Result(configuration, "Unknown: domainName: " + domainName);
     }
+#endif
+
+#ifdef ENABLE_SLIDING_TILE_PUZZLE
+      if (domainName == DOMAIN_TILES) {
+      return executeDomain<SlidingTilePuzzle>(configuration, resourcesDir);
+    }
+#endif
+
+#ifdef ENABLE_TRAFFIC_WORLD
+    if (domainName == DOMAIN_TRAFFIC) {
+      return executeDomain<Traffic>(configuration, resourcesDir);
+    }
+#endif
+
+    LOG(ERROR) << "Unknown domain name: " << domainName << std::endl;
+    return Result(configuration, "Unknown: domainName: " + domainName);
   }
 
   template <typename Domain>
@@ -104,21 +128,31 @@ class ConfigurationExecutor {
 
     std::string algorithmName{configuration.getString(ALGORITHM_NAME)};
 
+#ifdef ENABLE_A_STAR
     if (algorithmName == ALGORITHM_A_STAR) {
       return executeOfflinePlanner<Domain, AStar<Domain>>(configuration,
                                                           domain);
-    } else if (algorithmName == ALGORITHM_LSS_LRTA_STAR) {
+    }
+#endif
+
+#ifdef ENABLE_LSS_LRTA_STAR
+    if (algorithmName == ALGORITHM_LSS_LRTA_STAR) {
       return executeRealTimePlanner<Domain,
                                     LssLrtaStar<Domain, TerminationChecker>,
                                     TerminationChecker>(configuration, domain);
-    } else if (algorithmName == ALGORITHM_CLUSTER_RTS) {
+    }
+#endif
+
+#ifdef ENABLE_CLUSTER_RTS
+    if (algorithmName == ALGORITHM_CLUSTER_RTS) {
       return executeRealTimePlanner<Domain,
                                     ClusterRts<Domain, TerminationChecker>,
                                     TerminationChecker>(configuration, domain);
-    } else {
-      LOG(ERROR) << "Unknown algorithms name: " << algorithmName << std::endl;
-      return Result(configuration, "Unknown: algorithmName: " + algorithmName);
     }
+#endif
+
+    LOG(ERROR) << "Unknown algorithms name: " << algorithmName << std::endl;
+    return Result(configuration, "Unknown: algorithmName: " + algorithmName);
   }
 
   template <typename Domain>
@@ -165,8 +199,8 @@ class ConfigurationExecutor {
                                        const Domain& domain) {
     Planner planner{domain, configuration};
 
-    RealTimePlanManager<Domain, Planner, TerminationChecker>
-        realTimePlanManager;
+    RealTimeExperiment<Domain, Planner, TerminationChecker> realTimePlanManager(
+        configuration);
 
     LOG(INFO) << "Configuration done.";
     return realTimePlanManager.plan(configuration, domain, planner);
