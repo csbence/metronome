@@ -111,7 +111,7 @@ class Traffic {
       return !(*this == obstacle);
     }
 
-    bool isEmpty() { return x == -1 && y == -1; }
+//    bool isEmpty() { return x == -1 && y == -1; }
 
     friend std::ostream& operator<<(std::ostream& stream,
                                     const Traffic::Obstacle& obstacle) {

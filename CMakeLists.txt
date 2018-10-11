@@ -43,8 +43,9 @@ set(SOURCE_FILES
         src/MetronomeException.hpp
         src/utils/File.hpp
         src/experiment/termination/ExpansionTerminationChecker.hpp
-        src/utils/Statistic.hpp src/MemoryConfiguration.hpp
+        src/utils/Statistic.hpp
         src/utils/ObjectPool.hpp
+        src/MemoryConfiguration.hpp
         )
 
 set(TEST_FILES
@@ -60,24 +61,24 @@ add_executable(Metronome ${SOURCE_FILES})
 add_executable(MetronomeTest ${TEST_FILES})
 
 find_package(Boost 1.55.0 COMPONENTS thread system REQUIRED)
-find_package(X11)
 
-include_directories(
+include_directories(SYSTEM
         ${Boost_INCLUDE_DIRS}
         ${Boost_LIBRARY_DIRS}
         dependencies
-        src
 )
+
+include_directories(src)
 
 # The following options can enable algorithms and domains.
 # These options have a large impact on the compilation speed.
 
 # Comment the following line out to disable Gephi (Stream Graph HTTP) visualization
-#add_definitions(-DSTREAM_GRAPH)
+add_definitions(-DSTREAM_GRAPH)
 
 # Select the possible algorithms.
-add_definitions(-DENABLE_A_STAR)
-add_definitions(-DENABLE_LSS_LRTA_STAR)
+#add_definitions(-DENABLE_A_STAR)
+#add_definitions(-DENABLE_LSS_LRTA_STAR)
 add_definitions(-DENABLE_CLUSTER_RTS)
 
 # Select the possible domains
@@ -85,5 +86,5 @@ add_definitions(-DENABLE_GRID_WORLD)
 #add_definitions(-DENABLE_SLIDING_TILE_PUZZLE)
 #add_definitions(-DENABLE_TRAFFIC_WORLD)
 
-target_link_libraries(Metronome ${Boost_LIBRARIES} ${X11_LIBRARIES})
-target_link_libraries(MetronomeTest ${Boost_LIBRARIES} ${X11_LIBRARIES})
+target_link_libraries(Metronome ${Boost_LIBRARIES})
+target_link_libraries(MetronomeTest ${Boost_LIBRARIES})
