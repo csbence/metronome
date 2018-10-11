@@ -197,6 +197,14 @@ def construct_results(futures):
         raw_output = result.output.splitlines()
         print('\n'.join(raw_output))
         print(result.error)
+        if '#' not in raw_output:
+            results.append({
+                'configuration': future.configuration,
+                'success': False,
+                'errorMessage': 'exception ::' + str(exception)
+            })
+            continue
+
         result_offset = raw_output.index('#') + 1
         output = json.loads(raw_output[result_offset])
         results.append(output)
