@@ -1,3 +1,13 @@
+#ifdef _WIN32 //The windows section
+#define NOMINMAX
+#define _WINSOCKAPI_
+//Compiler Error C4596 was causing compile errors in easylogging++.h
+//From what I can find, seems to be a bug in VS. Recommendation is to turn it off :/
+#pragma warning( disable : 4596 )
+#include <winsock2.h>
+#include <Windows.h>
+#endif
+
 #include "easylogging++.h"
 #include "experiment/ConfigurationExecutor.hpp"
 #include "rapidjson/document.h"
@@ -9,6 +19,7 @@
 #include <utils/Statistic.hpp>
 
 #define NDEBUG
+#undef STREAM_GRAPH
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -19,12 +30,14 @@ int main(int argc, char** argv) {
   printSplashScreen();
 
   if (argc == 1) {
-    std::cerr << "Invalid arguments. Please use one of the following ways to invoke Metronome:\n"
+    std::cerr << "Invalid arguments. Please use one of the following ways to "
+                 "invoke Metronome:\n"
               << "Metronome <resource path> <json configuration path>\n"
               << "OR\n"
               << "Metronome <resource path> \n"
                  "then provide the configuration using the standard input."
               << std::endl;
+
     return 1;
   }
 
@@ -66,7 +79,7 @@ int main(int argc, char** argv) {
 
   LOG(INFO) << "Configuration has been processed.";
 
-  //        getchar(); // Wait for keypress
+          getchar(); // Wait for keypress
 
   const Result result = ConfigurationExecutor::executeConfiguration(
       Configuration(std::move(document)), resourceDir);
@@ -85,6 +98,7 @@ int main(int argc, char** argv) {
   std::cout << result.getJsonString();
   std::cout << std::flush;
 
+  getchar(); //wait for keypress
   return 0;
 }
 

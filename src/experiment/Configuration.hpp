@@ -2,6 +2,9 @@
 
 #include "MetronomeException.hpp"
 #include "rapidjson/document.h"
+
+#include <iostream>
+
 namespace metronome {
 
 static const std::string RAW_DOMAIN{"rawDomain"};
@@ -35,8 +38,14 @@ static const std::string COMMITMENT_MULTIPLE{"MULTIPLE"};
 class Configuration {
  public:
   Configuration() : document{} {};
-  Configuration(const Configuration&) = default;
-    Configuration(Configuration&&) = default;
+//  Configuration(const Configuration&) = default;
+  Configuration(const Configuration&) : document{} {
+    std::cout << "Here" << std::endl;
+  };
+//    Configuration(Configuration&&) = default;
+  Configuration(Configuration&&) : document{} {
+    std::cout << "Here" << std::endl;
+  };
 
   Configuration(rapidjson::Document document) : document{std::move(document)} {}
 

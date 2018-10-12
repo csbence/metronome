@@ -190,11 +190,12 @@ class LssLrtaStar final : public OnlinePlanner<Domain, TerminationChecker> {
     addToOpenList(*startNode);
 
     while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
-      Node* const currentNode = popOpenList();
+      Node* const listTopNode = topOpenList();
 
-      if (domain.isGoal(currentNode->state)) {
-        return currentNode;
+      if (domain.isGoal(listTopNode->state)) {
+        return listTopNode;
       }
+      Node* const currentNode = popOpenList();
 
       terminationChecker.notifyExpansion();
       expandNode(currentNode);
@@ -265,6 +266,14 @@ class LssLrtaStar final : public OnlinePlanner<Domain, TerminationChecker> {
   void clearOpenList() {
     openList.forEach([](Node* node) { node->open = false; });
     openList.clear();
+  }
+
+  Node* topOpenList() const {
+	if (openList.isEmpty()) {
+      throw MetronomeException("Open list was empty, goal not reachable");
+	}
+
+	return openList.top();
   }
 
   Node* popOpenList() {

@@ -5,13 +5,20 @@ project(Metronome)
 # locating required libraries for addons, etc. Store them in modules/
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/modules/")
 
-if (NOT APPLE)
+if (NOT APPLE AND NOT WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
-endif(NOT APPLE)
+elseif(WIN32)
+	set(CMAKE_EXE_LINKER_FLAGS "/STACK:0x2000000")
+endif()
 
 set(CXX clang++)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -pedantic -Wextra")
+if (WIN32 AND NOT MINGW)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall /bigobj")
+else()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -pedantic -Wextra")
+endif(WIN32 AND NOT MINGW)
+
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  ${CMAKE_CXX_FLAGS} -O3")
 set(CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG}  ${CMAKE_CXX_FLAGS} -g -O0")
 
@@ -86,5 +93,8 @@ add_definitions(-DENABLE_GRID_WORLD)
 #add_definitions(-DENABLE_SLIDING_TILE_PUZZLE)
 #add_definitions(-DENABLE_TRAFFIC_WORLD)
 
+if (MINGW OR WIN32)
+    target_link_libraries(Metronome ws2_32)
+endif()
 target_link_libraries(Metronome ${Boost_LIBRARIES})
 target_link_libraries(MetronomeTest ${Boost_LIBRARIES})
