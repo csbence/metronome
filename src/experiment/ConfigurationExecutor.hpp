@@ -31,6 +31,9 @@
 #ifdef ENABLE_CLUSTER_RTS
 #include "algorithms/ClusterRts.hpp"
 #endif
+#ifdef ENABLE_TBA_STAR
+#include "algorithms/TBAStar.hpp"
+#endif
 
 namespace metronome {
 
@@ -147,6 +150,14 @@ class ConfigurationExecutor {
     if (algorithmName == ALGORITHM_CLUSTER_RTS) {
       return executeRealTimePlanner<Domain,
                                     ClusterRts<Domain, TerminationChecker>,
+                                    TerminationChecker>(configuration, domain);
+    }
+#endif
+
+#ifdef ENABLE_TBA_STAR
+    if (algorithmName == ALGORITHM_TBA_STAR) {
+      return executeRealTimePlanner<Domain,
+                                    TBAStar<Domain, TerminationChecker>,
                                     TerminationChecker>(configuration, domain);
     }
 #endif
