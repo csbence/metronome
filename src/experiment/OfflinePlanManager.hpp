@@ -1,7 +1,9 @@
 #pragma once
 
+#include <sstream>
 #include "Experiment.hpp"
 #include "utils/TimeMeasurement.hpp"
+
 namespace metronome {
 template <typename Domain, typename Planner>
 class OfflinePlanManager : Experiment<Domain, Planner> {
@@ -23,12 +25,15 @@ class OfflinePlanManager : Experiment<Domain, Planner> {
     typename Domain::State currentState = domain.getStartState();
 
     for (auto& action : actions) {
-      actionStrings.emplace_back(action.toString());
+      std::ostringstream stringStream;
+      stringStream << action;
+      actionStrings.push_back(stringStream.str());
+      
       auto candidateState = domain.transition(currentState, action);
-      if (!candidateState.is_initialized()) {
+      if (!candidateState.has_value()) {
         throw MetronomeException("Invalid path.");
       }
-      currentState = candidateState.get();
+      currentState = candidateState.value();
     }
     if (!domain.isGoal(currentState)) {
       throw MetronomeException("Goal is not reached!");

@@ -2,9 +2,9 @@
 
 #include <MetronomeException.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/optional.hpp>
 #include <experiment/Configuration.hpp>
 #include <limits>
+#include <optional>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -20,8 +20,8 @@ class SlidingTilePuzzle {
   class Action {
    public:
     Action() : label{'~'} {}
-
     Action(char value) : label{value} {}
+    
 
     static std::vector<Action>& getActions() {
       static std::vector<Action> actions{
@@ -41,10 +41,6 @@ class SlidingTilePuzzle {
     bool operator!=(const Action& rhs) const { return !(rhs == *this); }
 
     char toChar() const { return label; }
-
-    static Action getIdentity() { return Action('0'); }
-
-    std::string toString() const { return std::string{1, label}; }
 
     friend std::ostream& operator<<(std::ostream& os, const Action& action) {
       os << action.label;
@@ -160,8 +156,8 @@ class SlidingTilePuzzle {
     }
   }
 
-  boost::optional<State> transition(const State& state,
-                                    const Action& action) const {
+  std::optional<State> transition(const State& state,
+                                  const Action& action) const {
     switch (action.toChar()) {
       case 'N':
         return getSuccessor(state, 0, -1);
@@ -172,9 +168,9 @@ class SlidingTilePuzzle {
       case 'S':
         return getSuccessor(state, 0, 1);
       case '0':
-        return boost::make_optional(state);
+        return state;
       default:
-        return boost::none;
+        return {};
     }
   }
 
@@ -218,6 +214,10 @@ class SlidingTilePuzzle {
   const State getStartState() const { return startState; }
 
   Cost getActionDuration() const { return actionDuration; }
+  
+  Action getIdentityAction() const {
+    return Action('0');
+  }
 
  private:
   static signed char getIndex(signed char x, signed char y) {
@@ -230,16 +230,15 @@ class SlidingTilePuzzle {
       signed char relativeX,
       signed char relativeY,
       Action action) const {
-    const boost::optional<State>& successor =
-        getSuccessor(sourceState, relativeX, relativeY);
-    if (successor.is_initialized()) {
-      successors.emplace_back(successor.get(), action, actionDuration);
+    auto successor = getSuccessor(sourceState, relativeX, relativeY);
+    if (successor.has_value()) {
+      successors.emplace_back(successor.value(), action, actionDuration);
     }
   }
 
-  boost::optional<State> getSuccessor(const State& sourceState,
-                                      signed char relativeX,
-                                      signed char relativeY) const {
+  std::optional<State> getSuccessor(const State& sourceState,
+                                    signed char relativeX,
+                                    signed char relativeY) const {
     signed char targetZeroIndex =
         static_cast<signed char>(sourceState.getZeroIndex()) +
         getIndex(relativeX, relativeY);
@@ -253,10 +252,10 @@ class SlidingTilePuzzle {
       targetState.set(static_cast<unsigned char>(targetZeroIndex), 0);
       targetState.setZeroIndex(static_cast<unsigned char>(targetZeroIndex));
 
-      return boost::optional<State>{targetState};
+      return targetState;
     }
 
-    return boost::none;
+    return {};
   }
 
   const Cost actionDuration;

@@ -593,24 +593,24 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       targetNode = targetCluster->openList.top()->parent;
       LOG(INFO) << "\tto: " << targetNode;
     }
-    
+
     if (agentNode == targetNode) {
-      return {ActionBundle(domain.getIdentityAction(), domain.getActionDuration
-      ())};
+      return {
+          ActionBundle(domain.getIdentityAction(), domain.getActionDuration())};
     }
 
     populateAgentToClusterCosts(agentCluster, targetCluster);
     auto skeletonPath = extractSkeletonPath(agentCluster, targetCluster);
 
-//    LOG(INFO) << "Agent cluster: " << clusterPool.index(agentCluster)
-//              << " core: " << agentCluster->coreNode;
-//    for (auto clusterEdge : skeletonPath) {
-//      LOG(INFO) << "intermediate cluster: "
-//                << std::to_string(clusterPool.index(clusterEdge.cluster))
-//                << " core: " << clusterEdge.cluster->coreNode;
-//    }
-//    LOG(INFO) << "Target cluster: " << clusterPool.index(targetCluster)
-//              << " core: " << targetCluster->coreNode;
+    //    LOG(INFO) << "Agent cluster: " << clusterPool.index(agentCluster)
+    //              << " core: " << agentCluster->coreNode;
+    //    for (auto clusterEdge : skeletonPath) {
+    //      LOG(INFO) << "intermediate cluster: "
+    //                << std::to_string(clusterPool.index(clusterEdge.cluster))
+    //                << " core: " << clusterEdge.cluster->coreNode;
+    //    }
+    //    LOG(INFO) << "Target cluster: " << clusterPool.index(targetCluster)
+    //              << " core: " << targetCluster->coreNode;
 
     auto sourceClusterPath = extractNodeToCorePath(agentNode);
     auto interClusterPath = extractInterClusterPath(skeletonPath);
@@ -755,7 +755,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
       // NOTE: we use the assumption that the cost is symmetric and the
       // actions are reversible.
-//      std::reverse(begin(segmentActions), end(segmentActions));
+      //      std::reverse(begin(segmentActions), end(segmentActions));
       //      for (auto& actionBundle : segmentActions) {
       //        actionBundle.action = actionBundle.action.inverse();
       //      }

@@ -1,12 +1,11 @@
 #pragma once
 
 #include <algorithm>
-#include <boost/assert.hpp>
-#include <boost/optional.hpp>
 #include <cstdlib>
 #include <experiment/Configuration.hpp>
 #include <functional>
 #include <limits>
+#include <optional>
 #include <ostream>
 #include <unordered_set>
 #include <utils/Hash.hpp>
@@ -22,6 +21,7 @@ class GridWorld {
   class Action {
    public:
     Action() : label{'~'} {};
+    explicit Action(char label) : label{label} {}
     Action(const Action&) = default;
     Action(Action&&) = default;
     Action& operator=(const Action&) = default;
@@ -38,6 +38,7 @@ class GridWorld {
       if (label == 'S') return 0;
       if (label == 'W') return -1;
       if (label == 'E') return 1;
+      if (label == '0') return 0;
       return 0;
     }
 
@@ -46,6 +47,7 @@ class GridWorld {
       if (label == 'S') return 1;
       if (label == 'W') return 0;
       if (label == 'E') return 0;
+      if (label == '0') return 0;
       return 0;
     }
 
@@ -54,7 +56,7 @@ class GridWorld {
       if (label == 'S') return Action('N');
       if (label == 'W') return Action('E');
       if (label == 'E') return Action('W');
-      if (label == '~') return Action('~');
+      if (label == '0') return Action('0');
 
       throw MetronomeException("Unknown action to invert: " +
                                std::to_string(label));
@@ -66,8 +68,6 @@ class GridWorld {
 
     char toChar() const { return label; }
 
-    static Action getIdentity() { return Action('0'); }
-
     friend std::ostream& operator<<(std::ostream& os, const Action& action) {
       os << action.label << " (dx: " << action.relativeX()
          << " dy: " << action.relativeY() << ")";
@@ -75,7 +75,6 @@ class GridWorld {
     }
 
    private:
-    explicit Action(char label) : label{label} {}
     char label;
   };
 
@@ -143,8 +142,8 @@ class GridWorld {
     std::stringstream convertHeight(line);
     convertHeight >> height;
 
-    boost::optional<State> tempStarState;
-    boost::optional<State> tempGoalState;
+    std::optional<State> tempStarState;
+    std::optional<State> tempGoalState;
 
     while (getline(input, line) && currentHeight < height) {
       for (char it : line) {
@@ -178,14 +177,14 @@ class GridWorld {
           "configuration.");
     }
 
-    if (!tempStarState.is_initialized() || !tempGoalState.is_initialized()) {
+    if (!tempStarState.has_value() || !tempGoalState.has_value()) {
       throw MetronomeException(
           "Traffic unknown start or goal location. Start or goal location is "
           "not defined.");
     }
 
-    startLocation = tempStarState.get();
-    goalLocation = tempGoalState.get();
+    startLocation = tempStarState.value();
+    goalLocation = tempGoalState.value();
   }
 
   /**
@@ -193,18 +192,18 @@ class GridWorld {
    *
    * @return the original state if the transition is not possible
    */
-  boost::optional<State> transition(const State& sourceState,
-                                    const Action& action) const {
+  std::optional<State> transition(const State& sourceState,
+                                  const Action& action) const {
     State targetState(sourceState.getX() + action.relativeX(),
                       sourceState.getY() + action.relativeY());
 
     if (isLegalLocation(targetState)) {
-      return boost::make_optional(targetState);
+      return targetState;
     }
-    
-    return boost::none;
+
+    return {};
   }
-  
+
   /*Validating a goal state*/
   bool isGoal(const State& location) const {
     return location.getX() == goalLocation.getX() &&
@@ -292,7 +291,7 @@ class GridWorld {
 
   Cost getActionDuration() const { return actionDuration; }
 
-  Action getIdentityAction() const { return Action(); }
+  Action getIdentityAction() const { return Action('0'); }
 
  private:
   void addValidSuccessor(std::vector<SuccessorBundle<GridWorld>>& successors,
@@ -300,16 +299,15 @@ class GridWorld {
                          const int relativeX,
                          const int relativeY,
                          Action& action) const {
-    const boost::optional<State>& successor =
-        getSuccessor(sourceState, relativeX, relativeY);
-    if (successor.is_initialized()) {
-      successors.emplace_back(successor.get(), action, actionDuration);
+    auto successor = getSuccessor(sourceState, relativeX, relativeY);
+    if (successor.has_value()) {
+      successors.emplace_back(successor.value(), action, actionDuration);
     }
   }
 
-  boost::optional<State> getSuccessor(const State& sourceState,
-                                      int relativeX,
-                                      int relativeY) const {
+  std::optional<State> getSuccessor(const State& sourceState,
+                                    int relativeX,
+                                    int relativeY) const {
     auto newX = static_cast<unsigned int>(static_cast<int>(sourceState.getX()) +
                                           relativeX);
     auto newY = static_cast<unsigned int>(static_cast<int>(sourceState.getY()) +
@@ -318,10 +316,10 @@ class GridWorld {
     State newState = State(newX, newY);
 
     if (isLegalLocation(newState)) {
-      return boost::make_optional(newState);
+      return newState;
     }
 
-    return boost::none;
+    return {};
   }
 
   /*

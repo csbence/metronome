@@ -1,6 +1,5 @@
 #pragma once
 
-#include <boost/assert.hpp>
 #include <functional>
 #include <string>
 #include <vector>

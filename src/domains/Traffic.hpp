@@ -1,7 +1,7 @@
 #pragma once
 
-#include <boost/assert.hpp>
 #include <cstdlib>
+#include <optional>
 #include <ctime>
 #include <functional>
 #include <unordered_map>
@@ -78,11 +78,11 @@ class Traffic {
 
   class Obstacle {
    public:
-    Obstacle(unsigned int x, unsigned  int y, int xVelocity, int yVelocity)
+    Obstacle(unsigned int x, unsigned int y, int xVelocity, int yVelocity)
         : x{x}, y{y}, xVelocity{xVelocity}, yVelocity{yVelocity} {}
     Obstacle() : x{0}, y{0}, xVelocity{0}, yVelocity{0} {}
-    Obstacle(unsigned int x, unsigned int y) : x{x}, y{y}, xVelocity{0}, 
-    yVelocity{0} {}
+    Obstacle(unsigned int x, unsigned int y)
+        : x{x}, y{y}, xVelocity{0}, yVelocity{0} {}
     Obstacle& operator=(Obstacle toCopy) {
       swap(*this, toCopy);
       return *this;
@@ -111,7 +111,7 @@ class Traffic {
       return !(*this == obstacle);
     }
 
-//    bool isEmpty() { return x == -1 && y == -1; }
+    //    bool isEmpty() { return x == -1 && y == -1; }
 
     friend std::ostream& operator<<(std::ostream& stream,
                                     const Traffic::Obstacle& obstacle) {
@@ -238,8 +238,8 @@ class Traffic {
       }
     }
 
-    boost::optional<State> tempStartState;
-    boost::optional<State> tempGoalState;
+    std::optional<State> tempStartState;
+    std::optional<State> tempGoalState;
 
     std::vector<Obstacle> startObstacles{};
 
@@ -292,14 +292,14 @@ class Traffic {
           "Traffic is not complete. Height doesn't match input configuration.");
     }
 
-    if (!tempStartState.is_initialized() || !tempGoalState.is_initialized()) {
+    if (!tempStartState.has_value() || !tempGoalState.has_value()) {
       throw MetronomeException(
           "Traffic unknown start or goal location. Start or goal location is "
           "not defined.");
     }
 
-    startLocation = tempStartState.get();
-    goalLocation = tempGoalState.get();
+    startLocation = tempStartState.value();
+    goalLocation = tempGoalState.value();
 
     startLocation.remapObstacles(startObstacles);
   }
@@ -333,8 +333,8 @@ class Traffic {
     display << "\n";
   }
 
-  boost::optional<State> transition(const State& state,
-                                    const Action& action) const {
+  std::optional<State> transition(const State& state,
+                                  const Action& action) const {
     std::vector<metronome::Traffic::Obstacle> obstacleMap =
         moveObstacles(state);
 
@@ -342,36 +342,36 @@ class Traffic {
       State newState = State(state.getX(), state.getY() - 1, obstacleMap);
       if (isLegalLocation(newState)) {
         //                visualize(std::cout, state, action);
-        return boost::make_optional(newState);
+        return newState;
       }
     } else if (action.toChar() == 'E') {
       State newState = State(state.getX() + 1, state.getY(), obstacleMap);
       if (isLegalLocation(newState)) {
         //                visualize(std::cout, state, action);
-        return boost::make_optional(newState);
+        return newState;
       }
     } else if (action.toChar() == 'S') {
       State newState = State(state.getX(), state.getY() + 1, obstacleMap);
       if (isLegalLocation(newState)) {
         //                visualize(std::cout, state, action);
-        return boost::make_optional(newState);
+        return newState;
       }
     } else if (action.toChar() == 'W') {
       State newState = State(state.getX() - 1, state.getY(), obstacleMap);
       if (isLegalLocation(newState)) {
         //                visualize(std::cout, state, action);
-        return boost::make_optional(newState);
+        return newState;
       }
     } else if (action.toChar() ==
                '0' /*&& bunkers[state.getX()][state.getY()]*/) {
       State newState = State(state.getX(), state.getY(), obstacleMap);
       if (isLegalLocation(newState)) {
         //                visualize(std::cout, state, action);
-        return boost::make_optional(newState);
+        return newState;
       }
     }
 
-    return boost::none;
+    return {};
   }
 
   bool isObstacle(const State& state, unsigned int x, unsigned int y) const {
@@ -382,7 +382,7 @@ class Traffic {
     }
     return false;
   }
-  
+
   bool isBunker(int x, int y) const { return bunkers[x][y]; }
 
   bool isLegalLocation(const State& location) const {
@@ -396,12 +396,13 @@ class Traffic {
     unsigned int actions[] = {5, 4, 3, 2, 1};
 
     for (auto a : actions) {
-      boost::optional<State> newState = transition(state, Action(a));
-      if (newState.is_initialized()) {
-        if (!isObstacle(
-                newState.get(), newState.get().getX(), newState.get().getY())) {
+      auto newState = transition(state, Action(a));
+      if (newState.has_value()) {
+        if (!isObstacle(newState.value(),
+                        newState.value().getX(),
+                        newState.value().getY())) {
           successors.push_back(
-              SuccessorBundle<Traffic>{newState.get(), a, actionDuration});
+              SuccessorBundle<Traffic>{newState.value(), a, actionDuration});
         }
       } else {
         //
@@ -442,6 +443,11 @@ class Traffic {
   }
 
   Cost getActionDuration() const { return actionDuration; }
+  
+  Action getIdentityAction() const {
+    throw std::logic_error(
+        "Not implemented function: Traffic::getIdentityAction()");
+  }
 
  private:
   std::vector<metronome::Traffic::Obstacle> moveObstacles(
@@ -459,7 +465,7 @@ class Traffic {
         xVelocity *= -1;
         newXLocation = curObstacle.getX();  // + xVelocity;
       }
-      
+
       if (newYLocation > height - 1 || newYLocation <= 0) {
         yVelocity *= -1;
         newYLocation = curObstacle.getY();  // + yVelocity;
