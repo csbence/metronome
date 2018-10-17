@@ -1,10 +1,10 @@
-#ifndef METRONOME_CONFIGURATION_HPP
-#define METRONOME_CONFIGURATION_HPP
+#pragma once
 
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
 #include "MetronomeException.hpp"
 #include "rapidjson/document.h"
+
+#include <iostream>
+
 namespace metronome {
 
 static const std::string RAW_DOMAIN{"rawDomain"};
@@ -16,23 +16,15 @@ static const std::string TERMINATION_CHECKER_TYPE{"terminationType"};
 static const std::string ACTION_DURATION{"actionDuration"};
 static const std::string TIME_LIMIT{"timeLimit"};
 static const std::string LOOKAHEAD_TYPE{"lookaheadType"};
-static const std::string COMMITMENT_TYPE{"commitmentType"};
-static const std::string FIRST_ITERATION_DURATION{"firstIterationDuration"};
-static const std::string OCTILE_MOVEMENT{"octileMovement"};
+static const std::string COMMITMENT_STRATEGY{"commitmentStrategy"};
 
 static const std::string DOMAIN_GRID_WORLD{"GRID_WORLD"};
 static const std::string DOMAIN_TRAFFIC{"TRAFFIC"};
 static const std::string DOMAIN_TILES{"SLIDING_TILE_PUZZLE"};
-static const std::string DOMAIN_GRAPH{"GRAPH"};
 
 static const std::string ALGORITHM_A_STAR{"A_STAR"};
 static const std::string ALGORITHM_LSS_LRTA_STAR{"LSS_LRTA_STAR"};
-static const std::string ALGORITHM_F_HAT{"F_HAT"};
-static const std::string ALGORITHM_MO_RTS{"MO_RTS"};
-static const std::string ALGORITHM_MO_RTS_OLD{"MO_RTS_OLD"};
-static const std::string ALGORITHM_SLOW_RTS{"SLOW_RTS"};
-static const std::string ALGORITHM_S_ZERO{"S_ZERO"};
-static const std::string ALGORITHM_F_RTS{"F_RTS"};
+static const std::string ALGORITHM_CLUSTER_RTS{"CLUSTER_RTS"};
 
 static const std::string TERMINATION_CHECKER_TIME{"TIME"};
 static const std::string TERMINATION_CHECKER_EXPANSION{"EXPANSION"};
@@ -41,57 +33,64 @@ static const std::string LOOKAHEAD_STATIC{"STATIC"};
 static const std::string LOOKAHEAD_DYNAMIC{"DYNAMIC"};
 
 static const std::string COMMITMENT_SINGLE{"SINGLE"};
-static const std::string COMMITMENT_FRONTIER{"FRONTIER"};
+static const std::string COMMITMENT_MULTIPLE{"MULTIPLE"};
 
 class Configuration {
-public:
-    Configuration() : document{} {};
-    Configuration(const Configuration&) = default;
-    Configuration(Configuration&&) = default;
+ public:
+  Configuration() : document{} {};
+//  Configuration(const Configuration&) = default;
+  Configuration(const Configuration&) : document{} {
+    std::cout << "Here" << std::endl;
+  };
+//    Configuration(Configuration&&) = default;
+  Configuration(Configuration&&) : document{} {
+    std::cout << "Here" << std::endl;
+  };
 
-    Configuration(rapidjson::Document document) : document{std::move(document)} {}
+  Configuration(rapidjson::Document document) : document{std::move(document)} {}
 
-    Configuration(const std::string& json) : document{} { document.Parse(json.c_str()); }
+  Configuration(const std::string& json) : document{} {
+    document.Parse(json.c_str());
+  }
 
-    bool hasMember(const std::string& key) const { return document.HasMember(key.c_str()); }
+  bool hasMember(const std::string& key) const {
+    return document.HasMember(key.c_str());
+  }
 
-    std::string getString(const std::string& key) const { return std::string{document[key.c_str()].GetString()}; }
-    long long int getLong(const std::string& key) const { return document[key.c_str()].GetInt64(); }
-    long long int getLong(const std::string& key, const long long int defaultValue) const {
-        if (!hasMember(key)) {
-            return defaultValue;
-        }
-        return document[key.c_str()].GetInt64();
-    }
-
-    std::string getStringOrThrow(const std::string& key) const {
-        if (!hasMember(key)) {
-            throw metronome::MetronomeException("Invalid key: " + key);
-        }
-
-        return std::string{document[key.c_str()].GetString()};
-    }
-
-    long long int getLongOrThrow(const std::string& key) const {
-        if (!hasMember(key)) {
-            throw metronome::MetronomeException("Invalid key: " + key);
-        }
-
-        return document[key.c_str()].GetInt64();
-    }
-
-    bool getBool(const std::string& key) const { return document[key.c_str()].GetBool(); }
+  std::string getString(const std::string& key) const {
+    checkKey(key);
     
-    std::string toString() {
-        rapidjson::StringBuffer buffer;
-        rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-        document.Accept(writer);
-        return buffer.GetString();
-    }
+    return std::string{document[key.c_str()].GetString()};
+  }
+  
+  long long int getLong(const std::string& key) const {
+    checkKey(key);
     
-private:
-    rapidjson::Document document;
+    return document[key.c_str()].GetInt64();
+  }
+  
+  double getDouble(const std::string& key) const {
+    checkKey(key);
+    
+    return document[key.c_str()].GetDouble();
+  }
+  
+  double getBool(const std::string& key) const {
+    checkKey(key);
+    
+    return document[key.c_str()].GetBool();
+  }
+
+  void checkKey(const std::string& key) const {
+    if (!hasMember(key)) {
+      throw metronome::MetronomeException("Invalid key: " + key);
+    }
+  }
+
+  const rapidjson::Document& getJsonDocument() const { return document; }
+
+ private:
+  rapidjson::Document document;
 };
-}
 
-#endif // METRONOME_CONFIGURATION_HPP
+}  // namespace metronome

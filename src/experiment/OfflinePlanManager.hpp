@@ -1,52 +1,58 @@
-#ifndef METRONOME_OFFLINEPLANMANAGER_HPP
-#define METRONOME_OFFLINEPLANMANAGER_HPP
+#pragma once
 
-#include "PlanManager.hpp"
+#include "Experiment.hpp"
 #include "utils/TimeMeasurement.hpp"
 namespace metronome {
 template <typename Domain, typename Planner>
-class OfflinePlanManager : PlanManager<Domain, Planner> {
-public:
-    Result plan(const Configuration& configuration, const Domain& domain, Planner& planner) {
-        std::vector<typename Domain::Action> actions;
-        auto planningTime = measureNanoTime([&] { actions = planner.plan(domain.getStartState()); });
-        auto pathLength = actions.size();
+class OfflinePlanManager : Experiment<Domain, Planner> {
+ public:
+  Result plan(const Configuration& configuration,
+              const Domain& domain,
+              Planner& planner) {
+    std::vector<typename Domain::Action> actions;
+    //            long long int start = currentNanoTime();
+    //        logTime();
+    auto planningTime = measureNanoTime(
+        [&] { actions = planner.plan(domain.getStartState()); });
+    //        long long int end = currentNanoTime();
+    //        LOG(DEBUG) << (end - start) / 1000000;
 
-        std::vector<std::string> actionStrings;
-        typename Domain::State currentState = domain.getStartState();
+    auto pathLength = actions.size();
 
-        for (auto& action : actions) {
-            actionStrings.emplace_back(action.toString());
-            auto candidateState = domain.transition(currentState, action);
-            if(!candidateState.is_initialized()){
-                throw MetronomeException("Invalid path.");
-            }
-            currentState = candidateState.get();
-        }
-        if (!domain.isGoal(currentState)) {
-            throw MetronomeException("Goal is not reached!");
-        }
+    std::vector<std::string> actionStrings;
+    typename Domain::State currentState = domain.getStartState();
 
-        const std::string terminationCheckerType{configuration.getString(TERMINATION_CHECKER_TYPE)};
-        long long int calculatedPlanningTime = planningTime;
-
-        if (terminationCheckerType == TERMINATION_CHECKER_EXPANSION) {
-            calculatedPlanningTime = planner.getExpandedNodeCount();
-        }
-
-        const auto firstIterationDuration = this->getFirstIterationDuration(configuration);
-        
-        return Result(configuration,
-                planner.getExpandedNodeCount(),
-                planner.getGeneratedNodeCount(),
-                planningTime,
-                pathLength * configuration.getLong("actionDuration"),
-                calculatedPlanningTime + pathLength * configuration.getLong("actionDuration"),
-                calculatedPlanningTime,
-                pathLength,
-                actionStrings);
+    for (auto& action : actions) {
+      actionStrings.emplace_back(action.toString());
+      auto candidateState = domain.transition(currentState, action);
+      if (!candidateState.is_initialized()) {
+        throw MetronomeException("Invalid path.");
+      }
+      currentState = candidateState.get();
     }
-};
-}
+    if (!domain.isGoal(currentState)) {
+      throw MetronomeException("Goal is not reached!");
+    }
 
-#endif // METRONOME_OFFLINEPLANMANAGER_HPP
+    const std::string terminationCheckerType{
+        configuration.getString(TERMINATION_CHECKER_TYPE)};
+    long long int calculatedPlanningTime = planningTime;
+
+    if (terminationCheckerType == TERMINATION_CHECKER_EXPANSION) {
+      calculatedPlanningTime = planner.getExpandedNodeCount();
+    }
+
+    return Result(configuration,
+                  planner.getExpandedNodeCount(),
+                  planner.getGeneratedNodeCount(),
+                  planningTime,
+                  pathLength * configuration.getLong("actionDuration"),
+                  calculatedPlanningTime +
+                      pathLength * configuration.getLong("actionDuration"),
+                  calculatedPlanningTime,
+                  pathLength,
+                  actionStrings);
+  }
+};
+
+}  // namespace metronome
