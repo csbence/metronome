@@ -21,9 +21,10 @@ def generate_base_configuration():
     expansion_limit = [100000000]
     lookahead_type = ['DYNAMIC']
     time_limit = [300000000000]
-    action_durations = [1]  # Use this for A*
+    # action_durations = [1]  # Use this for A*
     # action_durations = [10000000, 12000000, 16000000, 20000000, 25000000, 32000000]
-    termination_types = ['TIME']
+    action_durations = [1000]
+    termination_types = ['EXPANSION']
     step_limits = [100000000]
 
     base_configuration = dict()
@@ -195,13 +196,16 @@ def construct_results(futures):
         # print(f'output: {result.output}')
 
         raw_output = result.output.splitlines()
-        print('\n'.join(raw_output))
-        print(result.error)
+        # print('Output:')
+        # print('\n'.join(raw_output))
+        # print('Error:')
+        # print(result.error)
         if '#' not in raw_output:
             results.append({
                 'configuration': future.configuration,
                 'success': False,
-                'errorMessage': 'exception ::' + str(exception)
+                'errorMessage': 'exception :: output not found :: ' +
+                                str(raw_output)
             })
             continue
 
@@ -320,7 +324,7 @@ def main():
     else:
         # Generate new domain configurations
         configurations = generate_grid_world()
-        # configurations = configurations[:1] # debug - keep only one config
+        # configurations = configurations[:1]  # debug - keep only one config
 
     print('{} configurations has been generated '.format(len(configurations)))
 

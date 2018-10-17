@@ -14,9 +14,6 @@ class Domain {
 
   class Action {
    public:
-    static Action getIdentity() {
-      // TODO
-    }
 
     std::string toString() const {
       // TODO

@@ -16,7 +16,7 @@ set(CXX clang++)
 if (WIN32 AND NOT MINGW)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall /bigobj")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -pedantic -Wextra")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -pedantic -Wextra")
 endif(WIN32 AND NOT MINGW)
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  ${CMAKE_CXX_FLAGS} -O3")
@@ -81,7 +81,7 @@ include_directories(src)
 # These options have a large impact on the compilation speed.
 
 # Comment the following line out to disable Gephi (Stream Graph HTTP) visualization
-add_definitions(-DSTREAM_GRAPH)
+#add_definitions(-DSTREAM_GRAPH)
 
 # Select the possible algorithms.
 #add_definitions(-DENABLE_A_STAR)
@@ -92,6 +92,9 @@ add_definitions(-DENABLE_CLUSTER_RTS)
 add_definitions(-DENABLE_GRID_WORLD)
 #add_definitions(-DENABLE_SLIDING_TILE_PUZZLE)
 #add_definitions(-DENABLE_TRAFFIC_WORLD)
+
+# Disable logger
+#add_definitions(-DELPP_DISABLE_LOGS)
 
 if (MINGW OR WIN32)
     target_link_libraries(Metronome ws2_32)

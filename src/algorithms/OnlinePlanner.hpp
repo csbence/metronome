@@ -1,7 +1,8 @@
 #pragma once
 
-#include <vector>
+#include <ostream>
 #include <string>
+#include <vector>
 #include "Planner.hpp"
 #include "experiment/termination/TimeTerminationChecker.hpp"
 
@@ -18,20 +19,37 @@ class OnlinePlanner : public Planner {
         : action{action}, actionDuration{actionDuration} {}
     ActionBundle(const ActionBundle&) = default;
     ActionBundle(ActionBundle&&) = default;
-    ActionBundle& operator=(const ActionBundle&) = default;
+    ActionBundle& operator=(ActionBundle&) = default;
+    ActionBundle& operator=(ActionBundle&&) = default;
     ~ActionBundle() = default;
-    
+
+    friend std::ostream& operator<<(std::ostream& os,
+                                    const ActionBundle& bundle) {
+      os << "Action: " << bundle.action
+         << " expectedTargetState: " << bundle.expectedTargetState
+         << " label: " << bundle.label;
+      return os;
+    }
+
     typename Domain::Action action;
     typename Domain::Cost actionDuration;
     typename Domain::State expectedTargetState;
     std::string label;
   };
 
-  virtual ~OnlinePlanner() = default;
+  ~OnlinePlanner() override = default;
 
   virtual std::vector<ActionBundle> selectActions(
       const typename Domain::State& startState,
       TerminationChecker& terminationChecker) = 0;
+
+  friend std::ostream& operator<<(
+      std::ostream& os, const std::vector<ActionBundle>& actionBundles) {
+    for (const auto& actionBundle : actionBundles) {
+      os << actionBundle << "\n";
+    }
+    return os;
+  }
 };
 
 }  // namespace metronome
