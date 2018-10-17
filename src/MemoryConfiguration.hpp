@@ -1,5 +1,6 @@
-#ifndef METRONOME_MEMORYCONFIGURATION_HPP
-#define METRONOME_MEMORYCONFIGURATION_HPP
+#pragma once
+
+#include <cstddef>
 
 namespace metronome {
 
@@ -8,6 +9,5 @@ public:
     static constexpr std::size_t OPEN_LIST_SIZE{30000000};
     static constexpr std::size_t NODE_LIMIT{30000000};
 };
-}
 
-#endif //METRONOME_MEMORYCONFIGURATION_HPP
+}

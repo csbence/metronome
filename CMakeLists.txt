@@ -5,21 +5,28 @@ project(Metronome)
 # locating required libraries for addons, etc. Store them in modules/
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/modules/")
 
-if (NOT APPLE)
+if (NOT APPLE AND NOT WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
-endif(NOT APPLE)
+elseif(WIN32)
+	set(CMAKE_EXE_LINKER_FLAGS "/STACK:0x2000000")
+endif()
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -pedantic -Wextra")
 set(CXX clang++)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+if (WIN32 AND NOT MINGW)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall /bigobj")
+else()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -pedantic -Wextra")
+endif(WIN32 AND NOT MINGW)
+
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  ${CMAKE_CXX_FLAGS} -O3")
+set(CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG}  ${CMAKE_CXX_FLAGS} -g -O0")
 
 set(SOURCE_FILES
         src/Metronome.cpp
         src/algorithms/AStar.hpp
+        src/algorithms/ClusterRts.hpp
         src/algorithms/LssLrtaStar.hpp
-        src/algorithms/FHat.hpp
-        src/algorithms/MoRts.hpp
         src/algorithms/OfflinePlanner.hpp
         src/algorithms/OnlinePlanner.hpp
         src/algorithms/Planner.hpp
@@ -30,22 +37,23 @@ set(SOURCE_FILES
         src/domains/Traffic.hpp
         src/domains/SuccessorBundle.hpp
         src/utils/PriorityQueue.hpp
-        src/utils/Hasher.hpp
-        src/utils/Visualizer.hpp
+        src/utils/Hash.hpp
+        src/visualization/Visualizer.hpp
         src/utils/Location2D.hpp
         src/experiment/termination/TimeTerminationChecker.hpp
-        src/experiment/PlanManager.hpp
+        src/experiment/Experiment.hpp
         src/experiment/OfflinePlanManager.hpp
-        src/experiment/RealTimePlanManager.hpp
+        src/experiment/RealTimeExperiment.hpp
         src/experiment/Configuration.hpp
         src/experiment/Result.hpp
         src/experiment/ConfigurationExecutor.hpp
         src/MetronomeException.hpp
         src/utils/File.hpp
         src/experiment/termination/ExpansionTerminationChecker.hpp
-        src/utils/Statistic.hpp src/MemoryConfiguration.hpp
+        src/utils/Statistic.hpp
         src/utils/ObjectPool.hpp
-        src/algorithms/FRts.hpp)
+        src/MemoryConfiguration.hpp
+        )
 
 set(TEST_FILES
         test/test.cpp
@@ -60,16 +68,36 @@ add_executable(Metronome ${SOURCE_FILES})
 add_executable(MetronomeTest ${TEST_FILES})
 
 find_package(Boost 1.55.0 COMPONENTS thread system REQUIRED)
-find_package(X11)
 
-include_directories(
+include_directories(SYSTEM
         ${Boost_INCLUDE_DIRS}
         ${Boost_LIBRARY_DIRS}
         dependencies
-        src
 )
 
-#    add_definitions(-DGRAPHICS)
+include_directories(src)
 
-target_link_libraries(Metronome ${Boost_LIBRARIES} ${X11_LIBRARIES})
-target_link_libraries(MetronomeTest ${Boost_LIBRARIES} ${X11_LIBRARIES})
+# The following options can enable algorithms and domains.
+# These options have a large impact on the compilation speed.
+
+# Comment the following line out to disable Gephi (Stream Graph HTTP) visualization
+#add_definitions(-DSTREAM_GRAPH)
+
+# Select the possible algorithms.
+#add_definitions(-DENABLE_A_STAR)
+#add_definitions(-DENABLE_LSS_LRTA_STAR)
+add_definitions(-DENABLE_CLUSTER_RTS)
+
+# Select the possible domains
+add_definitions(-DENABLE_GRID_WORLD)
+#add_definitions(-DENABLE_SLIDING_TILE_PUZZLE)
+#add_definitions(-DENABLE_TRAFFIC_WORLD)
+
+# Disable logger
+#add_definitions(-DELPP_DISABLE_LOGS)
+
+if (MINGW OR WIN32)
+    target_link_libraries(Metronome ws2_32)
+endif()
+target_link_libraries(Metronome ${Boost_LIBRARIES})
+target_link_libraries(MetronomeTest ${Boost_LIBRARIES})
