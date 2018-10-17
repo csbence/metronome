@@ -6,10 +6,10 @@ Real time search library implemented in C++
 
 ## Metronome C++
 
-* Clang 3.8
+* C++ 17 (Tested with Clang and GCC)
 * Cmake
 * Boost
-* X11 and Cairo (optional for visualizaion)
+* Gephi with Graph Streaming (optional for visualizaion)
 
 ## Experiment execution and plotting
 
@@ -18,7 +18,7 @@ Real time search library implemented in C++
 
 # features
 
-Search domains including VaccumWorld, Traffic, TestDomain
+Search domains including VacuumWorld, Traffic, TestDomain
 
 Algorithm set that makes use of real time search paradigms 
 
