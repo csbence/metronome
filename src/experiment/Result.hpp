@@ -94,9 +94,10 @@ class Result {
     resultDocument.AddMember(
         "timestamp", Value{}.SetInt64(timestamp), allocator);
 
-//    rapidjson::Value configurationValue;
-//    configurationValue.CopyFrom(document, allocator);
-//    resultDocument.AddMember("configuration", configurationValue, allocator);
+    const rapidjson::Document& document = configuration.getJsonDocument();
+    rapidjson::Value configurationValue;
+    configurationValue.CopyFrom(document, allocator);
+    resultDocument.AddMember("configuration", configurationValue, allocator);
 
     StringBuffer buffer;
     Writer<StringBuffer> writer(buffer);
