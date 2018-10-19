@@ -31,6 +31,9 @@
 #ifdef ENABLE_CLUSTER_RTS
 #include "algorithms/ClusterRts.hpp"
 #endif
+#ifdef ENABLE_TIME_BOUNDED_A_STAR
+#include "algorithms/TimeBoundedAStar.hpp"
+#endif
 
 namespace metronome {
 
@@ -152,6 +155,15 @@ class ConfigurationExecutor {
       return executeRealTimePlanner<Domain,
                                     ClusterRts<Domain, TerminationChecker>,
                                     TerminationChecker>(configuration, domain);
+    }
+#endif
+
+#ifdef ENABLE_TIME_BOUNDED_A_STAR
+    if (algorithmName == ALGORITHM_TIME_BOUNDED_A_STAR) {
+      return executeRealTimePlanner<
+          Domain,
+          TimeBoundedAStar<Domain, TerminationChecker>,
+          TerminationChecker>(configuration, domain);
     }
 #endif
 

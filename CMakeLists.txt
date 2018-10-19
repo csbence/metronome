@@ -30,6 +30,7 @@ set(SOURCE_FILES
         src/algorithms/OfflinePlanner.hpp
         src/algorithms/OnlinePlanner.hpp
         src/algorithms/Planner.hpp
+		src/algorithms/TimeBoundedAStar.hpp
         src/domains/GridWorld.hpp
         src/domains/Domain.hpp
         src/domains/SlidingTilePuzzle.hpp
@@ -84,9 +85,10 @@ include_directories(src)
 #add_definitions(-DSTREAM_GRAPH)
 
 # Select the possible algorithms.
-#add_definitions(-DENABLE_A_STAR)
+add_definitions(-DENABLE_A_STAR)
 #add_definitions(-DENABLE_LSS_LRTA_STAR)
 add_definitions(-DENABLE_CLUSTER_RTS)
+add_definitions(-DENABLE_TIME_BOUNDED_A_STAR)
 
 # Select the possible domains
 add_definitions(-DENABLE_GRID_WORLD)

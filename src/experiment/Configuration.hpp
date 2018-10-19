@@ -4,6 +4,8 @@
 #include "rapidjson/document.h"
 
 #include <iostream>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 
 namespace metronome {
 
@@ -25,6 +27,7 @@ static const std::string DOMAIN_TILES{"SLIDING_TILE_PUZZLE"};
 static const std::string ALGORITHM_A_STAR{"A_STAR"};
 static const std::string ALGORITHM_LSS_LRTA_STAR{"LSS_LRTA_STAR"};
 static const std::string ALGORITHM_CLUSTER_RTS{"CLUSTER_RTS"};
+static const std::string ALGORITHM_TIME_BOUNDED_A_STAR{"TIME_BOUNDED_A_STAR"};
 
 static const std::string TERMINATION_CHECKER_TIME{"TIME"};
 static const std::string TERMINATION_CHECKER_EXPANSION{"EXPANSION"};
@@ -34,6 +37,13 @@ static const std::string LOOKAHEAD_DYNAMIC{"DYNAMIC"};
 
 static const std::string COMMITMENT_SINGLE{"SINGLE"};
 static const std::string COMMITMENT_MULTIPLE{"MULTIPLE"};
+
+// Cluster RTS
+static const std::string CLUSTER_NODE_LIMIT{"clusterNodeLimit"};
+static const std::string CLUSTER_DEPTH_LIMIT{"clusterDepthLimit"};
+
+// Weighted Algorithms
+static const std::string WEIGHT{"weight"};
 
 class Configuration {
  public:
@@ -83,11 +93,25 @@ class Configuration {
 
   void checkKey(const std::string& key) const {
     if (!hasMember(key)) {
-      throw metronome::MetronomeException("Invalid key: " + key);
+      throw metronome::MetronomeException("Mission configuration: " + key);
     }
   }
 
   const rapidjson::Document& getJsonDocument() const { return document; }
+
+  friend std::ostream &operator<<(std::ostream &os,
+                                  const Configuration &configuration) {
+    using namespace rapidjson;
+
+    StringBuffer buffer;
+    Writer<StringBuffer> writer(buffer);
+    configuration.getJsonDocument().Accept(writer);
+    
+    auto serializedConfiguration = std::string(buffer.GetString());
+    os << "configuration: " << serializedConfiguration;
+    
+    return os;
+  }
 
  private:
   rapidjson::Document document;
