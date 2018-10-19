@@ -37,7 +37,7 @@ class Traffic {
       }
     }
 
-    Action inverse() {
+    Action inverse() const {
       throw MetronomeException("Unable to invert Traffic domain Actions.");
     }
 
