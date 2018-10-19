@@ -9,6 +9,7 @@ from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import itertools
+import time
 from distlre.distlre import DistLRE, Task, RemoteHost
 
 __author__ = 'Bence Cserna, William Doyle, Kevin C. Gall'
@@ -16,25 +17,25 @@ __author__ = 'Bence Cserna, William Doyle, Kevin C. Gall'
 
 def generate_base_configuration():
     # required configuration parameters
-    algorithms_to_run = ['CLUSTER_RTS']
-    # algorithms_to_run = ['ES']
+    algorithms_to_run = ['CLUSTER_RTS', 'TIME_BOUNDED_A_STAR']
+    # algorithms_to_run = ['A_STAR']
     expansion_limit = [100000000]
     lookahead_type = ['DYNAMIC']
     time_limit = [300000000000]
     # action_durations = [1]  # Use this for A*
     # action_durations = [10000000, 12000000, 16000000, 20000000, 25000000, 32000000]
-    action_durations = [1000]
+    action_durations = [100, 250, 500, 1000, 4000]
     termination_types = ['EXPANSION']
     step_limits = [100000000]
 
     base_configuration = dict()
     base_configuration['algorithmName'] = algorithms_to_run
-    base_configuration['expansionLimit'] = expansion_limit
+    # base_configuration['expansionLimit'] = expansion_limit
     base_configuration['lookaheadType'] = lookahead_type
     base_configuration['actionDuration'] = action_durations
     base_configuration['terminationType'] = termination_types
-    base_configuration['stepLimit'] = step_limits
-    base_configuration['timeLimit'] = time_limit
+    # base_configuration['stepLimit'] = step_limits
+    # base_configuration['timeLimit'] = time_limit
     base_configuration['commitmentStrategy'] = ['SINGLE']
     base_configuration['terminationTimeEpsilon'] = [5000000]  # 4ms
 
@@ -51,27 +52,36 @@ def generate_base_configuration():
                                                 [['algorithmName',
                                                   'WEIGHTED_A_STAR']])
 
-    # Envelope-based
     # No configurable resource ratio for RES at this time
-
     compiled_configurations = cartesian_product(compiled_configurations,
                                                 'backlogRatio', [0.2],
                                                 [['algorithmName',
                                                   'TIME_BOUNDED_A_STAR']])
 
-    # TBA*
-    optimizations = ['THRESHOLD']
     compiled_configurations = cartesian_product(compiled_configurations,
-                                                'tbaOptimization',
-                                                optimizations,
+                                                'weight', [1.0],
                                                 [['algorithmName',
                                                   'TIME_BOUNDED_A_STAR']])
+
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'clusterNodeLimit', [100000],
+                                                [['algorithmName',
+                                                  'CLUSTER_RTS']])
+
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'clusterDepthLimit', [10,
+                                                                      100,
+                                                                      500,
+                                                                      1000,
+                                                                      10000],
+                                                [['algorithmName',
+                                                  'CLUSTER_RTS']])
 
     return compiled_configurations
 
 
 def generate_tile_puzzle():
-    configurations = generate_base_suboptimal_configuration()
+    configurations = generate_base_configuration()
 
     puzzles = []
     for puzzle in range(1, 11):
@@ -102,7 +112,7 @@ def generate_grid_world():
     minima3000_paths = []
     uniform1500_base_path = 'input/vacuum/uniform1500/uniform1500_1500-'
     uniform1500_paths = []
-    for scenario_num in range(0, 50):  # large set 25
+    for scenario_num in range(0, 10):  # large set 25
         n = str(scenario_num)
         dao_paths.append(dao_base_path + n)
         minima1500_paths.append(minima1500_base_path + n + '.vw')
@@ -159,6 +169,9 @@ def distributed_execution(configurations):
         task = Task(command=command, meta=None, time_limit=10, memory_limit=10)
         task.input = json_configuration.encode()
 
+        print(task.command)
+        print(task.input)
+
         future = executor.submit(task)
         future.add_done_callback(lambda _: progress_bar.update())
         future.configuration = configuration
@@ -210,6 +223,16 @@ def construct_results(futures):
             continue
 
         result_offset = raw_output.index('#') + 1
+
+        if result_offset >= len(raw_output):
+            results.append({
+                'configuration': future.configuration,
+                'success': False,
+                'errorMessage': 'exception :: incomplete output :: ' +
+                                str(raw_output)
+            })
+            continue
+
         output = json.loads(raw_output[result_offset])
         results.append(output)
     return results
@@ -304,6 +327,20 @@ def save_results(results_json, file_name):
     print(f'Results saved to {file_name}')
 
 
+def label_algorithms(configurations):
+    for configuration in configurations:
+        if configuration['algorithmName'] == 'CLUSTER_RTS':
+            configuration['algorithmLabel'] = configuration['algorithmName'] \
+                                              + ' limit: ' \
+                                              + str(configuration[
+                                                        'clusterDepthLimit'])
+        if configuration['algorithmName'] == 'TIME_BOUNDED_A_STAR':
+            configuration['algorithmLabel'] = configuration['algorithmName'] \
+                                              + ' weight: ' \
+                                              + str(configuration[
+                                                        'weight'])
+
+
 def main():
     print(os.getcwd())
     os.chdir('..')
@@ -324,11 +361,16 @@ def main():
     else:
         # Generate new domain configurations
         configurations = generate_grid_world()
-        # configurations = configurations[:1]  # debug - keep only one config
+        label_algorithms(configurations)
+        # configurations = configurations[:10]  # debug - keep only one config
 
     print('{} configurations has been generated '.format(len(configurations)))
 
+    start_time = time.perf_counter()
     results = distributed_execution(configurations)
+    end_time = time.perf_counter()
+
+    print(f"Experiment time: {end_time - start_time}s")
 
     if recycle:
         inplace_merge_experiments(old_results, results)
