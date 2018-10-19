@@ -16,7 +16,7 @@ set(CXX clang++)
 if (WIN32 AND NOT MINGW)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall /bigobj")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -pedantic -Wextra")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -pedantic -Wextra")
 endif(WIN32 AND NOT MINGW)
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  ${CMAKE_CXX_FLAGS} -O3")
@@ -52,8 +52,9 @@ set(SOURCE_FILES
         src/MetronomeException.hpp
         src/utils/File.hpp
         src/experiment/termination/ExpansionTerminationChecker.hpp
-        src/utils/Statistic.hpp src/MemoryConfiguration.hpp
+        src/utils/Statistic.hpp
         src/utils/ObjectPool.hpp
+        src/MemoryConfiguration.hpp
         )
 
 set(TEST_FILES
@@ -69,14 +70,14 @@ add_executable(Metronome ${SOURCE_FILES})
 add_executable(MetronomeTest ${TEST_FILES})
 
 find_package(Boost 1.55.0 COMPONENTS thread system REQUIRED)
-find_package(X11)
 
-include_directories(
+include_directories(SYSTEM
         ${Boost_INCLUDE_DIRS}
         ${Boost_LIBRARY_DIRS}
         dependencies
-        src
 )
+
+include_directories(src)
 
 # The following options can enable algorithms and domains.
 # These options have a large impact on the compilation speed.
@@ -87,8 +88,7 @@ include_directories(
 # Select the possible algorithms.
 # add_definitions(-DENABLE_A_STAR)
 # add_definitions(-DENABLE_LSS_LRTA_STAR)
-# add_definitions(-DENABLE_CLUSTER_RTS)
-# add_definitions(-DENABLE_CLUSTER_RTS)
+add_definitions(-DENABLE_CLUSTER_RTS)
 add_definitions(-DENABLE_TBA_STAR)
 
 # Select the possible domains
@@ -96,8 +96,11 @@ add_definitions(-DENABLE_GRID_WORLD)
 #add_definitions(-DENABLE_SLIDING_TILE_PUZZLE)
 #add_definitions(-DENABLE_TRAFFIC_WORLD)
 
+# Disable logger
+#add_definitions(-DELPP_DISABLE_LOGS)
+
 if (MINGW OR WIN32)
     target_link_libraries(Metronome ws2_32)
 endif()
-target_link_libraries(Metronome ${Boost_LIBRARIES} ${X11_LIBRARIES})
-target_link_libraries(MetronomeTest ${Boost_LIBRARIES} ${X11_LIBRARIES})
+target_link_libraries(Metronome ${Boost_LIBRARIES})
+target_link_libraries(MetronomeTest ${Boost_LIBRARIES})

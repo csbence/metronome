@@ -48,6 +48,21 @@ class Visualizer {
 #endif
   }
 
+  void removeNode(std::size_t nodeId) {
+#ifdef STREAM_GRAPH
+    std::ostringstream commandBuilder;
+
+    bool alreadyVisualized = nodeIds.find(nodeId) != edgeIds.end();
+    if (!alreadyVisualized) return;
+    
+    nodeIds.erase(nodeId);
+
+    commandBuilder << R"({"dn":{")" << nodeId << R"(":{}}})";
+
+    commands.push_back(commandBuilder.str());
+#endif
+  }
+  
   void addEdge(std::size_t edgeId,
                std::size_t sourceNodeId,
                std::size_t targetNodeId,
@@ -108,7 +123,6 @@ class Visualizer {
   std::vector<std::string> commands;
   std::unordered_set<std::size_t> nodeIds;
   std::unordered_set<std::size_t> edgeIds;
-
 #endif
 };
 }  // namespace metronome

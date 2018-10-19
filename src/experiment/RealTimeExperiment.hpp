@@ -39,7 +39,7 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
               const Domain& domain,
               Planner& planner) {
     using namespace std::chrono;
-    LOG(INFO) << "Begin real-time planning iterations";
+//    LOG(INFO) << "Begin real-time planning iterations";
 
     std::vector<typename Domain::Action> actions;
     long long int planningTime{0};
@@ -58,7 +58,7 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
         } else {
           terminationChecker.resetTo(actionDuration);
         }
-
+        
         auto actionBundles =
             planner.selectActions(currentState, terminationChecker);
         
@@ -73,14 +73,14 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
               domain.transition(currentState, actionBundle.action);
 
           if (!nextState.is_initialized()) {
-            LOG(ERROR) << "Invalid action from: " << currentState
-                       << "Expected target: "
-                       << actionBundle.expectedTargetState;
+            LOG(ERROR) << "Invalid action " << actionBundle.action
+                       << " from: " << currentState
+                       << " "
+                       << actionBundle;
             throw MetronomeException(
                 "Invalid action. Partial plan is corrupt.");
           }
-          LOG(INFO) << "> action from: " << currentState
-                    << " expected target: " << actionBundle.expectedTargetState;
+          LOG(INFO) << "> action from: " << currentState << actionBundle;
 
           currentState = nextState.get();
           //                    LOG(INFO) << actionBundle.action << std::endl;
@@ -110,7 +110,10 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
     std::vector<std::string> actionStrings;
 
     for (auto& action : actions) {
-      actionStrings.push_back(action.toString());
+      std::ostringstream stringStream;
+      stringStream << action;
+
+      actionStrings.push_back(stringStream.str());
     }
 
     return Result(

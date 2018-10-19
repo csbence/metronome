@@ -22,6 +22,10 @@ class GridWorld {
   class Action {
    public:
     Action() : label{'~'} {};
+    Action(const Action&) = default;
+    Action(Action&&) = default;
+    Action& operator=(const Action&) = default;
+    ~Action() = default;
 
     static std::vector<Action>& getActions() {
       static std::vector<Action> actions{
@@ -29,11 +33,28 @@ class GridWorld {
       return actions;
     }
 
+    int relativeX() const {
+      if (label == 'N') return 0;
+      if (label == 'S') return 0;
+      if (label == 'W') return -1;
+      if (label == 'E') return 1;
+      return 0;
+    }
+
+    int relativeY() const {
+      if (label == 'N') return -1;
+      if (label == 'S') return 1;
+      if (label == 'W') return 0;
+      if (label == 'E') return 0;
+      return 0;
+    }
+
     Action inverse() const {
       if (label == 'N') return Action('S');
       if (label == 'S') return Action('N');
       if (label == 'W') return Action('E');
       if (label == 'E') return Action('W');
+      if (label == '~') return Action('~');
 
       throw MetronomeException("Unknown action to invert: " +
                                std::to_string(label));
@@ -47,15 +68,14 @@ class GridWorld {
 
     static Action getIdentity() { return Action('0'); }
 
-    std::string toString() const { return std::string{label}; }
-
     friend std::ostream& operator<<(std::ostream& os, const Action& action) {
-      os << action.label;
+      os << action.label << " (dx: " << action.relativeX()
+         << " dy: " << action.relativeY() << ")";
       return os;
     }
 
    private:
-    Action(char label) : label{label} {}
+    explicit Action(char label) : label{label} {}
     char label;
   };
 
@@ -67,19 +87,18 @@ class GridWorld {
     unsigned int getX() const { return x; }
     unsigned int getY() const { return y; }
     std::size_t hash() const { return x ^ y << 16 ^ y >> 16; }
+
     bool operator==(const State& state) const {
       return x == state.x && y == state.y;
     }
+
     bool operator!=(const State& state) const {
       return x != state.x || y != state.y;
     }
+
     State& operator=(State toCopy) {
       swap(*this, toCopy);
       return *this;
-    }
-    std::string toString() {
-      std::string string{"x: "};
-      return string + std::to_string(x) + " y: " + std::to_string(y);
     }
 
     friend std::ostream& operator<<(std::ostream& stream,
@@ -99,6 +118,7 @@ class GridWorld {
       swap(first.y, second.y);
     }
   };
+
   /*Entry point for using this Domain*/
   GridWorld(const Configuration& configuration, std::istream& input)
       : actionDuration(configuration.getLong(ACTION_DURATION)) {
@@ -108,15 +128,18 @@ class GridWorld {
     std::string line;
     char* end;
     getline(input, line);  // get the width
+
     std::stringstream convertWidth(line);
     if (std::strtol(line.c_str(), &end, 10) == 0) {
       throw MetronomeException("GridWorld first line must be a number.");
     }
+
     convertWidth >> width;
     getline(input, line);  // get the height
     if (std::strtol(line.c_str(), &end, 10) == 0) {
       throw MetronomeException("GridWorld second line must be a number.");
     }
+
     std::stringstream convertHeight(line);
     convertHeight >> height;
 
@@ -124,20 +147,22 @@ class GridWorld {
     boost::optional<State> tempGoalState;
 
     while (getline(input, line) && currentHeight < height) {
-      for (auto it = line.cbegin(); it != line.cend(); ++it) {
-        if (*it == '@') {  // find the start location
+      for (char it : line) {
+        if (it == '@') {  // find the start location
           tempStarState = State(currentWidth, currentHeight);
-        } else if (*it == '*') {  // find the goal location
+        } else if (it == '*') {  // find the goal location
           tempGoalState = State(currentWidth, currentHeight);
-        } else if (*it == '#') {  // store the objects
+        } else if (it == '#') {  // store the objects
           State object = State(currentWidth, currentHeight);
           obstacles.insert(object);
         } else {
           // its an open cell nothing needs to be done
         }
+        if (currentWidth == width) break;
+
         ++currentWidth;  // at the end of the character parse move along
       }
-      if (currentWidth != width) {
+      if (currentWidth < width) {
         throw MetronomeException(
             "GridWorld is not complete. Width doesn't match input "
             "configuration.");
@@ -170,34 +195,16 @@ class GridWorld {
    */
   boost::optional<State> transition(const State& sourceState,
                                     const Action& action) const {
-    boost::optional<State> targetState;
+    State targetState(sourceState.getX() + action.relativeX(),
+                      sourceState.getY() + action.relativeY());
 
-    if (action.toChar() == 'N') {
-      State newState = State(sourceState.getX(), sourceState.getY() - 1);
-      if (isLegalLocation(newState)) {
-        targetState = newState;
-      }
-    } else if (action.toChar() == 'E') {
-      State newState = State(sourceState.getX() + 1, sourceState.getY());
-      if (isLegalLocation(newState)) {
-        targetState = newState;
-      }
-    } else if (action.toChar() == 'S') {
-      State newState = State(sourceState.getX(), sourceState.getY() + 1);
-      if (isLegalLocation(newState)) {
-        targetState = newState;
-      }
-    } else if (action.toChar() == 'W') {
-      State newState = State(sourceState.getX() - 1, sourceState.getY());
-      if (isLegalLocation(newState)) {
-        targetState = newState;
-      }
-    } else if (action.toChar() == '0') {
-      return boost::make_optional(sourceState);
+    if (isLegalLocation(targetState)) {
+      return boost::make_optional(targetState);
     }
-
-    return targetState;
+    
+    return boost::none;
   }
+  
   /*Validating a goal state*/
   bool isGoal(const State& location) const {
     return location.getX() == goalLocation.getX() &&
@@ -257,10 +264,10 @@ class GridWorld {
     std::vector<SuccessorBundle<GridWorld>> successors;
     successors.reserve(4);
 
-    addValidSuccessor(successors, state, 0, 1, Action::getActions()[1]);
-    addValidSuccessor(successors, state, 0, -1, Action::getActions()[0]);
-    addValidSuccessor(successors, state, -1, 0, Action::getActions()[2]);
-    addValidSuccessor(successors, state, 1, 0, Action::getActions()[3]);
+    for (auto& action : Action::getActions()) {
+      addValidSuccessor(
+          successors, state, action.relativeX(), action.relativeY(), action);
+    }
 
     return successors;
   }
@@ -284,6 +291,8 @@ class GridWorld {
   }
 
   Cost getActionDuration() const { return actionDuration; }
+
+  Action getIdentityAction() const { return Action(); }
 
  private:
   void addValidSuccessor(std::vector<SuccessorBundle<GridWorld>>& successors,

@@ -2,14 +2,14 @@
 
 #include <easylogging++.h>
 #include <rapidjson/document.h>
-#include <MetronomeException.hpp>
-#include <domains/Traffic.hpp>
-#include <experiment/termination/ExpansionTerminationChecker.hpp>
 #include <string>
 #include "Configuration.hpp"
+#include "MetronomeException.hpp"
 #include "OfflinePlanManager.hpp"
 #include "RealTimeExperiment.hpp"
 #include "Result.hpp"
+#include "domains/Traffic.hpp"
+#include "experiment/termination/ExpansionTerminationChecker.hpp"
 #include "utils/File.hpp"
 
 #ifdef ENABLE_GRID_WORLD
@@ -43,8 +43,12 @@ class ConfigurationExecutor {
                                      const std::string& resourcesDir) {
     try {
       return unsafeExecuteConfiguration(configuration, resourcesDir);
-    } catch (MetronomeException exception) {
+    } catch (const MetronomeException& exception) {
       return Result(configuration, exception.what());
+    } catch (const std::exception& exception) {
+      return Result(configuration, exception.what());
+    } catch (...) {
+      return Result(configuration, "Unexpected exception.");
     }
   }
 
@@ -73,7 +77,7 @@ class ConfigurationExecutor {
 #endif
 
 #ifdef ENABLE_SLIDING_TILE_PUZZLE
-      if (domainName == DOMAIN_TILES) {
+    if (domainName == DOMAIN_TILES) {
       return executeDomain<SlidingTilePuzzle>(configuration, resourcesDir);
     }
 #endif

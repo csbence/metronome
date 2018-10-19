@@ -60,8 +60,6 @@ class Result {
 
     auto& allocator = resultDocument.GetAllocator();
 
-    const rapidjson::Document& document = configuration.getJsonDocument();
-
     Value errorMessageValue;
     errorMessageValue.SetString(errorMessage.c_str(), errorMessage.size());
     resultDocument.AddMember("errorMessage", errorMessageValue, allocator);

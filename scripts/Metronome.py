@@ -1,157 +1,350 @@
 #!/usr/bin/env python3
 
-import json
-import subprocess
-import numpy as np
-import copy
-from subprocess import Popen, PIPE
-
 import sys
+import copy
+import json
+import os
+from subprocess import run, TimeoutExpired, PIPE
+from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor
+import pandas as pd
+import itertools
+from distlre.distlre import DistLRE, Task, RemoteHost
 
-from mongo_client import MetronomeMongoClient
-
-__author__ = 'Bence Cserna'
-
-
-def execute_metronome(executable, resources, configuration, timeout):
-    nice = "nice -n 20"
-    return execute_metronome_command(" ".join([nice, executable, resources]), configuration, timeout)
-
-
-def execute_metronome_command(command, configuration, timeout):
-    # proc = Popen(" ".join([nice, executable, resources]), stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True)
-
-    json_configuration = json.dumps(configuration)
-
-    try:
-        print("Start to execute metronome.")
-        result = subprocess.run(command, input=json_configuration.encode(),
-                                timeout=timeout, check=True, stdout=PIPE, stderr=PIPE, shell=True)
-
-        stdout, stderr = result.stdout, result.stderr
-        print("Metronome output: ")
-        sys.stdout.flush()
-        print(result.stdout.decode())
-        print(result.stderr.decode())
-        print("Finish execution")
-        sys.stdout.flush()
-    except subprocess.TimeoutExpired as e:
-        # stdout, stderr = e.stdout, result.stderr
-        print("Experiment timed out")
-        sys.stdout.flush()
-        print(e.stdout.decode())
-        print(e.stderr.decode())
-        sys.stdout.flush()
-        return 0
-    except subprocess.CalledProcessError as e:
-        print("Experiment failed!")
-        sys.stdout.flush()
-        print(e.stdout.decode())
-        print(e.stderr.decode())
-        sys.stdout.flush()
-        return 0
-
-    raw_result = stdout.decode().split("Result:", 2)[1]
-    result = json.loads(raw_result)
-
-    #    print("Parsed result: \n")
-    #    print(result)
-
-    sys.stdout.flush()
-    return result
+__author__ = 'Bence Cserna, William Doyle, Kevin C. Gall'
 
 
-def run_experiments(configurations):
-    path = "../build/release/Metronome"
-    resources = "../resources"
-    gat = []
+def generate_base_configuration():
+    # required configuration parameters
+    algorithms_to_run = ['CLUSTER_RTS']
+    # algorithms_to_run = ['ES']
+    expansion_limit = [100000000]
+    lookahead_type = ['DYNAMIC']
+    time_limit = [300000000000]
+    # action_durations = [1]  # Use this for A*
+    # action_durations = [10000000, 12000000, 16000000, 20000000, 25000000, 32000000]
+    action_durations = [1000]
+    termination_types = ['EXPANSION']
+    step_limits = [100000000]
 
-    results = []
+    base_configuration = dict()
+    base_configuration['algorithmName'] = algorithms_to_run
+    base_configuration['expansionLimit'] = expansion_limit
+    base_configuration['lookaheadType'] = lookahead_type
+    base_configuration['actionDuration'] = action_durations
+    base_configuration['terminationType'] = termination_types
+    base_configuration['stepLimit'] = step_limits
+    base_configuration['timeLimit'] = time_limit
+    base_configuration['commitmentStrategy'] = ['SINGLE']
+    base_configuration['terminationTimeEpsilon'] = [5000000]  # 4ms
 
-    for configuration in configurations:
-        result = execute_metronome(path, resources, configuration, timeout=60)
-        result["experimentConfiguration"] = configuration
-        results.append(result)
+    compiled_configurations = [{}]
 
-        gat.append(result["goalAchievementTime"])
+    for key, value in base_configuration.items():
+        compiled_configurations = cartesian_product(compiled_configurations,
+                                                    key, value)
 
-        successful = [x for x in gat if x != 0]
-        failed_count = len(gat) - len(successful)
-        succeeded_count = len(successful)
+    # Algorithm specific configurations
+    weight = [3.0]
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'weight', weight,
+                                                [['algorithmName',
+                                                  'WEIGHTED_A_STAR']])
 
-        #       print("GATs: " + str(gat))
-        print("Failed: {} Succeeded: {}/{}".format(failed_count, succeeded_count, len(configurations)))
-        #     print("Avg of successful:{}".format(np.mean(successful)))
+    # Envelope-based
+    # No configurable resource ratio for RES at this time
 
-    successful = [x for x in gat if x != 0]
-    failed_count = len(gat) - len(successful)
-    succeeded_count = len(successful)
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'backlogRatio', [0.2],
+                                                [['algorithmName',
+                                                  'TIME_BOUNDED_A_STAR']])
 
-    print("Experiment completed!")
-    #    pr#int("GATs: " + str(gat))
-    print("Failed: {} Succeeded: {}".format(failed_count, succeeded_count))
-    #    p#rint("Avg of successful:{}".format(np.mean(successful)))
+    # TBA*
+    optimizations = ['THRESHOLD']
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'tbaOptimization',
+                                                optimizations,
+                                                [['algorithmName',
+                                                  'TIME_BOUNDED_A_STAR']])
 
-    return results
-
-
-def cartesian_product(configurations, key, values):
-    joined_configurations = []
-    for configuration in configurations:
-        for value in values:
-            deepcopy = copy.deepcopy(configuration)
-            deepcopy[key] = value
-            joined_configurations.append(deepcopy)
-
-    return joined_configurations
+    return compiled_configurations
 
 
-def generate_experiment_configurations(algorithms, domain_type, domains,
-                                       termination_type, action_durations, lookahead_type):
-    configuration = {
-        "timeLimit": 150000000000,
-        "domainInstanceName": "Manual test instance",
-        "domainName": domain_type,
-        "terminationType": termination_type
-    }
+def generate_tile_puzzle():
+    configurations = generate_base_suboptimal_configuration()
 
-    configurations = [configuration]
-    configurations = cartesian_product(configurations, "algorithmName", algorithms)
-    configurations = cartesian_product(configurations, "domainPath", domains)
-    configurations = cartesian_product(configurations, "actionDuration", action_durations)
-    configurations = cartesian_product(configurations, "lookaheadType", lookahead_type)
+    puzzles = []
+    for puzzle in range(1, 11):
+        puzzles.append(str(puzzle))
+
+    puzzle_base_path = 'input/tiles/korf/4/real/'
+    full_puzzle_paths = [puzzle_base_path + puzzle for puzzle in puzzles]
+
+    configurations = cartesian_product(configurations, 'domainName',
+                                       ['SLIDING_TILE_PUZZLE_4'])
+    configurations = cartesian_product(configurations, 'domainPath',
+                                       full_puzzle_paths)
 
     return configurations
 
 
+def generate_grid_world():
+    configurations = generate_base_configuration()
+
+    domain_paths = []
+
+    # Build all domain paths
+    dao_base_path = 'input/vacuum/orz100d/orz100d.map_scen_'
+    dao_paths = []
+    minima1500_base_path = 'input/vacuum/minima1500/minima1500_1500-'
+    minima1500_paths = []
+    minima3000_base_path = 'input/vacuum/minima3k_300/minima3000_300-'
+    minima3000_paths = []
+    uniform1500_base_path = 'input/vacuum/uniform1500/uniform1500_1500-'
+    uniform1500_paths = []
+    for scenario_num in range(0, 50):  # large set 25
+        n = str(scenario_num)
+        dao_paths.append(dao_base_path + n)
+        minima1500_paths.append(minima1500_base_path + n + '.vw')
+        minima3000_paths.append(minima3000_base_path + n + '.vw')
+        uniform1500_paths.append(uniform1500_base_path + n + '.vw')
+
+    domain_paths.extend(dao_paths)
+    domain_paths.extend(minima1500_paths)
+    domain_paths.extend(
+        minima3000_paths)  # this was not included in the large set
+    domain_paths.extend(uniform1500_paths)
+
+    configurations = cartesian_product(configurations, 'domainName',
+                                       ['GRID_WORLD'])
+    configurations = cartesian_product(configurations, 'domainPath',
+                                       domain_paths)
+
+    return configurations
+
+
+def cartesian_product(base, key, values, filters=None):
+    new_base = []
+    if filters is None:
+        for item in base:
+            for value in values:
+                new_configuration = copy.deepcopy(item)
+                new_configuration[key] = value
+                new_base.append(new_configuration)
+    else:
+        for item in base:
+            if all(filter_key in item and item[filter_key] == filter_value for
+                   filter_key, filter_value in filters):
+                new_base.extend(cartesian_product([item], key, values))
+            else:
+                new_base.append(item)
+
+    return new_base
+
+
+def distributed_execution(configurations):
+    executor = create_local_distlre_executor()
+
+    futures = []
+    progress_bar = tqdm(total=len(configurations))
+    tqdm.monitor_interval = 0
+
+    for configuration in configurations:
+        nice = "nice -n 20"
+        executable = 'build/release/Metronome'
+        resources = 'resources/'
+        command = ' '.join([nice, executable, resources])
+        json_configuration = f'{json.dumps(configuration)}\n'
+
+        task = Task(command=command, meta=None, time_limit=10, memory_limit=10)
+        task.input = json_configuration.encode()
+
+        future = executor.submit(task)
+        future.add_done_callback(lambda _: progress_bar.update())
+        future.configuration = configuration
+
+        futures.append(future)
+
+    # start_experiment_notification(experiment_count=len(configurations))
+    print('Experiments started')
+    executor.execute_tasks()
+
+    executor.wait()
+    progress_bar.close()
+
+    print('Experiments finished')
+    # end_experiment_notification()
+
+    results = construct_results(futures)
+
+    return results
+
+
+def construct_results(futures):
+    results = []
+    for future in futures:
+        exception = future.exception()
+        if exception:
+            results.append({
+                'configuration': future.configuration,
+                'success': False,
+                'errorMessage': 'exception ::' + str(exception)
+            })
+            continue
+
+        result = future.result()
+        # print(f'output: {result.output}')
+
+        raw_output = result.output.splitlines()
+        # print('Output:')
+        # print('\n'.join(raw_output))
+        # print('Error:')
+        # print(result.error)
+        if '#' not in raw_output:
+            results.append({
+                'configuration': future.configuration,
+                'success': False,
+                'errorMessage': 'exception :: output not found :: ' +
+                                str(raw_output)
+            })
+            continue
+
+        result_offset = raw_output.index('#') + 1
+        output = json.loads(raw_output[result_offset])
+        results.append(output)
+    return results
+
+
+def create_local_distlre_executor():
+    executor = DistLRE(local_threads=4)
+
+    return executor
+
+
+def create_remote_distlre_executor():
+    from slack_notification import start_experiment_notification, \
+        end_experiment_notification
+
+    import getpass
+    HOSTS = ['ai' + str(i) + '.cs.unh.edu' for i in
+             [1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15]]
+    print('\nExecuting configurations on the following ai servers: ')
+    print(HOSTS)
+
+    # I would recommend setting up public key auth for your ssh
+    # password = getpass.getpass("Password to connect to [ai.cs.unh.edu]")
+    password = None
+    remote_hosts = [RemoteHost(host, port=22, password=password) for host in
+                    HOSTS]
+    # Remove executor
+    executor = DistLRE(remote_hosts=remote_hosts)
+
+    return executor
+
+
+def read_results_from_file(file_name):
+    if file_name.endswith('.gz'):
+        with gzip.open("input.json.gz", "rb") as file:
+            return json.loads(file.read().decode("utf-8"))
+
+    with open(file_name) as file:
+        return json.load(file)
+
+
+def inplace_merge_experiments(old_results, new_results):
+    for new_result in new_results:
+        replaced = False
+        for i, old_result in enumerate(old_results):
+            if old_result['configuration'] == new_result['configuration']:
+                old_results[i] = new_result
+                replaced = True
+                break
+
+        if not replaced:
+            old_results.append(new_result)
+
+
+def extract_configurations_from_failed_results(results):
+    return [result['configuration'] for result in results if
+            not result['success']]
+
+
+def build_metronome():
+    os.chdir('build/release')
+
+    return_code = run(
+        ['cmake',
+         '-DCMAKE_BUILD_TYPE=Release',
+         '../..']).returncode
+
+    if return_code != 0:
+        os.chdir('../..')
+        return False
+
+    return_code = run(
+        ['cmake --build . --target Metronome -- -j4'],
+        # ['cmake --build . --target Metronome --clean-first -- -j4'],
+        shell=True).returncode
+
+    os.chdir('../..')
+    return return_code == 0
+
+
+def print_summary(results_json):
+    results = pd.read_json(json.dumps(results_json))
+    print('Successful: {}/{}'.format(results.success.sum(), len(results_json)))
+
+
+def save_results(results_json, file_name):
+    if not os.path.exists('results'):
+        os.makedirs('results')
+
+    with open(file_name, 'w') as outfile:
+        json.dump(results_json, outfile)
+    print(f'Results saved to {file_name}')
+
+
 def main():
-    print("Metronome python.")
+    print(os.getcwd())
+    os.chdir('..')
 
-    #domains = ["/input/tiles/korf/4/all/{}".format(x) for x in range(1, 100)]
-    domains = ["/input/vacuum/variants/cups-2/cups_{}.vw".format(x) for x in range(0, 100)]
-    domains.extend(["/input/vacuum/variants/wall-2/wall_{}.vw".format(x) for x in range(0, 100)])
-    domains.extend(["/input/vacuum/variants/uniform-2/uniform_{}.vw".format(x) for x in range(0, 100)])
+    recycle = False
 
-    configurations = generate_experiment_configurations(["A_STAR", "LSS_LRTA_STAR", "MO_RTS", "MO_RTS_OLD"], "GRID_WORLD", domains, "EXPANSION", [10], ["STATIC"])
+    if not build_metronome():
+        raise Exception(
+            'Build failed.')
+    print('Build complete!')
 
-    # configurations = generate_experiment_configurations(["LSS_LRTA_STAR", "MO_RTS"], "SLIDING_TILE_PUZZLE", domains, "EXPANSION", [100, 1000, 10000, 100000])
+    file_name = 'results/results.json'
 
-    results = run_experiments(list(reversed(configurations)))
-    # print("Execution completed")
+    if recycle:
+        # Load previous configurations
+        old_results = read_results_from_file(file_name)
+        configurations = extract_configurations_from_failed_results(old_results)
+    else:
+        # Generate new domain configurations
+        configurations = generate_grid_world()
+        # configurations = configurations[:1]  # debug - keep only one config
 
-    data = None
-    db = MetronomeMongoClient()
-    db.upload_results(results)
-#    data = db.get_results("A_STAR",
-#                          "GRID_WORLD",
-#                          "/input/vacuum/variants/cups-2/cups_",
-#                          "EXPANSION",
-#                          100)
+    print('{} configurations has been generated '.format(len(configurations)))
 
-#    for value in data:
-#        print(value)
-    print("Done")
+    results = distributed_execution(configurations)
+
+    if recycle:
+        inplace_merge_experiments(old_results, results)
+        results = old_results
+
+    for result in results:
+        result.pop('actions', None)
+        result.pop('systemProperties', None)
+
+    save_results(results, 'results/results_temp.json')
+
+    save_results(results, file_name)
+    print_summary(results)
+
+    print('{} results has been received.'.format(len(results)))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

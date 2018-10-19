@@ -18,8 +18,7 @@
 #include <cstdio>
 #include <utils/Statistic.hpp>
 
-#define NDEBUG
-#undef STREAM_GRAPH
+//#define NDEBUG
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -79,8 +78,6 @@ int main(int argc, char** argv) {
 
   LOG(INFO) << "Configuration has been processed.";
 
-          getchar(); // Wait for keypress
-
   const Result result = ConfigurationExecutor::executeConfiguration(
       Configuration(std::move(document)), resourceDir);
 
@@ -98,7 +95,6 @@ int main(int argc, char** argv) {
   std::cout << result.getJsonString();
   std::cout << std::flush;
 
-  getchar(); //wait for keypress
   return 0;
 }
 
