@@ -17,6 +17,7 @@ static const std::string ACTION_DURATION{"actionDuration"};
 static const std::string TIME_LIMIT{"timeLimit"};
 static const std::string LOOKAHEAD_TYPE{"lookaheadType"};
 static const std::string COMMITMENT_STRATEGY{"commitmentStrategy"};
+static const std::string WEIGHT{"weight"};
 
 static const std::string DOMAIN_GRID_WORLD{"GRID_WORLD"};
 static const std::string DOMAIN_TRAFFIC{"TRAFFIC"};
@@ -39,11 +40,11 @@ static const std::string COMMITMENT_MULTIPLE{"MULTIPLE"};
 class Configuration {
  public:
   Configuration() : document{} {};
-//  Configuration(const Configuration&) = default;
+  //  Configuration(const Configuration&) = default;
   Configuration(const Configuration&) : document{} {
     std::cout << "Here" << std::endl;
   };
-//    Configuration(Configuration&&) = default;
+  //    Configuration(Configuration&&) = default;
   Configuration(Configuration&&) : document{} {
     std::cout << "Here" << std::endl;
   };
@@ -60,25 +61,25 @@ class Configuration {
 
   std::string getString(const std::string& key) const {
     checkKey(key);
-    
+
     return std::string{document[key.c_str()].GetString()};
   }
-  
+
   long long int getLong(const std::string& key) const {
     checkKey(key);
-    
+
     return document[key.c_str()].GetInt64();
   }
-  
+
   double getDouble(const std::string& key) const {
     checkKey(key);
-    
+
     return document[key.c_str()].GetDouble();
   }
-  
+
   double getBool(const std::string& key) const {
     checkKey(key);
-    
+
     return document[key.c_str()].GetBool();
   }
 

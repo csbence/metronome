@@ -5,14 +5,15 @@
  */
 
 #include <cstdint>
+#include "Nodes.hpp"
 
 namespace metronome {
 
 /**
  *  Requires that Node type have function f and member g
  */
-template <typename Node>
-int fComparator(const Node& lhs, const Node& rhs) {
+template <typename Domain>
+int fComparator(const SearchNode<Domain>& lhs, const SearchNode<Domain>& rhs) {
   if (lhs.f() < rhs.f()) return -1;
   if (lhs.f() > rhs.f()) return 1;
   if (lhs.g > rhs.g) return -1;
@@ -23,8 +24,8 @@ int fComparator(const Node& lhs, const Node& rhs) {
 /**
  *  Requires that Node type have member h
  */
-template <typename Node>
-int hComparator(const Node& lhs, const Node& rhs) {
+template <typename Domain>
+int hComparator(const SearchNode<Domain>& lhs, const SearchNode<Domain>& rhs) {
   if (lhs.h < rhs.h) return -1;
   if (lhs.h > rhs.h) return 1;
   return 0;
