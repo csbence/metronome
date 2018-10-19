@@ -44,7 +44,7 @@ class PriorityQueue {
       siftDown(0, x);
     }
 
-    BOOST_ASSERT_MSG(result->index == 0,
+    assert(result->index == 0 &&
                      "Internal index of top item was not null");
     result->index = std::numeric_limits<unsigned int>::max();
     return const_cast<T*>(result);
