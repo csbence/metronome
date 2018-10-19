@@ -27,6 +27,7 @@ void printSplashScreen();
 int main(int argc, char** argv) {
   using namespace metronome;
   printSplashScreen();
+  el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%level: %msg");
 
   if (argc == 1) {
     std::cerr << "Invalid arguments. Please use one of the following ways to "
@@ -76,10 +77,14 @@ int main(int argc, char** argv) {
     document.ParseStream(streamWrapper);
   }
 
-  LOG(INFO) << "Configuration has been processed.";
+  LOG(INFO) << "Configuration has been received.";
 
+  const auto configuration = Configuration(std::move(document));
+  
+//  std::cout << configuration;
+  
   const Result result = ConfigurationExecutor::executeConfiguration(
-      Configuration(std::move(document)), resourceDir);
+      configuration, resourceDir);
 
   LOG(INFO) << "Execution completed in " << result.planningTime / 1000000
             << "ms";
@@ -87,13 +92,8 @@ int main(int argc, char** argv) {
   LOG(INFO) << "Nodes :: expanded: " << result.expandedNodes
             << " generated: " << result.generatedNodes;
 
-  //                for (auto action : result.actions) {
-  //                    LOG(INFO) << action;
-  //                }
-
   std::cout << "\n\nResult:\n#" << std::endl;
-  std::cout << result.getJsonString();
-  std::cout << std::flush;
+  std::cout << result.getJsonString() << std::endl;
 
   return 0;
 }
