@@ -293,6 +293,9 @@ def extract_configurations_from_failed_results(results):
 
 
 def build_metronome():
+    if not os.path.exists('build/release'):
+        os.makedirs('build/release')
+
     os.chdir('build/release')
 
     return_code = run(
