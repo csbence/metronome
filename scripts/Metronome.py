@@ -24,7 +24,7 @@ def generate_base_configuration():
     time_limit = [300000000000]
     # action_durations = [1]  # Use this for A*
     # action_durations = [10000000, 12000000, 16000000, 20000000, 25000000, 32000000]
-    action_durations = [100, 250, 500, 1000, 4000, 16000]
+    action_durations = [50, 100, 250, 500, 1000]
     termination_types = ['EXPANSION']
     step_limits = [100000000]
 
@@ -59,7 +59,8 @@ def generate_base_configuration():
                                                   'TIME_BOUNDED_A_STAR']])
 
     compiled_configurations = cartesian_product(compiled_configurations,
-                                                'weight', [1.0],
+                                                'weight', [1.0, 1.4, 2.0,
+                                                           2.8, 4.0, 8.0],
                                                 [['algorithmName',
                                                   'TIME_BOUNDED_A_STAR']])
 

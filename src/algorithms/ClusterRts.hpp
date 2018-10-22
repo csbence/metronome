@@ -58,7 +58,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     explore(agentState, terminationChecker);
 
     std::vector<ActionBundle> path;
-    if (cachedPath.size() == cachedIndex) {
+    if (cachedPath.size() == cachedIndex || cachedIndex > 20) {
       cachedPath = extractPath(agentState);
       cachedIndex = 0;
     }
