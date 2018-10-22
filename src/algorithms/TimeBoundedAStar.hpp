@@ -190,8 +190,8 @@ class TimeBoundedAStar final
     NodeComparatorWeightedF(double weight) : weight(weight) {}
 
     int operator()(const Node *lhs, const Node *rhs) const {
-      if (lhs->g + weight * lhs->h < lhs->g + weight * lhs->h) return -1;
-      if (lhs->g + weight * lhs->h > lhs->g + weight * lhs->h) return 1;
+      if (lhs->g + weight * lhs->h < rhs->g + weight * rhs->h) return -1;
+      if (lhs->g + weight * lhs->h > rhs->g + weight * rhs->h) return 1;
       if (lhs->g > rhs->g) return -1;
       if (lhs->g < rhs->g) return 1;
       return 0;

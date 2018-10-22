@@ -19,7 +19,7 @@ class OnlinePlanner : public Planner {
         : action{action}, actionDuration{actionDuration} {}
     ActionBundle(const ActionBundle&) = default;
     ActionBundle(ActionBundle&&) = default;
-    ActionBundle& operator=(ActionBundle&) = default;
+    ActionBundle& operator=(const ActionBundle&) = default;
     ActionBundle& operator=(ActionBundle&&) = default;
     ~ActionBundle() = default;
 
