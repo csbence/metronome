@@ -24,7 +24,7 @@ def generate_base_configuration():
     time_limit = [300000000000]
     # action_durations = [1]  # Use this for A*
     # action_durations = [10000000, 12000000, 16000000, 20000000, 25000000, 32000000]
-    action_durations = [100, 250, 500, 1000, 4000]
+    action_durations = [100, 250, 500, 1000, 4000, 16000]
     termination_types = ['EXPANSION']
     step_limits = [100000000]
 
@@ -166,7 +166,7 @@ def distributed_execution(configurations):
         command = ' '.join([nice, executable, resources])
         json_configuration = f'{json.dumps(configuration)}\n'
 
-        task = Task(command=command, meta=None, time_limit=10, memory_limit=10)
+        task = Task(command=command, meta=None, time_limit=30, memory_limit=10)
         task.input = json_configuration.encode()
 
         print(task.command)
