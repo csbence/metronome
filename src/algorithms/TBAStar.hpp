@@ -49,6 +49,9 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
   typedef typename SearchNode<Domain> Node;
   typedef typename Edge<Domain> Edge;
 
+  static constexpr double traceCost = 10;
+  static constexpr double tracebackRatio = 1.0;
+
   TBAStar(const Domain& domain, const Configuration& config)
       : domain{domain}, config{config} {
     // Initialize hash table
@@ -107,11 +110,83 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
       // Goal is already reached
       return std::vector<ActionBundle>();
     }
+    expansions = 0;  // reset
 
-    return std::vector<ActionBundle>{};
+    Node* thisNode = getNode(startState);
+    if (rootNode == nullptr) {
+      rootNode = thisNode;
+      openList.insertOrUpdate(*rootNode);
+    }
+
+    PathTrace* nextPath = getCurrentPath(startState, terminationChecker);
+
+    // If threshold optimization, only switch paths
+    // when the g-value of the new path is large enough
+    if (optimization == Optimization::THRESHOLD) {
+      if (targetPath != nullptr && nextPath != targetPath) {
+        bool gIsGreater = nextPath->costIsAsBig(targetPath);
+        bool agentAtEnd =
+            targetPath->reachedEnd() && targetPath->isHead(startState);
+        if (gIsGreater || agentAtEnd) {
+          // destruct old path trace
+          delete targetPath;
+        } else {
+          nextPath = targetPath;
+        }
+      }
+    }
+
+    if (nextPath != targetPath) {
+      if (targetPath != nullptr) delete targetPath;
+
+      targetPath = nextPath;
+    }
+
+    std::vector<ActionBundle> plan {};
+    if (targetPath->isHead(startState)) {
+      if (targetPath->reachedEnd()) {
+        delete targetPath;
+
+        //backtrack one
+        targetPath = new PathTrace(thisNode->parent);
+        plan.push_back(backtrack(thisNode));
+      
+      } else {
+        //move forward one
+        const Edge edge = targetPath->pop_front();
+        plan.push_back({edge.action, edge.actionCost});
+      }
+    } else {
+      if (targetPath->isOnPath(startState)) {
+        const Edge edge = targetPath->slicePath(startState);
+
+        if (edge.successor == nullptr) { //indicates that we've gone off the end of the path
+          delete targetPath;
+          targetPath = new PathTrace(thisNode->parent);
+          plan.push_back(backtrack(thisNode));
+
+        } else {
+          //move forward one
+          plan.push_back({edge.action, edge.actionCost});
+        }
+
+      } else if (thisNode == rootNode) {
+        //flip between root node and successor. Edge case!
+        plan.push_back({lastAgentNode->action, lastAgentNode->actionCost});
+      } else {
+        //we're not on the path. Backtrack
+        plan.push_back(backtrack(thisNode));
+      }
+    }
+
+    lastAgentNode = thisNode; //in case of edge case w/ root node
+
+    return plan;
   }
 
  private:
+  static constexpr std::size_t EDGE_LIMIT = Memory::NODE_LIMIT / 10;
+
   /**
    *  Simple linked list of edges
    */
@@ -121,7 +196,13 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
     PathEdge* next;
     Action action;
     Cost actionCost;
+    PathEdge(Node* node,
+             PathEdge* next,
+             Action action,
+             Cost actionCost)
+        : node{node}, next{next}, action{action}, actionCost{actionCost} {}
   };
+  static inline ObjectPool<PathEdge, EDGE_LIMIT> edgePool{};
 
   /**
    *  Class to abstract the trace storage and logic. Uses PathEdge
@@ -132,13 +213,12 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
    private:
     std::unordered_map<State, PathEdge*, metronome::Hash<State>> edges{};
     PathEdge* pathEnd;
-    PathEdge* cursor;
     PathEdge* pathHead;
 
    public:
-    PathTrace(const Node* goalNode) {
-      pathEnd = new PathEdge{
-          goalNode, nullptr, goalNode->action, goalNode->actionCost};
+    PathTrace(Node* goalNode) {
+      pathEnd = edgePool.construct(
+          goalNode, nullptr, goalNode->action, goalNode->actionCost);
       pathHead = pathEnd;
 
       edges.insert({goalNode->state, pathEnd});
@@ -149,7 +229,7 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
       PathEdge* current = pathHead;
       while (current != nullptr) {
         PathEdge* temp = current->next;
-        delete current;
+        edgePool.destruct(current);
 
         current = temp;
       }
@@ -158,38 +238,70 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
     /**
      *  Add node to the front of the trace.
      */
-    void push_front(const Node* headNode) {
+    void push_front(Node* headNode) {
       if (edges.count(headNode->state)) {
         throw MetronomeException(
             "Path trace asked to add a state that is already in the trace");
       }
 
-      pathHead = new PathEdge{
-          headNode, pathHead, headNode->action, headNode->actionCost};
+      pathHead = edgePool.construct(
+          headNode, pathHead, headNode->action, headNode->actionCost);
 
       edges.insert({headNode->state, pathHead});
     }
 
-    bool reachedEnd() { return pathHead == pathEnd; }
+    Node* top() { return pathHead->node; }
+
+    bool reachedEnd() const { return pathHead == pathEnd || pathHead == nullptr; }
+    bool isHead(const State& state) const { return state == pathHead->node->state; }
+    bool isOnPath(const State& state) const { return edges.count(state) > 0; }
+    bool costIsAsBig(const PathTrace* rhs) {
+      return pathEnd->node->g >= rhs->pathEnd->node->g;
+    }
+
+    /**
+     *  Slice the path from the given state. All edges before and including the state
+     *  will be deleted, and an edge usable by the user is returned
+     *  If the state is not in the path, this effectively deletes the entire
+     *  path.
+     */
+    Edge slicePath(const State& state) {
+      Node* predecessor;
+      while (pathHead != nullptr) {
+        predecessor = pathHead->node;
+
+        PathEdge* temp = pathHead;
+        pathHead = pathHead->next;
+        edgePool.destruct(temp);
+
+        //we've reached the end of the slice
+        if (predecessor->state == state) break;
+      }
+
+      return pathHead == nullptr ?
+          Edge{ nullptr, nullptr, Action(), std::numeric_limits<Cost>::max() }
+        : Edge{ predecessor, pathHead->node, pathHead->action, pathHead->actionCost};
+    }
 
     /**
      *  Pops the front of the path which should correspond to the
      *  agent's current state. Return an edge usable by user code
      *  representing the next action to take. Deletes the path head
-     *  
+     *
      *  For multiple commit, consider allowing a variable number
      *  of edges to be popped
      */
-    const Edge pop_front() {
+    Edge pop_front() {
       if (reachedEnd()) {
-        throw MetronomeException("Attempted to advance past the end of the path");
+        throw MetronomeException(
+            "Attempted to advance past the end of the path");
       }
 
       Node* predecessor = pathHead->node;
 
       PathEdge* temp = pathHead;
       pathHead = pathHead->next;
-      delete temp;
+      edgePool.destruct(temp);
 
       return {
           predecessor, pathHead->node, pathHead->action, pathHead->actionCost};
@@ -197,6 +309,128 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
   };
 
   enum class Optimization { NONE, THRESHOLD, SHORTCUT };
+
+  PathTrace* getCurrentPath(const State& startState,
+                            TerminationChecker& terminationChecker) {
+    // check if we've already found and traced the goal
+    bool goalFound = goalNode != nullptr;
+    bool goalTraced = goalFound && traceInProgress == nullptr;
+
+    Node* bestNode;
+
+    Node* top = openList.top();
+    if (top == nullptr) {
+      throw MetronomeException("Goal not reachable - open list empty");
+    }
+    if (goalTraced) return targetPath;
+
+    if (domain.isGoal(top->state)) {
+      goalNode = top;
+      bestNode = top;
+    } else {
+      bestNode = aStar(terminationChecker);
+    }
+
+    Node* nextNode;
+    if (traceInProgress != nullptr) {
+      nextNode = traceInProgress->top()->parent;
+    } else {
+      traceInProgress = new PathTrace(bestNode);
+      nextNode = bestNode->parent;
+    }
+
+    unsigned long long int tracebacks =
+        static_cast<unsigned long long int>(expansions * tracebackRatio);
+
+    PathTrace* currentTrace = traceInProgress;
+    while (tracebacks > 0) {
+      currentTrace->push_front(nextNode);
+
+      if (nextNode->state == rootNode->state || nextNode->state == startState) {
+        traceInProgress = nullptr;
+        break;
+      }
+
+      nextNode = nextNode->parent;
+      tracebacks--;
+    }
+
+    return traceInProgress == nullptr ? currentTrace : targetPath;
+  }
+
+  Node* aStar(TerminationChecker& terminationChecker) {
+    while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
+      Node* currentNode = openList.top();
+      if (domain.isGoal(currentNode->state)) {
+        return currentNode;
+      }
+
+      openList.pop();
+      currentNode->open = false;
+      currentNode->closed = true;
+
+      expandNode(currentNode);
+      terminationChecker.notifyExpansion();
+    }
+
+    Node* openListTop = openList.top();
+    if (openListTop == nullptr) {
+      throw MetronomeException("Goal not reachable");
+    }
+    return openListTop;
+  }
+
+  void expandNode(Node* sourceNode) {
+    Planner::incrementExpandedNodeCount();
+    expansions++;
+
+    for (auto successor : domain.successors(sourceNode->state)) {
+      Node* successorNode = getNode(successor.state);
+
+      if (successorNode->closed) continue;
+
+      Cost successorG = successor.actionCost + sourceNode->g;
+      if (successorG < successorNode->g) {
+        successorNode->g = successorG;
+        successorNode->actionCost = successor.actionCost;
+        successorNode->action = successor.action;
+        successorNode->parent = sourceNode;
+
+        openList.insertOrUpdate(*successorNode);
+      }
+    }
+  }
+
+  /*  Note: This depends on the relatively dangerous
+   *  domain function getActionDuration(). This will
+   *  not work in domains with non-constant action
+   *  costs. Also depends on the domain being able to
+   *  invert actions
+   */
+  ActionBundle backtrack(const Node* node) {
+    Action backupAction = node->action.inverse();
+
+    return { backupAction, domain.getActionDuration() };
+  }
+
+  Node* getNode(const State& state) {
+    Node* node = nodes[state];
+
+    if (node == nullptr) {
+      Planner::incrementGeneratedNodeCount();
+      Cost h = static_cast<Cost>(domain.heuristic(state) * weight);
+      node = nodePool.construct(nullptr,
+                                state,
+                                Action(),
+                                0,
+                                std::numeric_limits<Cost>::max(),
+                                h,
+                                true);
+      nodes[state] = node;
+    }
+
+    return node;
+  }
 
   typedef int (*Comparator)(const Node&, const Node&);
   static constexpr Comparator fComparator = &fComparator<Node::Domain>;
@@ -211,7 +445,11 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
   PriorityQueue<Node> openList{Memory::OPEN_LIST_SIZE, fComparator};
   std::unordered_map<State, Node*, typename metronome::Hash<State>> nodes{};
   ObjectPool<Node, Memory::NODE_LIMIT> nodePool;
-  PathTrace* targetPath;
-  PathTrace* traceInProgress;
+  PathTrace* targetPath = nullptr;
+  PathTrace* traceInProgress = nullptr;
+  Node* goalNode = nullptr;
+  Node* rootNode = nullptr;
+  Node* lastAgentNode = nullptr;
+  unsigned long long int expansions = 0;
 };
 }  // namespace metronome

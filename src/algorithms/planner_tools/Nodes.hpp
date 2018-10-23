@@ -30,8 +30,7 @@ class SearchNode {
         actionCost{actionCost},
         g{g},
         h{h},
-        open{open},
-        closed{false} {}
+        open{open} {}
 
   Cost f() const { return g + h; }
 
@@ -57,7 +56,7 @@ class SearchNode {
   }
 
   /** Index used by the priority queue */
-  mutable unsigned int index;
+  mutable unsigned int index{std::numeric_limits<unsigned int>::max()};
   /** Parent node */
   SearchNode* parent;
   /** Internal state */
@@ -73,7 +72,7 @@ class SearchNode {
   /** True if the node is in the open list */
   bool open;
   /** True if the node has been popped from the open list */
-  bool closed;
+  bool closed{false};
 };
 
 template <typename Domain>
