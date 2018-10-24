@@ -32,6 +32,7 @@ set(SOURCE_FILES
         src/algorithms/OnlinePlanner.hpp
         src/algorithms/Planner.hpp
         src/algorithms/planner_tools/Comparators.hpp
+		src/algorithms/TimeBoundedAStar.hpp
         src/domains/GridWorld.hpp
         src/domains/Domain.hpp
         src/domains/SlidingTilePuzzle.hpp
@@ -86,10 +87,11 @@ include_directories(src)
 # add_definitions(-DSTREAM_GRAPH)
 
 # Select the possible algorithms.
-# add_definitions(-DENABLE_A_STAR)
-# add_definitions(-DENABLE_LSS_LRTA_STAR)
+add_definitions(-DENABLE_A_STAR)
+#add_definitions(-DENABLE_LSS_LRTA_STAR)
 add_definitions(-DENABLE_CLUSTER_RTS)
 add_definitions(-DENABLE_TBA_STAR)
+add_definitions(-DENABLE_TIME_BOUNDED_A_STAR)
 
 # Select the possible domains
 add_definitions(-DENABLE_GRID_WORLD)
@@ -97,7 +99,7 @@ add_definitions(-DENABLE_GRID_WORLD)
 #add_definitions(-DENABLE_TRAFFIC_WORLD)
 
 # Disable logger
-#add_definitions(-DELPP_DISABLE_LOGS)
+add_definitions(-DELPP_DISABLE_LOGS)
 
 if (MINGW OR WIN32)
     target_link_libraries(Metronome ws2_32)

@@ -1,0 +1,65 @@
+# This is a graph comment
+# graph: <number of nodes> <start state> <goal state>
+graph 17 1 17
+
+# edge format: e <id> <source> <target> <cost>
+# node format: n <id> <h> <d>
+
+## Start
+n 1 6 6
+e 1 1 2 8
+
+## Decision node
+n 2 5 5
+e 2 2 3 1
+e 2 2 4 1
+
+# After fast 
+n 3 4 4
+e 4 3 5 1
+e 8 3 8 2
+
+# After slow
+n 4 4 4
+e 12 4 11 1
+e 16 4 14 2
+
+## Fast route
+
+# Fast alpha
+n 5 3 3
+e 5 5 6 1
+n 6 2 2
+e 6 6 7 1
+n 7 1 1
+e 7 7 17 1
+
+# Fast beta
+n 8 6 3 
+e 9 8 9 2
+n 9 4 2
+e 10 9 10 2
+n 10 2 1
+e 11 10 17 2
+
+## Slow route
+
+# Fast alpha
+n 11 3 3
+e 13 11 12 1
+n 12 2 2
+e 14 12 13 1
+n 13 1 1
+e 15 13 17 1
+
+# Fast beta
+n 14 6 3
+e 17 14 15 2
+n 15 4 2
+e 18 15 16 2
+n 16 2 1
+e 19 16 17 2
+
+## Goal
+n 17 0 0
+

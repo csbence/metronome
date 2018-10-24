@@ -1,7 +1,7 @@
 #pragma once
 
-#include <boost/optional.hpp>
-#include <chrono>
+#include <optional>
+#include <sstream>
 #include "Experiment.hpp"
 #include "MetronomeException.hpp"
 #include "easylogging++.h"
@@ -11,7 +11,6 @@ namespace metronome {
 template <typename Domain, typename Planner, typename TerminationChecker>
 class RealTimeExperiment : Experiment<Domain, Planner> {
  public:
-
   RealTimeExperiment(const Configuration& configuration) {
     std::string lookaheadType = configuration.getString(LOOKAHEAD_TYPE);
 
@@ -39,7 +38,7 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
               const Domain& domain,
               Planner& planner) {
     using namespace std::chrono;
-//    LOG(INFO) << "Begin real-time planning iterations";
+    //    LOG(INFO) << "Begin real-time planning iterations";
 
     std::vector<typename Domain::Action> actions;
     long long int planningTime{0};
@@ -58,10 +57,10 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
         } else {
           terminationChecker.resetTo(actionDuration);
         }
-        
+
         auto actionBundles =
             planner.selectActions(currentState, terminationChecker);
-        
+
         if (singleStep && actionBundles.size() > 1) {
           actionBundles.resize(1);
         }
@@ -69,21 +68,17 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
         previousTimeBound = timeBound;
         timeBound = 0;
         for (auto& actionBundle : actionBundles) {
-          boost::optional<typename Domain::State> nextState =
-              domain.transition(currentState, actionBundle.action);
+          auto nextState = domain.transition(currentState, actionBundle.action);
 
-          if (!nextState.is_initialized()) {
+          if (!nextState.has_value()) {
             LOG(ERROR) << "Invalid action " << actionBundle.action
-                       << " from: " << currentState
-                       << " "
-                       << actionBundle;
+                       << " from: " << currentState << " " << actionBundle;
             throw MetronomeException(
                 "Invalid action. Partial plan is corrupt.");
           }
-          LOG(INFO) << "> action from: " << currentState << actionBundle;
+          LOG(INFO) << "> action from: " << currentState << " " << actionBundle;
 
-          currentState = nextState.get();
-          //                    LOG(INFO) << actionBundle.action << std::endl;
+          currentState = nextState.value();
           actions.emplace_back(actionBundle.action);
           timeBound += actionBundle.actionDuration;
         }
