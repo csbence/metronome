@@ -130,6 +130,7 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
         if (gIsGreater || agentAtEnd) {
           // destruct old path trace
           delete targetPath;
+          targetPath = nullptr;
         } else {
           nextPath = targetPath;
         }
@@ -146,10 +147,16 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
     if (targetPath->isHead(startState)) {
       if (targetPath->reachedEnd()) {
         delete targetPath;
+        targetPath = nullptr;
 
-        //backtrack one
-        targetPath = new PathTrace(thisNode->parent);
-        plan.push_back(backtrack(thisNode));
+        //backtrack one except if root, in which case cycle with last node
+        if (thisNode == rootNode) {
+          plan.push_back({lastAgentNode->action, lastAgentNode->actionCost});
+          targetPath = new PathTrace(lastAgentNode);
+        } else {
+          targetPath = new PathTrace(thisNode->parent);
+          plan.push_back(backtrack(thisNode));
+        }
       
       } else {
         //move forward one
@@ -254,6 +261,7 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
 
     bool reachedEnd() const { return pathHead == pathEnd || pathHead == nullptr; }
     bool isHead(const State& state) const { return state == pathHead->node->state; }
+    bool isEnd(const State& state) const { return state == pathEnd->node->state; }
     bool isOnPath(const State& state) const { return edges.count(state) > 0; }
     bool costIsAsBig(const PathTrace* rhs) {
       return pathEnd->node->g >= rhs->pathEnd->node->g;
@@ -313,8 +321,7 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
   PathTrace* getCurrentPath(const State& startState,
                             TerminationChecker& terminationChecker) {
     // check if we've already found and traced the goal
-    bool goalFound = goalNode != nullptr;
-    bool goalTraced = goalFound && traceInProgress == nullptr;
+    bool goalTraced = goalNode != nullptr && targetPath->isEnd(goalNode->state);
 
     Node* bestNode;
 
@@ -339,8 +346,11 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
       nextNode = bestNode->parent;
     }
 
-    unsigned long long int tracebacks =
-        static_cast<unsigned long long int>(expansions * tracebackRatio);
+    unsigned long long int tracebacks {0};
+    if (config.getString(TERMINATION_CHECKER_TYPE) == TERMINATION_CHECKER_EXPANSION) {
+      tracebacks =
+          static_cast<unsigned long long int>(config.getLong(ACTION_DURATION) * tracebackRatio);
+    }
 
     PathTrace* currentTrace = traceInProgress;
     while (tracebacks > 0) {
