@@ -132,6 +132,7 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
           delete targetPath;
           targetPath = nullptr;
         } else {
+          delete nextPath;
           nextPath = targetPath;
         }
       }
