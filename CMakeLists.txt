@@ -8,13 +8,14 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/modules/")
 if (NOT APPLE AND NOT WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
 elseif(WIN32)
+# Stack must be increased from standard 1MB
 	set(CMAKE_EXE_LINKER_FLAGS "/STACK:0x2000000")
 endif()
 
 set(CXX clang++)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 if (WIN32 AND NOT MINGW)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall /bigobj")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall /bigobj /std:c++17")
 else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -pedantic -Wextra")
 endif(WIN32 AND NOT MINGW)
@@ -96,6 +97,7 @@ add_definitions(-DENABLE_URBAN_STAR)
 
 # Select the possible domains
 add_definitions(-DENABLE_URBAN_DRIVING)
+#add_definitions(-DENABLE_ORIENTATION_GRID)
 #add_definitions(-DENABLE_GRID_WORLD)
 #add_definitions(-DENABLE_SLIDING_TILE_PUZZLE)
 #add_definitions(-DENABLE_TRAFFIC_WORLD)

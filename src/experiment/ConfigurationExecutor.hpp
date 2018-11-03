@@ -10,10 +10,14 @@
 #include "Result.hpp"
 #include "domains/Traffic.hpp"
 #include "experiment/termination/ExpansionTerminationChecker.hpp"
+#include "experiment/termination/TimeTerminationChecker.hpp"
 #include "utils/File.hpp"
 
 #ifdef ENABLE_GRID_WORLD
 #include "domains/GridWorld.hpp"
+#endif
+#ifdef ENABLE_ORIENTATION_GRID
+#include "domains/OrientationGrid.hpp"
 #endif
 #ifdef ENABLE_SLIDING_TILE_PUZZLE
 #include "domains/SlidingTilePuzzle.hpp"
@@ -73,6 +77,12 @@ class ConfigurationExecutor {
 #ifdef ENABLE_GRID_WORLD
     if (domainName == DOMAIN_GRID_WORLD) {
       return executeDomain<GridWorld>(configuration, resourcesDir);
+    }
+#endif
+
+#ifdef ENABLE_ORIENTATION_GRID
+    if (domainName == DOMAIN_ORIENTATION_GRID) {
+      return executeDomain<OrientationGrid>(configuration, resourcesDir);
     }
 #endif
 
