@@ -5,7 +5,7 @@
 #include <string>
 #include "Configuration.hpp"
 #include "MetronomeException.hpp"
-#include "OfflinePlanManager.hpp"
+#include "OfflineExperiment.hpp"
 #include "RealTimeExperiment.hpp"
 #include "Result.hpp"
 #include "domains/Traffic.hpp"
@@ -214,7 +214,7 @@ class ConfigurationExecutor {
                                       const Domain& domain) {
     Planner planner{domain, configuration};
 
-    OfflinePlanManager<Domain, Planner> offlinePlanManager;
+    OfflineExperiment<Domain, Planner> offlinePlanManager;
 
     LOG(INFO) << "Configuration done.";
     return offlinePlanManager.plan(configuration, domain, planner);
