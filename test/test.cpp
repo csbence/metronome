@@ -9,7 +9,6 @@
 //#include "experiment/TimeTerminationCheckerTest.hpp"
 //#include "utils/PriorityQueueTest.hpp"
 //#include "domains/GridWorldTest.hpp"
-#include "domains/TrafficTest.hpp"
 //#include "domains/SlidingTilePuzzleTest.hpp"
 INITIALIZE_EASYLOGGINGPP
 
