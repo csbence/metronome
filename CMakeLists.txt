@@ -64,7 +64,7 @@ set(TEST_FILES
         test/algorithms/AStarTest.hpp
         test/algorithms/LssLrtaStarTest.hpp
         src/utils/TimeMeasurement.hpp
-        test/experiment/TimeTerminationCheckerTest.hpp test/domains/TrafficTest.hpp)
+        test/experiment/TimeTerminationCheckerTest.hpp)
 
 add_executable(Metronome ${SOURCE_FILES})
 add_executable(MetronomeTest ${TEST_FILES})
