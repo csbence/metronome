@@ -27,6 +27,7 @@ set(SOURCE_FILES
         src/algorithms/AStar.hpp
         src/algorithms/ClusterRts.hpp
         src/algorithms/LssLrtaStar.hpp
+		src/algorithms/UrbanAStar.hpp
         src/algorithms/OfflinePlanner.hpp
         src/algorithms/OnlinePlanner.hpp
         src/algorithms/Planner.hpp
@@ -36,6 +37,7 @@ set(SOURCE_FILES
         src/domains/SlidingTilePuzzle.hpp
         src/domains/TestDomain.hpp
         src/domains/Traffic.hpp
+		src/domains/UrbanDriving.hpp
         src/domains/SuccessorBundle.hpp
         src/utils/PriorityQueue.hpp
         src/utils/Hash.hpp
@@ -60,6 +62,7 @@ set(TEST_FILES
         test/test.cpp
         test/utils/PriorityQueueTest.hpp
         test/domains/GridWorldTest.hpp
+		test/domains/UrbanDrivingTest.hpp
         test/algorithms/AStarTest.hpp
         test/algorithms/LssLrtaStarTest.hpp
         src/utils/TimeMeasurement.hpp
@@ -85,13 +88,15 @@ include_directories(src)
 #add_definitions(-DSTREAM_GRAPH)
 
 # Select the possible algorithms.
-add_definitions(-DENABLE_A_STAR)
+add_definitions(-DENABLE_URBAN_STAR)
+#add_definitions(-DENABLE_A_STAR)
 #add_definitions(-DENABLE_LSS_LRTA_STAR)
-add_definitions(-DENABLE_CLUSTER_RTS)
-add_definitions(-DENABLE_TIME_BOUNDED_A_STAR)
+#add_definitions(-DENABLE_CLUSTER_RTS)
+#add_definitions(-DENABLE_TIME_BOUNDED_A_STAR)
 
 # Select the possible domains
-add_definitions(-DENABLE_GRID_WORLD)
+add_definitions(-DENABLE_URBAN_DRIVING)
+#add_definitions(-DENABLE_GRID_WORLD)
 #add_definitions(-DENABLE_SLIDING_TILE_PUZZLE)
 #add_definitions(-DENABLE_TRAFFIC_WORLD)
 
