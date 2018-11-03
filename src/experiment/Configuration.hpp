@@ -3,9 +3,10 @@
 #include "MetronomeException.hpp"
 #include "rapidjson/document.h"
 
-#include <iostream>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+#include <iostream>
+#include <vector>
 
 namespace metronome {
 
@@ -48,11 +49,11 @@ static const std::string WEIGHT{"weight"};
 class Configuration {
  public:
   Configuration() : document{} {};
-//  Configuration(const Configuration&) = default;
+  //  Configuration(const Configuration&) = default;
   Configuration(const Configuration&) : document{} {
     std::cout << "Here" << std::endl;
   };
-//    Configuration(Configuration&&) = default;
+  //    Configuration(Configuration&&) = default;
   Configuration(Configuration&&) : document{} {
     std::cout << "Here" << std::endl;
   };
@@ -69,26 +70,41 @@ class Configuration {
 
   std::string getString(const std::string& key) const {
     checkKey(key);
-    
+
     return std::string{document[key.c_str()].GetString()};
   }
-  
+
   long long int getLong(const std::string& key) const {
     checkKey(key);
-    
+
     return document[key.c_str()].GetInt64();
   }
-  
+
   double getDouble(const std::string& key) const {
     checkKey(key);
-    
+
     return document[key.c_str()].GetDouble();
   }
-  
+
   double getBool(const std::string& key) const {
     checkKey(key);
-    
+
     return document[key.c_str()].GetBool();
+  }
+
+  std::vector<double> getDoubles(const std::string& key) const {
+    checkKey(key);
+
+    auto genericArray = document[key.c_str()].GetArray();
+
+    std::vector<double> doubles;
+    doubles.reserve(genericArray.Size());
+
+    for (const auto& value : genericArray) {
+      doubles.push_back(value.GetDouble());
+    }
+
+    return doubles;
   }
 
   void checkKey(const std::string& key) const {
@@ -99,17 +115,17 @@ class Configuration {
 
   const rapidjson::Document& getJsonDocument() const { return document; }
 
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const Configuration &configuration) {
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const Configuration& configuration) {
     using namespace rapidjson;
 
     StringBuffer buffer;
     Writer<StringBuffer> writer(buffer);
     configuration.getJsonDocument().Accept(writer);
-    
+
     auto serializedConfiguration = std::string(buffer.GetString());
     os << "configuration: " << serializedConfiguration;
-    
+
     return os;
   }
 

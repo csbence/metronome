@@ -10,6 +10,7 @@
 #include "Result.hpp"
 #include "domains/Traffic.hpp"
 #include "experiment/termination/ExpansionTerminationChecker.hpp"
+#include "experiment/termination/TimeTerminationChecker.hpp"
 #include "utils/File.hpp"
 
 #ifdef ENABLE_GRID_WORLD
