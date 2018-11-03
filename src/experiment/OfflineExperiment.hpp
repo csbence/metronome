@@ -6,7 +6,7 @@
 
 namespace metronome {
 template <typename Domain, typename Planner>
-class OfflinePlanManager : Experiment<Domain, Planner> {
+class OfflineExperiment : Experiment<Domain, Planner> {
  public:
   Result plan(const Configuration& configuration,
               const Domain& domain,

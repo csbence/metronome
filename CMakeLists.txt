@@ -46,7 +46,7 @@ set(SOURCE_FILES
         src/utils/Location2D.hpp
         src/experiment/termination/TimeTerminationChecker.hpp
         src/experiment/Experiment.hpp
-        src/experiment/OfflinePlanManager.hpp
+		src/experiment/OfflineExperiment.hpp
         src/experiment/RealTimeExperiment.hpp
         src/experiment/Configuration.hpp
         src/experiment/Result.hpp
