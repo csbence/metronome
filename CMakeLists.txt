@@ -89,7 +89,7 @@ include_directories(src)
 #add_definitions(-DSTREAM_GRAPH)
 
 # Select the possible algorithms.
-add_definitions(-DENABLE_URBAN_STAR)
+add_definitions(-DENABLE_URBAN_A_STAR)
 #add_definitions(-DENABLE_A_STAR)
 #add_definitions(-DENABLE_LSS_LRTA_STAR)
 #add_definitions(-DENABLE_CLUSTER_RTS)

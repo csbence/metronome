@@ -6,13 +6,12 @@
 #include <vector>
 #include "MemoryConfiguration.hpp"
 #include "MetronomeException.hpp"
-#include "OnlinePlanner.hpp"
+#include "OfflinePlanner.hpp"
 #include "Planner.hpp"
 #include "domains/SuccessorBundle.hpp"
 #include "dynamic_priority_queue.hpp"
 #include "easylogging++.h"
 #include "experiment/Configuration.hpp"
-#include "experiment/termination/TimeTerminationChecker.hpp"
 #include "utils/Hash.hpp"
 #include "utils/ObjectPool.hpp"
 #include "utils/PriorityQueue.hpp"
@@ -21,14 +20,14 @@
 
 namespace metronome {
 
-template <typename Domain, typename TerminationChecker>
-class UrbanAStar final : public OnlinePlanner<Domain, TerminationChecker> {
+template <typename Domain>
+class UrbanAStar final : public OfflinePlanner<Domain> {
  public:
   using State = typename Domain::State;
   using Action = typename Domain::Action;
   using Cost = typename Domain::Cost;
-  using ActionBundle =
-      typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle;
+  using Planner = Planner<Domain>;
+  using ActionBundle = typename Planner::ActionBundle;
 
   // Only used for visualizations
   static constexpr std::size_t NODE_ID_OFFSET = 100000;
@@ -39,35 +38,20 @@ class UrbanAStar final : public OnlinePlanner<Domain, TerminationChecker> {
     nodes.max_load_factor(1);
     nodes.reserve(Memory::NODE_LIMIT);
   }
-
-  std::vector<ActionBundle> selectActions(
-      const State &agentState,
-      TerminationChecker &terminationChecker) override {
-    ++iteration;
-    if (domain.isGoal(agentState)) {
-      // Goal is already reached
-      return {};
-    }
-
-    // ---    Initialize    ---
+  
+  std::vector<Action> plan(const State& agentState) {
     if (nodePool.empty()) createInitialNode(agentState);
-
-    explore(agentState, terminationChecker);
-
-    std::vector<ActionBundle> rootToTargetPath;
-
-    if (goalNode != nullptr) {
-      rootToTargetPath = extractPath(goalNode, rootNode);
-    } else {
-      rootToTargetPath = extractPath(openList.top(), rootNode);
-    }
-
+    explore(agentState);
+    
+    std::vector<Action> path;
+    path = extractPath(goalNode, rootNode);
+    
 #ifdef STREAM_GRAPH
     visualizeProgress(agentState, rootToTargetPath);
 #endif
-
-    return rootToTargetPath;
-  }
+    
+    return path;
+  } 
 
   void visualizeProgress(const State &agentState,
                          const std::vector<ActionBundle> &path) {

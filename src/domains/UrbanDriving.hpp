@@ -119,8 +119,9 @@ class UrbanDriving {
   }
 
   bool isGoal(const State& state) const {
-    return state.spatialStateIndex == spatialStates.size() - 1 &&
-           state.speed < 1.0e-5;
+    return state.spatialStateIndex == spatialStates.size() - 1;
+//    &&
+//           state.speed < 1.0e-5;
   }
 
   Cost distance(const State& state) const { return 0; }

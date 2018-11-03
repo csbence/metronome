@@ -25,6 +25,9 @@
 #ifdef ENABLE_TRAFFIC_WORLD
 #include "domains/Traffic.hpp"
 #endif
+#ifdef ENABLE_URBAN_DRIVING
+#include "domains/UrbanDriving.hpp"
+#endif
 
 #ifdef ENABLE_A_STAR
 #include "algorithms/AStar.hpp"
@@ -37,6 +40,9 @@
 #endif
 #ifdef ENABLE_TIME_BOUNDED_A_STAR
 #include "algorithms/TimeBoundedAStar.hpp"
+#endif
+#ifdef ENABLE_URBAN_A_STAR
+#include "algorithms/UrbanAStar.hpp"
 #endif
 
 namespace metronome {
@@ -95,6 +101,12 @@ class ConfigurationExecutor {
 #ifdef ENABLE_TRAFFIC_WORLD
     if (domainName == DOMAIN_TRAFFIC) {
       return executeDomain<Traffic>(configuration, resourcesDir);
+    }
+#endif
+
+#ifdef ENABLE_URBAN_DRIVING
+    if (domainName == DOMAIN_URBAN_DRIVING) {
+      return executeDomain<UrbanDriving>(configuration, resourcesDir);
     }
 #endif
 
@@ -174,6 +186,13 @@ class ConfigurationExecutor {
           Domain,
           TimeBoundedAStar<Domain, TerminationChecker>,
           TerminationChecker>(configuration, domain);
+    }
+#endif
+
+#ifdef ENABLE_URBAN_A_STAR
+    if (algorithmName == ALGORITHM_TIME_BOUNDED_A_STAR) {
+      return executeOfflinePlanner<Domain, UrbanAStar<Domain>>(configuration,
+                                                                 domain);
     }
 #endif
 
