@@ -95,6 +95,7 @@ int main(int argc, char** argv) {
   std::cout << "\n\nResult:\n#" << std::endl;
   std::cout << result.getJsonString() << std::endl;
 
+  getchar();
   return 0;
 }
 
