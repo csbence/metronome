@@ -22,6 +22,7 @@ static const std::string LOOKAHEAD_TYPE{"lookaheadType"};
 static const std::string COMMITMENT_STRATEGY{"commitmentStrategy"};
 
 static const std::string DOMAIN_GRID_WORLD{"GRID_WORLD"};
+static const std::string DOMAIN_ORIENTATION_GRID{"ORIENTATION_GRID"};
 static const std::string DOMAIN_TRAFFIC{"TRAFFIC"};
 static const std::string DOMAIN_TILES{"SLIDING_TILE_PUZZLE"};
 
