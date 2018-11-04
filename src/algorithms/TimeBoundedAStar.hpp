@@ -28,8 +28,8 @@ class TimeBoundedAStar final
   using State = typename Domain::State;
   using Action = typename Domain::Action;
   using Cost = typename Domain::Cost;
-  using ActionBundle =
-      typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle;
+  using Planner = Planner<Domain>;
+  using ActionBundle = typename Planner::ActionBundle;
 
   // Only used for visualizations
   static constexpr std::size_t NODE_ID_OFFSET = 100000;

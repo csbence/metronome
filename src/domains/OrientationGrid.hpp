@@ -524,7 +524,7 @@ class OrientationGrid {
    */
   unsigned int width;
   unsigned int height;
-  std::unordered_set<State, typename LocationHash, typename LocationEquals>
+  std::unordered_set<State, LocationHash, LocationEquals>
       obstacles{};
   State startLocation{};
   State goalLocation{};

@@ -5,7 +5,7 @@
 namespace metronome {
 
 template <typename Domain>
-class OfflinePlanner : public Planner {
+class OfflinePlanner : public Planner<Domain> {
  public:
   virtual ~OfflinePlanner() = default;
   virtual std::vector<typename Domain::Action> plan(

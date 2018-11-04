@@ -17,10 +17,11 @@ namespace metronome {
 
 template <typename Domain>
 class AStar final : public OfflinePlanner<Domain> {
-  typedef typename Domain::State State;
-  typedef typename Domain::Action Action;
-  typedef typename Domain::Cost Cost;
-
+  using State = typename Domain::State;
+  using Action = typename Domain::Action;
+  using Cost = typename Domain::Cost;
+  using Planner = Planner<Domain>;
+  
  public:
   AStar(const Domain& domain, const Configuration&)
       : domain(domain), openList(Memory::OPEN_LIST_SIZE, fValueComparator) {
