@@ -19,11 +19,11 @@ namespace metronome {
 template <typename Domain, typename TerminationChecker>
 class LssLrtaStar final : public OnlinePlanner<Domain, TerminationChecker> {
  public:
-  typedef typename Domain::State State;
-  typedef typename Domain::Action Action;
-  typedef typename Domain::Cost Cost;
-  typedef typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle
-      ActionBundle;
+  using State = typename Domain::State;
+  using Action = typename Domain::Action;
+  using Cost = typename Domain::Cost;
+  using Planner = Planner<Domain>;
+  using ActionBundle = typename Planner::ActionBundle;
 
   LssLrtaStar(const Domain& domain, const Configuration&) : domain{domain} {
     // Initialize hash table

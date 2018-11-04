@@ -21,14 +21,14 @@
 
 namespace metronome {
 
-template<typename Domain, typename TerminationChecker>
+template <typename Domain, typename TerminationChecker>
 class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
  public:
   using State = typename Domain::State;
   using Action = typename Domain::Action;
   using Cost = typename Domain::Cost;
-  using ActionBundle =
-  typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle;
+  using Planner = Planner<Domain>;
+  using ActionBundle = typename Planner::ActionBundle;
 
   static constexpr std::size_t MAX_CLUSTER_COUNT = 100000;
   // Only used for visualizations
@@ -64,7 +64,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     }
 
 #ifdef STREAM_GRAPH
-      visualizeProgress(agentState, cachedPath);
+    visualizeProgress(agentState, cachedPath);
 #endif
     assert(!cachedPath.empty());
 
@@ -180,7 +180,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
         auto nodeToCorePath = extractNodeToCorePath(bestTargetFrontierNode);
 
         actionsTowardsCluster.reserve(coreToNodePath.size() +
-            nodeToCorePath.size() + 1);
+                                      nodeToCorePath.size() + 1);
 
         actionsTowardsCluster.insert(
             std::end(actionsTowardsCluster),
@@ -284,7 +284,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   struct ClusterComparatorH {
     int operator()(const Cluster *lhs, const Cluster *rhs) const {
       assert(!lhs->openList.empty() && !rhs->openList.empty() &&
-          "Depleted cluster on open!");
+             "Depleted cluster on open!");
 
       if (lhs->openList.top()->h < rhs->openList.top()->h) return -1;
       if (lhs->openList.top()->h > rhs->openList.top()->h) return 1;
@@ -369,9 +369,9 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     nodes[currentNode->state] = currentNode;
 
-    bool spawnNewCore = sourceCluster->expandedNodeCount >= clusterNodeLimit ||
-        currentNode->g / domain.getActionDuration() >=
-            clusterDepthLimit;
+    bool spawnNewCore =
+        sourceCluster->expandedNodeCount >= clusterNodeLimit ||
+        currentNode->g / domain.getActionDuration() >= clusterDepthLimit;
 
     if (spawnNewCore) {
       // Reassign local node to a new cluster
@@ -403,7 +403,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     auto clusterLabel =
         "cluster:" +
-            std::to_string(clusterPool.index(currentNode->containingCluster));
+        std::to_string(clusterPool.index(currentNode->containingCluster));
 
     visualizer.addNode(id,
                        currentNode->state.getX(),
@@ -516,8 +516,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
                        Action action,
                        Cost cost) {
     assert(nodes[sourceNode->state] != nullptr &&
-        nodes[targetNode->state] != nullptr &&
-        "can't connect dangling nodes");
+           nodes[targetNode->state] != nullptr &&
+           "can't connect dangling nodes");
 
     bool sourceSuccess =
         connectClustersDirected(sourceNode, targetNode, action, cost);
@@ -622,7 +622,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
         sourceClusterPath.clear();
         decltype(interClusterPath)(it, std::end(interClusterPath))
-        .swap(interClusterPath);
+            .swap(interClusterPath);
         break;
       }
     }
@@ -643,9 +643,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
           sourceClusterPath.clear();
           // TODO double check that +1
-          decltype(targetClusterPath)(it
-          +1, std::end(targetClusterPath))
-          .swap(targetClusterPath);
+          decltype(targetClusterPath)(it + 1, std::end(targetClusterPath))
+              .swap(targetClusterPath);
           break;
         }
       }
@@ -653,7 +652,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     std::vector<ActionBundle> path;
     path.reserve(sourceClusterPath.size() + interClusterPath.size() +
-        targetClusterPath.size());
+                 targetClusterPath.size());
 
     LOG(INFO) << "SOURCE PATH:";
     for (auto &actionBundle : sourceClusterPath) {
@@ -730,10 +729,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     for (auto &skeletonPathSegment : skeletonPath) {
       LOG(INFO) << "  Segment:"
                 << skeletonPathSegment.bestSourceFrontierNode->containingCluster
-                    ->label
+                       ->label
                 << " >>> "
                 << skeletonPathSegment.bestTargetFrontierNode->containingCluster
-                    ->label;
+                       ->label;
       auto segmentActions = skeletonPathSegment.inverseActions();
 
       // Debug info
@@ -747,7 +746,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
         const auto targetClusterId = clusterPool.index(targetCluster);
 
         actionBundle.label += std::to_string(targetClusterId) + "->" +
-            std::to_string(sourceClusterId);
+                              std::to_string(sourceClusterId);
       }
 
       // NOTE: we use the assumption that the cost is symmetric and the

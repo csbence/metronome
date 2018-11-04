@@ -92,10 +92,10 @@ add_definitions(-DENABLE_CLUSTER_RTS)
 add_definitions(-DENABLE_TIME_BOUNDED_A_STAR)
 
 # Select the possible domains
-#add_definitions(-DENABLE_GRID_WORLD)
+add_definitions(-DENABLE_GRID_WORLD)
 add_definitions(-DENABLE_ORIENTATION_GRID)
-#add_definitions(-DENABLE_SLIDING_TILE_PUZZLE)
-#add_definitions(-DENABLE_TRAFFIC_WORLD)
+add_definitions(-DENABLE_SLIDING_TILE_PUZZLE)
+add_definitions(-DENABLE_TRAFFIC_WORLD)
 
 # Disable logger
 add_definitions(-DELPP_DISABLE_LOGS)
