@@ -117,10 +117,6 @@ class ConfigurationExecutor {
   template <typename Domain>
   static Result executeDomain(const Configuration& configuration,
                               const std::string& resourcesDir) {
-    if (!configuration.hasMember(DOMAIN_NAME)) {
-      LOG(ERROR) << "Termination checker not found." << std::endl;
-      return Result(configuration, "Missing: terminationCheckerType");
-    }
     const std::string terminationCheckerType{
         configuration.getString(TERMINATION_CHECKER_TYPE)};
 
@@ -190,7 +186,7 @@ class ConfigurationExecutor {
 #endif
 
 #ifdef ENABLE_URBAN_A_STAR
-    if (algorithmName == ALGORITHM_TIME_BOUNDED_A_STAR) {
+    if (algorithmName == ALGORITHM_URBAN_A_STAR) {
       return executeOfflinePlanner<Domain, UrbanAStar<Domain>>(configuration,
                                                                  domain);
     }

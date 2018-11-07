@@ -12,6 +12,9 @@ class SuccessorBundle {
   SuccessorBundle(State state, Action action, Cost actionCost)
       : state(state), action(action), actionCost(actionCost) {}
 
+  SuccessorBundle(const SuccessorBundle&) = default;
+  SuccessorBundle& operator=(const SuccessorBundle&) = default;
+
   const State state;
   const Action action;
   const Cost actionCost;

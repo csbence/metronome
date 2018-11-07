@@ -17,27 +17,31 @@ __author__ = 'Bence Cserna, William Doyle, Kevin C. Gall'
 
 def generate_base_configuration():
     # required configuration parameters
-    algorithms_to_run = ['CLUSTER_RTS', 'TIME_BOUNDED_A_STAR']
-    # algorithms_to_run = ['A_STAR']
-    expansion_limit = [100000000]
-    lookahead_type = ['DYNAMIC']
-    time_limit = [300000000000]
-    # action_durations = [1]  # Use this for A*
-    # action_durations = [10000000, 12000000, 16000000, 20000000, 25000000, 32000000]
-    action_durations = [50, 100, 250, 500, 1000]
+    algorithms_to_run = ['URBAN_A_STAR']
+    domainName = ['URBAN_DRIVING']
     termination_types = ['EXPANSION']
-    step_limits = [100000000]
+    weight = [1.0]
+    time_resolution = [0.1]
+    speed_resolution = [0.1]
+    speed_limit = [15]
+    start_speed = [x / 5 for x in range(5 * 5)]
+    safety_version = [0, 2]
+    acceleration_profile = [0, 1, 2, 3]
+    spatial_distances = [[x / 2 for x in range(200)]]
 
     base_configuration = dict()
     base_configuration['algorithmName'] = algorithms_to_run
-    # base_configuration['expansionLimit'] = expansion_limit
-    base_configuration['lookaheadType'] = lookahead_type
-    base_configuration['actionDuration'] = action_durations
+    base_configuration['domainName'] = domainName
     base_configuration['terminationType'] = termination_types
-    # base_configuration['stepLimit'] = step_limits
-    # base_configuration['timeLimit'] = time_limit
-    base_configuration['commitmentStrategy'] = ['SINGLE']
-    base_configuration['terminationTimeEpsilon'] = [5000000]  # 4ms
+    base_configuration['weight'] = weight
+    base_configuration['timeResolution'] = time_resolution
+    base_configuration['speedResolution'] = speed_resolution
+    base_configuration['speedLimit'] = speed_limit
+    base_configuration['startSpeed'] = start_speed
+    base_configuration['safetyVersion'] = safety_version
+    base_configuration['accelerationProfile'] = acceleration_profile
+    base_configuration['spatialDistances'] = spatial_distances
+    base_configuration['domainPath'] = ['']
 
     compiled_configurations = [{}]
 
@@ -46,38 +50,41 @@ def generate_base_configuration():
                                                     key, value)
 
     # Algorithm specific configurations
-    weight = [3.0]
     compiled_configurations = cartesian_product(compiled_configurations,
-                                                'weight', weight,
-                                                [['algorithmName',
-                                                  'WEIGHTED_A_STAR']])
-
-    # No configurable resource ratio for RES at this time
+                                                'comfortableAccelerations',
+                                                [[0, 0.8, -0.8]],
+                                                [['accelerationProfile', 0]])
     compiled_configurations = cartesian_product(compiled_configurations,
-                                                'backlogRatio', [0.2],
-                                                [['algorithmName',
-                                                  'TIME_BOUNDED_A_STAR']])
+                                                'uncomfortableAccelerations',
+                                                [[-1.6]],
+                                                [['accelerationProfile', 0]])
 
     compiled_configurations = cartesian_product(compiled_configurations,
-                                                'weight', [1.0, 1.4, 2.0,
-                                                           2.8, 4.0, 8.0],
-                                                [['algorithmName',
-                                                  'TIME_BOUNDED_A_STAR']])
+                                                'comfortableAccelerations',
+                                                [[0, 1.0, -1.0]],
+                                                [['accelerationProfile', 1]])
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'uncomfortableAccelerations',
+                                                [[-1.8]],
+                                                [['accelerationProfile', 1]])
 
     compiled_configurations = cartesian_product(compiled_configurations,
-                                                'clusterNodeLimit', [100000],
-                                                [['algorithmName',
-                                                  'CLUSTER_RTS']])
+                                                'comfortableAccelerations',
+                                                [[0, 1.2, -1.2]],
+                                                [['accelerationProfile', 2]])
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'uncomfortableAccelerations',
+                                                [[-2.0]],
+                                                [['accelerationProfile', 2]])
 
     compiled_configurations = cartesian_product(compiled_configurations,
-                                                'clusterDepthLimit', [10,
-                                                                      100,
-                                                                      500,
-                                                                      1000,
-                                                                      10000],
-                                                [['algorithmName',
-                                                  'CLUSTER_RTS']])
-
+                                                'comfortableAccelerations',
+                                                [[0, 1.5, -1.5]],
+                                                [['accelerationProfile', 3]])
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'uncomfortableAccelerations',
+                                                [[-2.2]],
+                                                [['accelerationProfile', 3]])
     return compiled_configurations
 
 
@@ -333,16 +340,11 @@ def save_results(results_json, file_name):
 
 def label_algorithms(configurations):
     for configuration in configurations:
-        if configuration['algorithmName'] == 'CLUSTER_RTS':
+        if configuration['algorithmName'] == 'URBAN_A_STAR':
             configuration['algorithmLabel'] = configuration['algorithmName'] \
-                                              + ' limit: ' \
+                                              + ' safety: ' \
                                               + str(configuration[
-                                                        'clusterDepthLimit'])
-        if configuration['algorithmName'] == 'TIME_BOUNDED_A_STAR':
-            configuration['algorithmLabel'] = configuration['algorithmName'] \
-                                              + ' weight: ' \
-                                              + str(configuration[
-                                                        'weight'])
+                                                        'safetyVersion'])
 
 
 def main():
@@ -364,7 +366,7 @@ def main():
         configurations = extract_configurations_from_failed_results(old_results)
     else:
         # Generate new domain configurations
-        configurations = generate_grid_world()
+        configurations = generate_base_configuration()
         label_algorithms(configurations)
         # configurations = configurations[:10]  # debug - keep only one config
 

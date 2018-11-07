@@ -35,6 +35,7 @@ class OfflineExperiment : Experiment<Domain, Planner> {
       }
       currentState = candidateState.value();
     }
+    
     if (!domain.isGoal(currentState)) {
       throw MetronomeException("Goal is not reached!");
     }
@@ -51,9 +52,11 @@ class OfflineExperiment : Experiment<Domain, Planner> {
                   planner.getExpandedNodeCount(),
                   planner.getGeneratedNodeCount(),
                   planningTime,
-                  pathLength * configuration.getLong("actionDuration"),
-                  calculatedPlanningTime +
-                      pathLength * configuration.getLong("actionDuration"),
+                  currentState.time * 1000 * 1000 * 1000,
+                  planningTime + currentState.time * 1000 * 1000 * 1000,
+//                  pathLength * configuration.getLong("actionDuration"),
+//                  calculatedPlanningTime +
+//                      pathLength * configuration.getLong("actionDuration"),
                   calculatedPlanningTime,
                   pathLength,
                   actionStrings);

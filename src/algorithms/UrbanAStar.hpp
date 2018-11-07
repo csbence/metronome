@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fcntl.h>
+#include <deque>
 #include <ostream>
 #include <unordered_map>
 #include <vector>
@@ -33,25 +34,113 @@ class UrbanAStar final : public OfflinePlanner<Domain> {
   static constexpr std::size_t NODE_ID_OFFSET = 100000;
 
   UrbanAStar(const Domain &domain, const Configuration &configuration)
-      : domain(domain), weight(configuration.getDouble(WEIGHT)) {
+      : domain(domain),
+        weight(configuration.getDouble(WEIGHT)),
+        safetyVersion(configuration.getLong("safetyVersion")) {
     // Initialize hash table
     nodes.max_load_factor(1);
     nodes.reserve(Memory::NODE_LIMIT);
   }
-  
-  std::vector<Action> plan(const State& agentState) {
-    if (nodePool.empty()) createInitialNode(agentState);
+
+  std::vector<Action> plan(const State &agentState) {
+    createInitialNode(agentState);
     explore(agentState);
-    
-    std::vector<Action> path;
-    path = extractPath(goalNode, rootNode);
-    
+
+    std::vector<ActionBundle> path;
+    if (safetyVersion == 1) {
+      path = extractPath(partialGoalNode, rootNode);
+      std::size_t index = findFirstSafeNode(path);
+
+      for (std::size_t i = index + 2; i < path.size(); ++i) {
+        assert(i > 0);
+
+        const auto fastSuccessors =
+            domain.fastSuccessors(path[i - 1].expectedTargetState);
+
+        assert(fastSuccessors.size() == 1 || i == path.size() - 1);
+
+        ActionBundle actionBundle;
+
+        if (i == path.size() - 1) {
+          auto fastSuccessor =
+              domain.getStopActionBundle(path[i - 1].expectedTargetState);
+
+          actionBundle = {fastSuccessor.action, fastSuccessor.actionCost};
+          actionBundle.expectedTargetState = fastSuccessor.state;
+        } else {
+          auto fastSuccessor = fastSuccessors[0];
+
+          actionBundle = {fastSuccessor.action, fastSuccessor.actionCost};
+          actionBundle.expectedTargetState = fastSuccessor.state;
+        }
+
+        path[i] = actionBundle;
+      }
+
+    } else if (safetyVersion == 2) {
+      auto nodePath = extractNodePath(partialGoalNode, rootNode);
+      proveSafety(nodePath);
+      // TODO remove
+      visualizeProgress(agentState, path);
+
+      if (goalNode == nullptr)
+        throw MetronomeException("Goal is not reachable.");
+      path = extractPath(goalNode, rootNode);
+    } else {
+      if (goalNode == nullptr)
+        throw MetronomeException("Goal is not reachable.");
+
+      path = extractPath(goalNode, rootNode);
+    }
+
 #ifdef STREAM_GRAPH
-    visualizeProgress(agentState, rootToTargetPath);
+    visualizeProgress(agentState, path);
 #endif
-    
-    return path;
-  } 
+
+    std::vector<Action> actions;
+    actions.reserve(path.size());
+
+    for (const auto &actionBundle : path) {
+      actions.push_back(actionBundle.action);
+    }
+
+    return actions;
+  }
+
+  std::size_t findFirstSafeNode(std::vector<ActionBundle> path) {
+    // TODO set goalNode
+    const auto partialGoalState = domain.getPartialGoalState();
+    auto currentState = partialGoalState;
+
+    // Add first node
+
+    while (true) {
+      const auto predecessors = domain.partialPredecessors(currentState);
+      if (predecessors.empty())
+        throw MetronomeException(
+            "Backward safety "
+            "search can't reach "
+            "the path.");
+
+      // We only handle a single emergency action (trivial to extend)
+      assert(predecessors.size() == 1);
+      const State predecessor = predecessors[0];
+
+      // If in path stop else do more
+
+      std::size_t intersectionIndex = 0;
+      for (const auto &actionBundle : path) {
+        if (domain.isSafetyProof(actionBundle.expectedTargetState,
+                                 currentState)) {
+          return intersectionIndex;
+        }
+
+        ++intersectionIndex;
+      }
+
+      currentState = predecessor;
+    }
+  }
 
   void visualizeProgress(const State &agentState,
                          const std::vector<ActionBundle> &path) {
@@ -111,7 +200,7 @@ class UrbanAStar final : public OfflinePlanner<Domain> {
     /** Parent node */
     Node *parent;
     /** Internal state */
-    const State state;
+    State state;
     /** Action that led to the current node from the parent node */
     Action action;
     /** Cost from the root node */
@@ -127,6 +216,22 @@ class UrbanAStar final : public OfflinePlanner<Domain> {
     int operator()(const Node *lhs, const Node *rhs) const {
       if (domain.less(lhs->state, rhs->state)) return -1;
       if (domain.less(rhs->state, lhs->state)) return 1;
+
+      if (lhs->g > rhs->g) return -1;
+      if (lhs->g < rhs->g) return 1;
+
+      return 0;
+    }
+
+    const Domain &domain;
+  };
+
+  struct SafeNodeComparator {
+    SafeNodeComparator(const Domain &domain) : domain(domain) {}
+
+    int operator()(const Node *lhs, const Node *rhs) const {
+      if (domain.safeLess(lhs->state, rhs->state)) return -1;
+      if (domain.safeLess(rhs->state, lhs->state)) return 1;
 
       if (lhs->g > rhs->g) return -1;
       if (lhs->g < rhs->g) return 1;
@@ -164,13 +269,13 @@ class UrbanAStar final : public OfflinePlanner<Domain> {
     openList.push(initialNode);
   }
 
-  void explore(const State &, TerminationChecker &terminationChecker) {
-    while (!terminationChecker.reachedTermination() && !openList.empty()) {
+  void explore(const State &) {
+    while (!openList.empty()) {
       if (goalNode != nullptr) return;
+      if (safetyVersion > 0 && partialGoalNode != nullptr) return;
 
       auto currentNode = openList.pop();
       expandNode(currentNode);
-      terminationChecker.notifyExpansion();
 
       // Visualization
       std::size_t id = nodePool.index(currentNode) + NODE_ID_OFFSET;
@@ -184,6 +289,102 @@ class UrbanAStar final : public OfflinePlanner<Domain> {
     }
   }
 
+  void proveSafety(std::vector<Node *> path) {
+    while (!path.empty() && !domain.canBeSafe(path.back()->state)) {
+      path.pop_back();
+    }
+
+    // Reverse the vector
+    std::reverse(path.begin(), path.end());
+
+    for (auto node : path) {
+      findSafetyProof(node);
+
+      // If the proof was successful
+      if (goalNode != nullptr) return;
+    }
+  }
+
+  void findSafetyProof(Node *source) {
+    assert(safetyOpenList.empty());
+
+    safetyOpenList.push(source);
+
+    // visualization
+    std::string sourceId =
+        std::to_string(nodePool.index(source) + NODE_ID_OFFSET);
+
+    while (!safetyOpenList.empty()) {
+      if (goalNode != nullptr) return;
+
+      const auto currentNode = safetyOpenList.pop();
+
+      safetyExpandNode(currentNode);
+
+      std::size_t id = nodePool.index(currentNode) + NODE_ID_OFFSET;
+      visualizer.addNode(id,
+                         currentNode->state.getX(),
+                         currentNode->state.getY(),
+                         0,
+                         1,
+                         "safety" + sourceId);
+
+      if (currentNode->parent != nullptr) {
+        visualizer.addEdge(id,
+                           nodePool.index(currentNode->parent) + NODE_ID_OFFSET,
+                           id,
+                           "safety" + sourceId);
+      }
+    }
+  }
+
+  void safetyExpandNode(Node *sourceNode) {
+    Planner::incrementExpandedNodeCount();
+
+    //    if (sourceNode->closed) return;
+    sourceNode->closed = true;
+
+    if (domain.isGoal(sourceNode->state)) {
+      LOG(INFO) << "Goal was expanded!";
+      goalNode = sourceNode;
+    }
+
+    auto fastSuccessors = domain.fastSuccessors(sourceNode->state);
+    auto successors = domain.successors(sourceNode->state);
+
+    //ugly
+    for (const auto& fastSuccessor : fastSuccessors) {
+      successors.push_back(fastSuccessor);
+    }
+
+    for (auto successor : successors) {
+      auto successorState = successor.state;
+      Node *&successorNode = nodes[successorState];
+
+      if (successorNode == nullptr) {
+        Planner::incrementGeneratedNodeCount();
+        successorNode = nodePool.construct(sourceNode,
+                                           successor.state,
+                                           successor.action,
+                                           std::numeric_limits<Cost>::max(),
+                                           domain.heuristic(successor.state));
+
+        // Insert new region
+        safetyOpenList.insertOrUpdate(successorNode);
+      } else if (domain.safeLess(successorState, successorNode->state)) {
+        if (successorNode->closed) continue;
+
+        successorNode->g = sourceNode->g + successor.actionCost;
+        successorNode->parent = sourceNode;
+        successorNode->action = successor.action;
+        successorNode->state = successorState;
+
+        // Update existing region
+        safetyOpenList.insertOrUpdate(successorNode);
+      }
+    }
+  }
+
   void expandNode(Node *sourceNode) {
     Planner::incrementExpandedNodeCount();
 
@@ -193,6 +394,10 @@ class UrbanAStar final : public OfflinePlanner<Domain> {
     if (domain.isGoal(sourceNode->state)) {
       LOG(INFO) << "Goal was expanded!";
       goalNode = sourceNode;
+    }
+
+    if (domain.isPartialGoal(sourceNode->state)) {
+      partialGoalNode = sourceNode;
     }
 
     for (auto successor : domain.successors(sourceNode->state)) {
@@ -241,6 +446,22 @@ class UrbanAStar final : public OfflinePlanner<Domain> {
     return actionBundles;
   }
 
+  std::vector<Node *> extractNodePath(Node *targetNode,
+                                      const Node *sourceNode) const {
+    if (targetNode == sourceNode) return {};
+
+    std::vector<Node *> nodePath;
+    auto currentNode = targetNode;
+
+    while (currentNode != sourceNode) {
+      nodePath.emplace_back(currentNode);
+      currentNode = currentNode->parent;
+    }
+
+    std::reverse(nodePath.begin(), nodePath.end());
+    return nodePath;
+  }
+
   const Domain &domain;
   const double weight;
   const Node *rootNode;
@@ -252,14 +473,25 @@ class UrbanAStar final : public OfflinePlanner<Domain> {
       Memory::OPEN_LIST_SIZE,
       Memory::OPEN_LIST_SIZE>
       openList{{domain}};
+
+  cserna::DynamicPriorityQueue<
+      Node *,
+      cserna::NonIntrusiveIndexFunction<Node *, Hash<Node>, NodeEquals>,
+      SafeNodeComparator,
+      Memory::OPEN_LIST_SIZE,
+      Memory::OPEN_LIST_SIZE>
+      safetyOpenList{{domain}};
+
   std::unordered_map<State, Node *, typename metronome::Hash<State>> nodes;
   ObjectPool<Node, Memory::NODE_LIMIT> nodePool;
 
   std::size_t iteration = 0;
 
   Node *goalNode = nullptr;
+  Node *partialGoalNode = nullptr;
 
   Visualizer visualizer;
+  long long int safetyVersion;
 };
 
 }  // namespace metronome
