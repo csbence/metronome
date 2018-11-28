@@ -86,7 +86,7 @@ include_directories(src)
 # These options have a large impact on the compilation speed.
 
 # Comment the following line out to disable Gephi (Stream Graph HTTP) visualization
-#add_definitions(-DSTREAM_GRAPH)
+add_definitions(-DSTREAM_GRAPH)
 
 # Select the possible algorithms.
 add_definitions(-DENABLE_URBAN_A_STAR)
