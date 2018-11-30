@@ -127,7 +127,7 @@ def generate_grid_world():
     domain_paths.extend(uniform1500_paths)
 
     configurations = cartesian_product(configurations, 'domainName',
-                                       ['GRID_WORLD'])
+                                       ['ORIENTATION_GRID'])
     configurations = cartesian_product(configurations, 'domainPath',
                                        domain_paths)
 
