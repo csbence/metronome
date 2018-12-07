@@ -292,14 +292,14 @@ class UrbanDriving {
   bool isSafe(const State& state) const { return state.speed < 1.0e-5; }
 
   bool less(const State& lhs, const State& rhs) const {
-    // 2. Time
-    if (lhs.time < rhs.time) return true;
-    if (lhs.time > rhs.time) return false;
-    
     // 1. Goal distance
     if (lhs.spatialStateIndex > rhs.spatialStateIndex) return true;
     if (lhs.spatialStateIndex < rhs.spatialStateIndex) return false;
 
+    // 2. Time
+    if (lhs.time < rhs.time) return true;
+    if (lhs.time > rhs.time) return false;
+    
     // 3. Speed
     if (lhs.speed > rhs.speed) return true;
     if (lhs.speed < rhs.speed) return false;

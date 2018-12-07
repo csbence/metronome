@@ -122,10 +122,10 @@ def main(paths):
     }}, inplace=True)
 
     data['Algorithm'] = data.algorithmLabel
-    data['Planning Time [s]'] = data.planningTime
+    data['Planning Time [s]'] = data.planningTime / 1.0e9
     data['Expanded Nodes'] = data.expandedNodes
 
-    data['Average Velocity [m/s]'] = 100 / data.actionExecutionTime / 1.0e9
+    data['Average Velocity [m/s]'] = 100 / data.actionExecutionTime * 1.0e9
     
     # plot = sns.violinplot(data=data, x='Algorithm', y='Average Velocity ['
     #                                                   'm/s]')
@@ -135,18 +135,18 @@ def main(paths):
     # pdf = PdfPages("../results/plots/" + file_name + ".pdf")
     # plt.savefig(pdf, format='pdf')
 
-    # plot = sns.boxplot(data=data, x='Algorithm', y='Planning Time [s]')
-
-    # file_name = 'planningTime'
-    # pdf = PdfPages("../results/plots/" + file_name + ".pdf")
-    # plt.savefig(pdf, format='pdf')
-
-    plot = sns.boxplot(data=data, x='Algorithm', y='Expanded Nodes')
-    plot.set_yscale('log')
-
-    file_name = 'expandedNodes'
+    plot = sns.boxplot(data=data, x='Algorithm', y='Planning Time [s]')
+    # 
+    file_name = 'planningTime'
     pdf = PdfPages("../results/plots/" + file_name + ".pdf")
     plt.savefig(pdf, format='pdf')
+
+    # plot = sns.boxplot(data=data, x='Algorithm', y='Expanded Nodes')
+    # plot.set_yscale('log')
+    # 
+    # file_name = 'expandedNodes'
+    # pdf = PdfPages("../results/plots/" + file_name + ".pdf")
+    # plt.savefig(pdf, format='pdf')
 
 
 def remove_unused_columns(data):
