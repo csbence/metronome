@@ -207,7 +207,8 @@ class OrientationGrid {
 
   /*Entry point for using this Domain*/
   OrientationGrid(const Configuration& configuration, std::istream& input)
-      : actionDuration(configuration.getLong(ACTION_DURATION)) {
+      : actionDuration(configuration.getLong(ACTION_DURATION)), 
+      heuristicMultiplier(configuration.getDouble(HEURISTIC_MULTIPLIER)) {
     
     //init cost values
     double durationAsDouble = static_cast<double>(actionDuration);
@@ -447,7 +448,7 @@ class OrientationGrid {
     Cost estimate = (costValues[CARDINAL] * static_cast<Cost>(cardinalMoves)) +
                     (costValues[DIAGONAL] * static_cast<Cost>(diagonalMoves)) +
                     (costValues[ROTATION] * static_cast<Cost>(rotations));
-    return estimate;
+    return estimate * heuristicMultiplier;
   }
 
   bool safetyPredicate(const State&) const { return true; }
@@ -530,6 +531,7 @@ class OrientationGrid {
   State goalLocation{};
   const Cost actionDuration;
   Cost costValues[4];
+  const double heuristicMultiplier;
 };
 
 }  // namespace metronome
