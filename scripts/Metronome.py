@@ -37,6 +37,7 @@ def generate_base_configuration():
     # base_configuration['stepLimit'] = step_limits
     # base_configuration['timeLimit'] = time_limit
     base_configuration['commitmentStrategy'] = ['SINGLE']
+    base_configuration['heuristicMultiplier'] = [1.0, 0.1]
     base_configuration['terminationTimeEpsilon'] = [5000000]  # 4ms
 
     compiled_configurations = [{}]
@@ -59,8 +60,13 @@ def generate_base_configuration():
                                                   'TIME_BOUNDED_A_STAR']])
 
     compiled_configurations = cartesian_product(compiled_configurations,
-                                                'weight', [1.0, 1.4, 2.0,
-                                                           2.8, 4.0, 8.0],
+                                                'weight', [1.0,
+                                                           # 1.4,
+                                                           2.0,
+                                                           # 2.8,
+                                                           4.0,
+                                                           8.0
+                                                           ],
                                                 [['algorithmName',
                                                   'TIME_BOUNDED_A_STAR']])
 
@@ -72,7 +78,7 @@ def generate_base_configuration():
     compiled_configurations = cartesian_product(compiled_configurations,
                                                 'clusterDepthLimit', [10,
                                                                       100,
-                                                                      500,
+                                                                      # 500,
                                                                       1000,
                                                                       10000],
                                                 [['algorithmName',
@@ -127,7 +133,10 @@ def generate_grid_world():
     domain_paths.extend(uniform1500_paths)
 
     configurations = cartesian_product(configurations, 'domainName',
-                                       ['ORIENTATION_GRID'])
+                                       [
+                                           'ORIENTATION_GRID',
+                                           'GRID_WORLD'
+                                       ])
     configurations = cartesian_product(configurations, 'domainPath',
                                        domain_paths)
 
@@ -167,7 +176,7 @@ def distributed_execution(configurations):
         command = ' '.join([nice, executable, resources])
         json_configuration = f'{json.dumps(configuration)}\n'
 
-        task = Task(command=command, meta=None, time_limit=30, memory_limit=10)
+        task = Task(command=command, meta=None, time_limit=300, memory_limit=10)
         task.input = json_configuration.encode()
 
         print(task.command)
@@ -302,6 +311,8 @@ def build_metronome():
     return_code = run(
         ['cmake',
          '-DCMAKE_BUILD_TYPE=Release',
+         '-DCMAKE_C_COMPILER=clang',
+         '-DCMAKE_CXX_COMPILER=clang++',
          '../..']).returncode
 
     if return_code != 0:
