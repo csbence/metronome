@@ -31,7 +31,7 @@ def summarize_result(result_path):
     print(f'Success rate: {result.success.sum()} / {len(result)}')
     print(f'Algorithms: {result.algorithmName.unique()}')
     print(f'Domains: {result.domainName.unique()}')
-    print(f'Domains: {result.domainPath.unique()}')
+    print(f'Instances: {result.domainPath.unique()}')
     print('10 most frequent errors: ')
     print(result.errorMessage.value_counts()[:10])
 
