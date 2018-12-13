@@ -1,7 +1,6 @@
 #pragma once
 
 #include <MetronomeException.hpp>
-#include <boost/algorithm/string.hpp>
 #include <experiment/Configuration.hpp>
 #include <limits>
 #include <optional>
@@ -117,7 +116,7 @@ class SlidingTilePuzzle {
 
     // Read dimensions
     getline(input, line);
-    std::vector<std::string> dimensions;
+
 
     if (line.empty()) {
       throw MetronomeException(
@@ -125,7 +124,14 @@ class SlidingTilePuzzle {
           "invalid.");
     }
 
-    boost::split(dimensions, line, boost::is_any_of(" "));
+    // Replace with view::split when C++20 is available
+    std::string segment;
+    std::istringstream segmentStream(line);
+    std::vector<std::string> dimensions;
+    
+    while (getline(segmentStream, segment, ' ')) {
+      dimensions.push_back(segment);
+    }
 
     if (dimensions.size() != 2) {
       throw MetronomeException("Only two dimensional puzzles are supported.");

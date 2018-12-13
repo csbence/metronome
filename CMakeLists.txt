@@ -69,11 +69,8 @@ set(TEST_FILES
 add_executable(Metronome ${SOURCE_FILES})
 add_executable(MetronomeTest ${TEST_FILES})
 
-find_package(Boost 1.55.0 COMPONENTS thread system REQUIRED)
 
 include_directories(SYSTEM
-        ${Boost_INCLUDE_DIRS}
-        ${Boost_LIBRARY_DIRS}
         dependencies
 )
 
@@ -103,5 +100,6 @@ add_definitions(-DELPP_DISABLE_LOGS)
 if (MINGW OR WIN32)
     target_link_libraries(Metronome ws2_32)
 endif()
-target_link_libraries(Metronome ${Boost_LIBRARIES})
-target_link_libraries(MetronomeTest ${Boost_LIBRARIES})
+
+target_link_libraries(Metronome)
+target_link_libraries(MetronomeTest)
