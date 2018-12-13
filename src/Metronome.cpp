@@ -1,11 +1,12 @@
-#ifdef _WIN32 //The windows section
+#ifdef _WIN32  // The windows section
 #define NOMINMAX
 #define _WINSOCKAPI_
-//Compiler Error C4596 was causing compile errors in easylogging++.h
-//From what I can find, seems to be a bug in VS. Recommendation is to turn it off :/
-#pragma warning( disable : 4596 )
-#include <winsock2.h>
+// Compiler Error C4596 was causing compile errors in easylogging++.h
+// From what I can find, seems to be a bug in VS. Recommendation is to turn it
+// off :/
+#pragma warning(disable : 4596)
 #include <Windows.h>
+#include <winsock2.h>
 #endif
 
 #include "easylogging++.h"
@@ -24,10 +25,11 @@ INITIALIZE_EASYLOGGINGPP
 
 void printSplashScreen();
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   using namespace metronome;
   printSplashScreen();
-  el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format, "%level: %msg");
+  el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format,
+                                     "%level: %msg");
 
   if (argc == 1) {
     std::cerr << "Invalid arguments. Please use one of the following ways to "
@@ -45,7 +47,21 @@ int main(int argc, char** argv) {
 
   rapidjson::Document document;
 
-  if (argc == 2) {
+  if (argc == 3) {
+    LOG(INFO) << "Parsing JSON configuration file.";
+
+    std::string configurationPath{argv[2]};
+
+    if (!fileExists(configurationPath)) {
+      std::cerr << "Invalid configuration file: " << configurationPath
+                << std::endl;
+      return 1;
+    }
+
+    std::ifstream configurationFile{configurationPath};
+    rapidjson::IStreamWrapper streamWrapper{configurationFile};
+    document.ParseStream(streamWrapper);
+  } else {
     std::stringstream jsonStream;
     LOG(INFO) << "Parsing JSON configuration from stdin.";
 
@@ -61,30 +77,16 @@ int main(int argc, char** argv) {
 
     rapidjson::IStreamWrapper streamWrapper{jsonStream};
     document.ParseStream(streamWrapper);
-  } else {
-    LOG(INFO) << "Parsing JSON configuration file.";
-
-    std::string configurationPath{argv[2]};
-
-    if (!fileExists(configurationPath)) {
-      std::cerr << "Invalid configuration file: " << configurationPath
-                << std::endl;
-      return 1;
-    }
-
-    std::ifstream configurationFile{configurationPath};
-    rapidjson::IStreamWrapper streamWrapper{configurationFile};
-    document.ParseStream(streamWrapper);
   }
 
   LOG(INFO) << "Configuration has been received.";
 
   const auto configuration = Configuration(std::move(document));
-  
-//  std::cout << configuration;
-  
-  const Result result = ConfigurationExecutor::executeConfiguration(
-      configuration, resourceDir);
+
+  //  std::cout << configuration;
+
+  const Result result =
+      ConfigurationExecutor::executeConfiguration(configuration, resourceDir);
 
   LOG(INFO) << "Execution completed in " << result.planningTime / 1000000
             << "ms";
