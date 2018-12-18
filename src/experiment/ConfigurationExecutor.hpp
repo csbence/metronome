@@ -88,7 +88,8 @@ class ConfigurationExecutor {
 
 #ifdef ENABLE_SLIDING_TILE_PUZZLE
     if (domainName == DOMAIN_TILES) {
-      return executeDomain<SlidingTilePuzzle>(configuration, resourcesDir);
+      return executeDomain<SlidingTilePuzzle<4>>(configuration, 
+          resourcesDir);
     }
 #endif
 

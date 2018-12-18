@@ -61,6 +61,7 @@ set(TEST_FILES
         test/test.cpp
         test/utils/PriorityQueueTest.hpp
         test/domains/GridWorldTest.hpp
+		test/domains/SlidingTilePuzzleTest.hpp
         test/algorithms/AStarTest.hpp
         test/algorithms/LssLrtaStarTest.hpp
         src/utils/TimeMeasurement.hpp
