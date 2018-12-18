@@ -1,21 +1,21 @@
 4 4
 starting positions for each tile:
-12
-13
 8
-5
-2
-14
-3
-4
-0
-7
-6
-1
-9
 11
-15
+4
+6
+7
+3
 10
+9
+2
+12
+15
+13
+0
+1
+5
+14
 goal positions:
 0
 1
@@ -32,4 +32,3 @@ goal positions:
 12
 13
 14
-15
