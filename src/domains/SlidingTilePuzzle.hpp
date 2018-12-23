@@ -108,7 +108,7 @@ class SlidingTilePuzzle {
     const uint8_t& zeroIndex() const { return zeroTileIndex; }
 
     friend std::ostream& operator<<(std::ostream& os, const State& state) {
-      os << "zero: " << state.zeroIndex << " tiles: ";
+      os << "zero: " << state.zeroIndex() << " tiles: ";
 
       for (std::size_t i = 0; i < DIMENSION * DIMENSION; ++i) {
         if (i % DIMENSION == 0) os << "\n";

@@ -35,6 +35,7 @@ set(SOURCE_FILES
         src/domains/GridWorld.hpp
         src/domains/Domain.hpp
         src/domains/SlidingTilePuzzle.hpp
+		src/domains/OrientationGrid.hpp
         src/domains/TestDomain.hpp
         src/domains/Traffic.hpp
         src/domains/SuccessorBundle.hpp
