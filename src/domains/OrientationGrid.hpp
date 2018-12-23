@@ -325,10 +325,12 @@ class OrientationGrid {
   }
   /* Validating orientation.
    * We can only move forward and backward or rotate
+   * Allow identity action as special case
    */
   bool isLegalTransition(const State& sourceState, const Action& action) const {
     return strcmp(action.getLabel(), "L") == 0 ||
            strcmp(action.getLabel(), "R") == 0 ||
+           strcmp(action.getLabel(), "0") == 0 ||
            strcmp(sourceState.getTheta(), action.getLabel()) == 0 ||
            strcmp(sourceState.getTheta(), action.inverse().getLabel()) == 0;
   }

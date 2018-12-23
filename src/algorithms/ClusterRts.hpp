@@ -460,9 +460,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
           //                    << clusterPool.index(
           //                           globalSuccessorNode->containingCluster);
 
+          Node *successorRef = successorNode;
           containingCluster->openList.remove(successorNode);
           containingCluster->nodes.erase(successorNode->state);
-          nodePool.destruct(successorNode);
+          nodePool.destruct(successorRef);
         }
 
         // else: this node is not on the open list of this cluster, no cleanup
