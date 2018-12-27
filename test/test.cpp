@@ -10,6 +10,8 @@
 //#include "utils/PriorityQueueTest.hpp"
 //#include "domains/GridWorldTest.hpp"
 //#include "domains/SlidingTilePuzzleTest.hpp"
+//#include "utils/ObjectPoolTest.hpp"
+
 INITIALIZE_EASYLOGGINGPP
 
 TEST_CASE("Main test", "[main]") {}

@@ -239,7 +239,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
         cserna::NonIntrusiveIndexFunction<Node *, Hash<Node>, NodeEquals>,
         NodeComparatorF,
         100,
-        100000>
+        1000000>
         openList;
     std::unordered_map<State, Node *, typename metronome::Hash<State>>
         nodes;  // pre-allocate?
