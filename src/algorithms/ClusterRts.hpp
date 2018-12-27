@@ -333,7 +333,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       // todo check if the goal state was expanded
       if (goalNode != nullptr) return;
 
-      assert(!cluster->openList.empty() && "Empty cluster on open!");
+      if (cluster->openList.empty()) {
+        throw MetronomeException("Empty cluster on open!");
+      }
+
       expandCluster(cluster);
 
       terminationChecker.notifyExpansion();
@@ -573,7 +576,12 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   std::vector<ActionBundle> extractPath(const State &agentState) {
     LOG(INFO) << "Extracting path from: " << agentState;
     Node *agentNode = nodes[agentState];
-    assert(agentNode != nullptr);
+    if (agentNode == nullptr) {
+      throw MetronomeException(
+          "Target not available. Insufficient time to "
+          "expand path?");
+    }
+
     Cluster *agentCluster = agentNode->containingCluster;
 
     Cluster *targetCluster = nullptr;
