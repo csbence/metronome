@@ -61,6 +61,7 @@ set(SOURCE_FILES
 set(TEST_FILES
         test/test.cpp
         test/utils/PriorityQueueTest.hpp
+        test/utils/ObjectPoolTest.hpp
         test/domains/GridWorldTest.hpp
 		test/domains/SlidingTilePuzzleTest.hpp
         test/algorithms/AStarTest.hpp
