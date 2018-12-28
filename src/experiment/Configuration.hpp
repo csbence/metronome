@@ -44,6 +44,7 @@ static const std::string COMMITMENT_MULTIPLE{"MULTIPLE"};
 // Cluster RTS
 static const std::string CLUSTER_NODE_LIMIT{"clusterNodeLimit"};
 static const std::string CLUSTER_DEPTH_LIMIT{"clusterDepthLimit"};
+static const std::string EXTRACTION_CACHE_SIZE{"extractionCacheSize"};
 
 // Weighted Algorithms
 static const std::string WEIGHT{"weight"};

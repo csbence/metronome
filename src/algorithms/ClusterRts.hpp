@@ -37,7 +37,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   ClusterRts(const Domain &domain, const Configuration &configuration)
       : domain(domain),
         clusterNodeLimit(configuration.getLong(CLUSTER_NODE_LIMIT)),
-        clusterDepthLimit(configuration.getLong(CLUSTER_DEPTH_LIMIT)) {
+        clusterDepthLimit(configuration.getLong(CLUSTER_DEPTH_LIMIT)),
+        extractionCacheSize(configuration.getLong(EXTRACTION_CACHE_SIZE)) {
     // Initialize hash table
     nodes.max_load_factor(1);
     nodes.reserve(Memory::NODE_LIMIT);
@@ -58,9 +59,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     explore(agentState, terminationChecker);
 
     std::vector<ActionBundle> path;
-    const std::size_t cacheLength = 20;
-    if (cachedPath.size() == cachedIndex || cachedIndex > cacheLength) {
-      cachedPath = extractPath(agentState, cacheLength);
+    if (cachedPath.size() == cachedIndex || cachedIndex > extractionCacheSize) {
+      cachedPath = extractPath(agentState, extractionCacheSize);
       cachedIndex = 0;
     }
 
@@ -770,20 +770,20 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       //      for (auto& actionBundle : segmentActions) {
       //        actionBundle.action = actionBundle.action.inverse();
       //      }
-      
+
       if (!firstSegmentSize.has_value()) {
         // Initialize first segment size
         firstSegmentSize = segmentActions.size();
       }
-      
+
       interClusterActions.insert(std::end(interClusterActions),
                                  make_move_iterator(std::begin(segmentActions)),
                                  make_move_iterator(std::end(segmentActions)));
-      
+
       if (interClusterActions.size() - firstSegmentSize.value() > length) {
         // The first segment can be lost during optimization
         // The returned path has to be at least length size after optimization
-        
+
         break;
       }
     }
@@ -883,6 +883,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   const Domain &domain;
   const std::size_t clusterNodeLimit;
   const Cost clusterDepthLimit;
+  const std::size_t extractionCacheSize;
+  
   cserna::DynamicPriorityQueue<Cluster *,
                                ClusterIndex,
                                ClusterComparatorH,
