@@ -58,8 +58,9 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     explore(agentState, terminationChecker);
 
     std::vector<ActionBundle> path;
-    if (cachedPath.size() == cachedIndex || cachedIndex > 20) {
-      cachedPath = extractPath(agentState);
+    const std::size_t cacheLength = 20;
+    if (cachedPath.size() == cachedIndex || cachedIndex > cacheLength) {
+      cachedPath = extractPath(agentState, cacheLength);
       cachedIndex = 0;
     }
 
@@ -573,13 +574,31 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     return existingConnectionFound;
   }
 
-  std::vector<ActionBundle> extractPath(const State &agentState) {
+  std::vector<ActionBundle> join(std::vector<ActionBundle> &&segments...) {
+    std::size_t totalSize;
+    for (const auto &segment : segments) {
+      totalSize += segment.size();
+    }
+
+    std::vector<ActionBundle> joinedSegments;
+    joinedSegments.reserve(totalSize);
+
+    for (auto &segment : segments) {
+      joinedSegments.insert(std::end(joinedSegments),
+                            make_move_iterator(std::begin(segment)),
+                            make_move_iterator(std::end(segment)));
+    }
+
+    return joinedSegments;
+  }
+
+  std::vector<ActionBundle> extractPath(const State &agentState,
+                                        const std::size_t length) {
     LOG(INFO) << "Extracting path from: " << agentState;
     Node *agentNode = nodes[agentState];
     if (agentNode == nullptr) {
       throw MetronomeException(
-          "Target not available. Insufficient time to "
-          "expand path?");
+          "Target not available. Insufficient time to expand path?");
     }
 
     Cluster *agentCluster = agentNode->containingCluster;
@@ -587,6 +606,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     Cluster *targetCluster = nullptr;
     Node *targetNode = nullptr;
 
+    // Initialize the target cluster and target node
     if (goalNode != nullptr) {
       targetCluster = goalNode->containingCluster;
       targetNode = goalNode;
@@ -604,21 +624,28 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     }
 
     populateAgentToClusterCosts(agentCluster, targetCluster);
+
+    auto fromLastCorePath = extractCoreToNodePath(targetNode);
+
+    if (agentNode->containingCluster == targetNode->containingCluster) {
+      for (auto it = std::begin(fromLastCorePath);
+           it != std::end(fromLastCorePath);
+           ++it) {
+        if (it->expectedTargetState == agentState) {
+          // The source and the target are in the same cluster and the
+          // core-target path contains the source thus the agent can directly
+          // go to the target
+
+          LOG(INFO) << "Last segment cut " << *it;
+
+          return {it + 1, std::end(fromLastCorePath)};
+        }
+      }
+    }
+
     auto skeletonPath = extractSkeletonPath(agentCluster, targetCluster);
-
-    //    LOG(INFO) << "Agent cluster: " << clusterPool.index(agentCluster)
-    //              << " core: " << agentCluster->coreNode;
-    //    for (auto clusterEdge : skeletonPath) {
-    //      LOG(INFO) << "intermediate cluster: "
-    //                << std::to_string(clusterPool.index(clusterEdge.cluster))
-    //                << " core: " << clusterEdge.cluster->coreNode;
-    //    }
-    //    LOG(INFO) << "Target cluster: " << clusterPool.index(targetCluster)
-    //              << " core: " << targetCluster->coreNode;
-
-    auto sourceClusterPath = extractNodeToCorePath(agentNode);
-    auto interClusterPath = extractInterClusterPath(skeletonPath);
-    auto targetClusterPath = extractCoreToNodePath(targetNode);
+    auto toFirstCorePath = extractNodeToCorePath(agentNode);
+    auto interClusterPath = extractInterClusterPath(skeletonPath, length);
 
     // Look for shortcuts - this is not an optional step
 
@@ -627,44 +654,22 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
          ++it) {
       if (it->expectedTargetState == agentState) {
         LOG(INFO) << "CUT " << *it;
-        LOG(INFO) << sourceClusterPath;
+        LOG(INFO) << toFirstCorePath;
 
-        sourceClusterPath.clear();
+        toFirstCorePath.clear();
         decltype(interClusterPath)(it, std::end(interClusterPath))
             .swap(interClusterPath);
         break;
       }
     }
 
-    if (agentNode->containingCluster == targetNode->containingCluster) {
-      assert(interClusterPath.empty());
-
-      for (auto it = std::begin(targetClusterPath);
-           it != std::end(targetClusterPath);
-           ++it) {
-        if (it->expectedTargetState == agentState) {
-          // The source and the target are in the same cluster and the
-          // core-target path contains the source thus the agent can dirctly
-          // go to the target
-
-          LOG(INFO) << "CUT " << *it;
-          LOG(INFO) << sourceClusterPath;
-
-          sourceClusterPath.clear();
-          // TODO double check that +1
-          decltype(targetClusterPath)(it + 1, std::end(targetClusterPath))
-              .swap(targetClusterPath);
-          break;
-        }
-      }
-    }
-
+    // Join segments
     std::vector<ActionBundle> path;
-    path.reserve(sourceClusterPath.size() + interClusterPath.size() +
-                 targetClusterPath.size());
+    path.reserve(toFirstCorePath.size() + interClusterPath.size() +
+                 fromLastCorePath.size());
 
     LOG(INFO) << "SOURCE PATH:";
-    for (auto &actionBundle : sourceClusterPath) {
+    for (auto &actionBundle : toFirstCorePath) {
       LOG(INFO) << actionBundle;
     }
 
@@ -674,21 +679,21 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     }
 
     LOG(INFO) << "TARGET PATH:";
-    for (auto &actionBundle : targetClusterPath) {
+    for (auto &actionBundle : fromLastCorePath) {
       LOG(INFO) << actionBundle;
     }
 
     path.insert(std::end(path),
-                make_move_iterator(std::begin(sourceClusterPath)),
-                make_move_iterator(std::end(sourceClusterPath)));
+                make_move_iterator(std::begin(toFirstCorePath)),
+                make_move_iterator(std::end(toFirstCorePath)));
 
     path.insert(std::end(path),
                 make_move_iterator(std::begin(interClusterPath)),
                 make_move_iterator(std::end(interClusterPath)));
 
     path.insert(std::end(path),
-                make_move_iterator(std::begin(targetClusterPath)),
-                make_move_iterator(std::end(targetClusterPath)));
+                make_move_iterator(std::begin(fromLastCorePath)),
+                make_move_iterator(std::end(fromLastCorePath)));
 
     // Find abstract path to goal
     // 1. Find path to containing region center
@@ -730,10 +735,11 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   }
 
   std::vector<ActionBundle> extractInterClusterPath(
-      std::vector<ClusterEdge> &skeletonPath) const {
+      std::vector<ClusterEdge> &skeletonPath, const std::size_t length) const {
     std::vector<ActionBundle> interClusterActions;
 
     LOG(INFO) << "InterCluster Path";
+    std::optional<std::size_t> firstSegmentSize;
 
     for (auto &skeletonPathSegment : skeletonPath) {
       LOG(INFO) << "  Segment:"
@@ -764,10 +770,22 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       //      for (auto& actionBundle : segmentActions) {
       //        actionBundle.action = actionBundle.action.inverse();
       //      }
-
+      
+      if (!firstSegmentSize.has_value()) {
+        // Initialize first segment size
+        firstSegmentSize = segmentActions.size();
+      }
+      
       interClusterActions.insert(std::end(interClusterActions),
                                  make_move_iterator(std::begin(segmentActions)),
                                  make_move_iterator(std::end(segmentActions)));
+      
+      if (interClusterActions.size() - firstSegmentSize.value() > length) {
+        // The first segment can be lost during optimization
+        // The returned path has to be at least length size after optimization
+        
+        break;
+      }
     }
 
     LOG(INFO) << "InterCluster Path END";
@@ -798,6 +816,12 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     return nodeToCorePath;
   }
 
+  /**
+   * Extract the skeleton path from the agentCluster to the
+   * targetCluster following the cluster-parent pointers. The cluster-parent
+   * pointers mark the forward path as the cluster level search was initiated
+   * at the targetCluster.
+   */
   std::vector<ClusterEdge> extractSkeletonPath(const Cluster *agentCluster,
                                                Cluster *targetCluster) const {
     auto currentCluster = agentCluster;
