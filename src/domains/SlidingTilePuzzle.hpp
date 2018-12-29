@@ -12,7 +12,7 @@
 
 namespace metronome {
 
-template <std::size_t DIMENSION, bool INVERSE = false>
+template <std::size_t DIMENSION, bool HEAVY = true>
 class SlidingTilePuzzle {
  public:
   using Cost = long long int;
@@ -219,8 +219,8 @@ class SlidingTilePuzzle {
 
         const int manhattanDistance = std::abs(endY - y) + std::abs(endX - x);
 
-        if (INVERSE) {
-          manhattanSum += static_cast<double>(manhattanDistance) / value;
+        if (HEAVY) {
+          manhattanSum += manhattanDistance * value;
         } else {
           manhattanSum += manhattanDistance;
         }
@@ -268,8 +268,8 @@ class SlidingTilePuzzle {
       const auto successorState = successor.value();
       Cost actionCost;
       
-      if(INVERSE) {
-        actionCost = 1.0 / successorState[sourceState.zeroIndex()];
+      if(HEAVY) {
+        actionCost = successorState[sourceState.zeroIndex()] * actionDuration;
       } else {
         actionCost = actionDuration;
       }
@@ -297,13 +297,12 @@ class SlidingTilePuzzle {
       return {};
 
     State targetState{sourceState};
-    
 
     // Move tile
     assert(targetState[sourceZeroIndex] >= 0 &&
-           targetState[sourceZeroIndex] <= 15);
+           targetState[sourceZeroIndex] <= DIMENSION * DIMENSION - 1);
     assert(targetState[targetZeroIndex] >= 0 &&
-           targetState[targetZeroIndex] <= 15);
+           targetState[targetZeroIndex] <= DIMENSION * DIMENSION - 1);
     std::swap(targetState[sourceZeroIndex], targetState[targetZeroIndex]);
     targetState.zeroIndex() = static_cast<uint8_t>(targetZeroIndex);
 

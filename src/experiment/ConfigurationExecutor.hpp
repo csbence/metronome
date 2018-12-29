@@ -100,7 +100,7 @@ class ConfigurationExecutor {
 #endif
 
     LOG(ERROR) << "Unknown domain name: " << domainName << std::endl;
-    return Result(configuration, "Unknown: domainName: " + domainName);
+    return Result(configuration, "Unknown domainName: " + domainName);
   }
 
   template <typename Domain>

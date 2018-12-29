@@ -23,9 +23,14 @@ def generate_base_configuration():
     lookahead_type = ['DYNAMIC']
     time_limit = [300000000000]
     # action_durations = [1]  # Use this for A*
-    # action_durations = [10000000, 12000000, 16000000, 20000000, 25000000, 32000000]
-    action_durations = [50, 100, 250, 500, 1000]
-    termination_types = ['EXPANSION']
+    action_durations = [1000000,
+                        10000000,
+                        # 12000000, 16000000, 20000000, 25000000,
+                        32000000,
+                        64000000
+                        ]
+    # action_durations = [50, 100, 250, 500, 1000]
+    termination_types = ['TIME']
     step_limits = [100000000]
 
     base_configuration = dict()
@@ -37,7 +42,7 @@ def generate_base_configuration():
     # base_configuration['stepLimit'] = step_limits
     # base_configuration['timeLimit'] = time_limit
     base_configuration['commitmentStrategy'] = ['SINGLE']
-    base_configuration['heuristicMultiplier'] = [1.0, 0.1]
+    base_configuration['heuristicMultiplier'] = [0.1]
     base_configuration['terminationTimeEpsilon'] = [5000000]  # 4ms
 
     compiled_configurations = [{}]
@@ -71,7 +76,7 @@ def generate_base_configuration():
                                                   'TIME_BOUNDED_A_STAR']])
 
     compiled_configurations = cartesian_product(compiled_configurations,
-                                                'clusterNodeLimit', [100000],
+                                                'clusterNodeLimit', [10000000],
                                                 [['algorithmName',
                                                   'CLUSTER_RTS']])
 
@@ -91,14 +96,14 @@ def generate_tile_puzzle():
     configurations = generate_base_configuration()
 
     puzzles = []
-    for puzzle in range(1, 11):
+    for puzzle in range(1, 101):
         puzzles.append(str(puzzle))
 
-    puzzle_base_path = 'input/tiles/korf/4/real/'
+    puzzle_base_path = 'input/tiles/korf/4/'
     full_puzzle_paths = [puzzle_base_path + puzzle for puzzle in puzzles]
 
     configurations = cartesian_product(configurations, 'domainName',
-                                       ['SLIDING_TILE_PUZZLE_4'])
+                                       ['SLIDING_TILE_PUZZLE'])
     configurations = cartesian_product(configurations, 'domainPath',
                                        full_puzzle_paths)
 
@@ -135,7 +140,7 @@ def generate_grid_world():
     configurations = cartesian_product(configurations, 'domainName',
                                        [
                                            'ORIENTATION_GRID',
-                                           'GRID_WORLD'
+                                           # 'GRID_WORLD'
                                        ])
     configurations = cartesian_product(configurations, 'domainPath',
                                        domain_paths)
@@ -367,7 +372,7 @@ def main():
             'Build failed.')
     print('Build complete!')
 
-    file_name = 'results/results.json'
+    file_name = 'results/results2.json'
 
     if recycle:
         # Load previous configurations
