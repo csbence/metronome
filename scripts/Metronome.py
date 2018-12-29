@@ -23,14 +23,14 @@ def generate_base_configuration():
     lookahead_type = ['DYNAMIC']
     time_limit = [300000000000]
     # action_durations = [1]  # Use this for A*
-    action_durations = [1000000,
-                        10000000,
+    # action_durations = [1000000,
+    #                    10000000,
                         # 12000000, 16000000, 20000000, 25000000,
-                        32000000,
-                        64000000
-                        ]
-    # action_durations = [50, 100, 250, 500, 1000]
-    termination_types = ['TIME']
+    #                    32000000,
+    #                    64000000
+    #                    ]
+    action_durations = [50, 100, 250, 500, 1000]
+    termination_types = ['EXPANSION']
     step_limits = [100000000]
 
     base_configuration = dict()
@@ -52,9 +52,9 @@ def generate_base_configuration():
                                                     key, value)
 
     # Algorithm specific configurations
-    weight = [3.0]
+    weights = [1.0, 2.0, 4.0, 8.0]
     compiled_configurations = cartesian_product(compiled_configurations,
-                                                'weight', weight,
+                                                'weight', weights,
                                                 [['algorithmName',
                                                   'WEIGHTED_A_STAR']])
 
@@ -65,13 +65,7 @@ def generate_base_configuration():
                                                   'TIME_BOUNDED_A_STAR']])
 
     compiled_configurations = cartesian_product(compiled_configurations,
-                                                'weight', [1.0,
-                                                           # 1.4,
-                                                           2.0,
-                                                           # 2.8,
-                                                           4.0,
-                                                           8.0
-                                                           ],
+                                                'weight', weights,
                                                 [['algorithmName',
                                                   'TIME_BOUNDED_A_STAR']])
 
@@ -86,6 +80,16 @@ def generate_base_configuration():
                                                                       # 500,
                                                                       1000,
                                                                       10000],
+                                                [['algorithmName',
+                                                  'CLUSTER_RTS']])
+
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'weight', weights,
+                                                [['algorithmName',
+                                                  'CLUSTER_RTS']])
+
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'extractionCacheSize', [100],
                                                 [['algorithmName',
                                                   'CLUSTER_RTS']])
 
@@ -168,16 +172,18 @@ def cartesian_product(base, key, values, filters=None):
 
 
 def distributed_execution(configurations):
-    executor = create_local_distlre_executor()
+    executor = create_remote_distlre_executor()
 
     futures = []
     progress_bar = tqdm(total=len(configurations))
     tqdm.monitor_interval = 0
 
+	cwd = os.getcwd()
+
     for configuration in configurations:
         nice = "nice -n 20"
-        executable = 'build/release/Metronome'
-        resources = 'resources/'
+        executable = '/'.join([cwd, 'build/release/Metronome'])
+        resources = '/'.join([cwd, 'resources/'])
         command = ' '.join([nice, executable, resources])
         json_configuration = f'{json.dumps(configuration)}\n'
 

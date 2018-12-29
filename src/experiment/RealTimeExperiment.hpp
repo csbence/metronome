@@ -76,7 +76,7 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
             throw MetronomeException(
                 "Invalid action. Partial plan is corrupt.");
           }
-          LOG(INFO) << "> action from: " << currentState << " " << actionBundle;
+          // LOG(INFO) << "> action from: " << currentState << " " << actionBundle;
 
           currentState = nextState.value();
           actions.emplace_back(actionBundle.action);

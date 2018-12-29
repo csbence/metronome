@@ -610,7 +610,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
   std::vector<ActionBundle> extractPath(const State &agentState,
                                         const std::size_t length) {
-    LOG(INFO) << "Extracting path from: " << agentState;
+    // LOG(INFO) << "Extracting path from: " << agentState;
     Node *agentNode = nodes[agentState];
     if (agentNode == nullptr) {
       throw MetronomeException(
@@ -626,12 +626,12 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     if (goalNode != nullptr) {
       targetCluster = goalNode->containingCluster;
       targetNode = goalNode;
-      LOG(INFO) << "\tto the goal: " << goalNode;
+      // LOG(INFO) << "\tto the goal: " << goalNode;
     } else {
       assert(!openClusters.empty());
       targetCluster = openClusters.top();
       targetNode = targetCluster->openList.top()->parent;
-      LOG(INFO) << "\tto: " << targetNode;
+      // LOG(INFO) << "\tto: " << targetNode;
     }
 
     if (agentNode == targetNode) {
@@ -652,7 +652,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
           // core-target path contains the source thus the agent can directly
           // go to the target
 
-          LOG(INFO) << "Last segment cut " << *it;
+          // LOG(INFO) << "Last segment cut " << *it;
 
           return {it + 1, std::end(fromLastCorePath)};
         }
@@ -669,8 +669,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
          it != std::end(interClusterPath);
          ++it) {
       if (it->expectedTargetState == agentState) {
-        LOG(INFO) << "CUT " << *it;
-        LOG(INFO) << toFirstCorePath;
+        // LOG(INFO) << "CUT " << *it;
+        // LOG(INFO) << toFirstCorePath;
 
         toFirstCorePath.clear();
         decltype(interClusterPath)(it, std::end(interClusterPath))
@@ -684,7 +684,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     path.reserve(toFirstCorePath.size() + interClusterPath.size() +
                  fromLastCorePath.size());
 
-    LOG(INFO) << "SOURCE PATH:";
+    /*LOG(INFO) << "SOURCE PATH:";
     for (auto &actionBundle : toFirstCorePath) {
       LOG(INFO) << actionBundle;
     }
@@ -697,7 +697,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     LOG(INFO) << "TARGET PATH:";
     for (auto &actionBundle : fromLastCorePath) {
       LOG(INFO) << actionBundle;
-    }
+    }*/
 
     path.insert(std::end(path),
                 make_move_iterator(std::begin(toFirstCorePath)),
@@ -754,16 +754,16 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       std::vector<ClusterEdge> &skeletonPath, const std::size_t length) const {
     std::vector<ActionBundle> interClusterActions;
 
-    LOG(INFO) << "InterCluster Path";
+    // LOG(INFO) << "InterCluster Path";
     std::optional<std::size_t> firstSegmentSize;
 
     for (auto &skeletonPathSegment : skeletonPath) {
-      LOG(INFO) << "  Segment:"
+      /*LOG(INFO) << "  Segment:"
                 << skeletonPathSegment.bestSourceFrontierNode->containingCluster
                        ->label
                 << " >>> "
                 << skeletonPathSegment.bestTargetFrontierNode->containingCluster
-                       ->label;
+                       ->label;*/
       auto segmentActions = skeletonPathSegment.inverseActions();
 
       // Debug info
@@ -804,7 +804,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       }
     }
 
-    LOG(INFO) << "InterCluster Path END";
+    // LOG(INFO) << "InterCluster Path END";
 
     return interClusterActions;
   }
