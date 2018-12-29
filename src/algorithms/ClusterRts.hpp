@@ -37,7 +37,13 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   ClusterRts(const Domain &domain, const Configuration &configuration)
       : domain(domain),
         clusterNodeLimit(configuration.getLong(CLUSTER_NODE_LIMIT)),
-        clusterDepthLimit(configuration.getLong(CLUSTER_DEPTH_LIMIT)) {
+        clusterDepthLimit(configuration.getLong(CLUSTER_DEPTH_LIMIT)),
+        nodeWeight(configuration.hasMember(WEIGHT)
+                       ? configuration.getDouble(WEIGHT)
+                       : 1.0),
+        openClusters(ClusterComparatorWeightedH(configuration.hasMember(CLUSTER_WEIGHT)
+                          ? configuration.getDouble(CLUSTER_WEIGHT)
+                          : nodeWeight)) {
     // Initialize hash table
     nodes.max_load_factor(1);
     nodes.reserve(Memory::NODE_LIMIT);
@@ -142,14 +148,18 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     Cluster *containingCluster = nullptr;
   };
 
-  struct NodeComparatorF {
+  struct NodeComparatorWeightedF {
+    NodeComparatorWeightedF(double weight) : w{weight} {}
+
     int operator()(const Node *lhs, const Node *rhs) const {
-      if (lhs->f() < rhs->f()) return -1;
-      if (lhs->f() > rhs->f()) return 1;
+      if (lhs->g + lhs->h * w < rhs->g + rhs->h * w) return -1;
+      if (lhs->g + lhs->h * w > rhs->g + rhs->h * w) return 1;
       if (lhs->g > rhs->g) return -1;
       if (lhs->g < rhs->g) return 1;
       return 0;
     }
+
+    const double w;
   };
 
   struct NodeEquals {
@@ -228,7 +238,9 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
   class Cluster {
    public:
-    Node *coreNode = nullptr;
+    Cluster(double weight) : openList{{weight}} {}
+
+              Node *coreNode = nullptr;
     /** Number of nodes claimed by this cluster not including open nodes. */
     std::size_t expandedNodeCount = 0;
     bool depleted = false;
@@ -237,7 +249,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     cserna::DynamicPriorityQueue<
         Node *,
         cserna::NonIntrusiveIndexFunction<Node *, Hash<Node>, NodeEquals>,
-        NodeComparatorF,
+        NodeComparatorWeightedF,
         100,
         100000>
         openList;
@@ -281,17 +293,21 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     }
   };
 
-  struct ClusterComparatorH {
+  struct ClusterComparatorWeightedH {
+    ClusterComparatorWeightedH(double weight) : w{weight} {}
+
     int operator()(const Cluster *lhs, const Cluster *rhs) const {
       assert(!lhs->openList.empty() && !rhs->openList.empty() &&
              "Depleted cluster on open!");
 
-      if (lhs->openList.top()->h < rhs->openList.top()->h) return -1;
-      if (lhs->openList.top()->h > rhs->openList.top()->h) return 1;
+      if (lhs->openList.top()->h * w < rhs->openList.top()->h * w) return -1;
+      if (lhs->openList.top()->h * w > rhs->openList.top()->h * w) return 1;
       if (lhs->openList.top()->g < rhs->openList.top()->g) return -1;
       if (lhs->openList.top()->g > rhs->openList.top()->g) return 1;
       return 0;
     }
+
+    const double w;
   };
 
   struct ClusterComparatorCoreH {
@@ -313,7 +329,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   void createInitialCluster(const State &initialState) {
     Planner::incrementGeneratedNodeCount();
 
-    auto initialCluster = clusterPool.construct();
+    auto initialCluster = clusterPool.construct(nodeWeight);
     Node *&initialNode = initialCluster->nodes[initialState];
 
     initialNode = nodePool.construct(Node{
@@ -375,7 +391,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     if (spawnNewCore) {
       // Reassign local node to a new cluster
-      auto spawnedCluster = clusterPool.construct();
+      auto spawnedCluster = clusterPool.construct(nodeWeight);
       spawnedCluster->label = std::to_string(clusterPool.index(spawnedCluster));
       spawnedCluster->coreNode = currentNode;
       //      LOG(INFO) << "Creating cluster: " <<
@@ -851,11 +867,12 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   const Domain &domain;
   const std::size_t clusterNodeLimit;
   const Cost clusterDepthLimit;
+  const double nodeWeight;
   cserna::DynamicPriorityQueue<Cluster *,
-                               ClusterIndex,
-                               ClusterComparatorH,
-                               MAX_CLUSTER_COUNT,
-                               MAX_CLUSTER_COUNT>
+                              ClusterIndex,
+                              ClusterComparatorWeightedH,
+                              MAX_CLUSTER_COUNT,
+                              MAX_CLUSTER_COUNT>
       openClusters;
 
   std::unordered_map<State, Node *, typename metronome::Hash<State>> nodes;
