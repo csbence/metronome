@@ -98,7 +98,7 @@ class OrientationGrid {
     }
 
     const char* getLabel() const { return label; }
-    const CostType getCostType() const { return costType; }
+    CostType getCostType() const { return costType; }
 
     Action inverse() const {
       if (strcmp(label, "N") == 0) return getActions()[3];

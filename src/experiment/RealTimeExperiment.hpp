@@ -11,6 +11,10 @@ namespace metronome {
 template <typename Domain, typename Planner, typename TerminationChecker>
 class RealTimeExperiment : Experiment<Domain, Planner> {
  public:
+  using State = typename Domain::State;
+  using Action = typename Domain::Action;
+  using Cost = typename Domain::Cost;
+
   RealTimeExperiment(const Configuration& configuration) {
     std::string lookaheadType = configuration.getString(LOOKAHEAD_TYPE);
 
@@ -41,61 +45,54 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
     //    LOG(INFO) << "Begin real-time planning iterations";
 
     std::vector<typename Domain::Action> actions;
-    long long int planningTime{0};
+
+    std::size_t planningTime = 0;
+    std::size_t executionTime = 0;
+    std::size_t planningAndExecutionTime = 0;
+
     const auto actionDuration = configuration.getLong(ACTION_DURATION);
     auto currentState = domain.getStartState();
 
     TerminationChecker terminationChecker;
 
-    long long int timeBound = actionDuration;
-    long long int previousTimeBound;
+    auto timeBound = static_cast<std::size_t>(actionDuration);
 
     while (!domain.isGoal(currentState)) {
-      auto planningIterationTime = measureNanoTime([&] {
-        if (dynamicLookahead) {
-          terminationChecker.resetTo(timeBound);
-        } else {
-          terminationChecker.resetTo(actionDuration);
-        }
+      if (dynamicLookahead) {
+        terminationChecker.resetTo(timeBound);
+      } else {
+        terminationChecker.resetTo(actionDuration);
+      }
 
-        auto actionBundles =
-            planner.selectActions(currentState, terminationChecker);
+      const auto iterationStartTime = currentNanoTime();
+      auto actionBundles =
+          planner.selectActions(currentState, terminationChecker);
+      const auto iterationEndTime = currentNanoTime();
 
-        if (singleStep && actionBundles.size() > 1) {
-          actionBundles.resize(1);
-        }
+      if (singleStep && actionBundles.size() > 1) {
+        actionBundles.resize(1);
+      }
 
-        previousTimeBound = timeBound;
-        timeBound = 0;
-        for (auto& actionBundle : actionBundles) {
-          auto nextState = domain.transition(currentState, actionBundle.action);
-
-          if (!nextState.has_value()) {
-            LOG(ERROR) << "Invalid action " << actionBundle.action
-                       << " from: " << currentState << " " << actionBundle;
-            throw MetronomeException(
-                "Invalid action. Partial plan is corrupt.");
-          }
-          LOG(INFO) << "> action from: " << currentState << " " << actionBundle;
-
-          currentState = nextState.value();
-          actions.emplace_back(actionBundle.action);
-          timeBound += actionBundle.actionDuration;
-        }
-      });
-
-      //            LOG(INFO) << planningIterationTime - previousTimeBound;
-
-      //            if (planningIterationTime > previousTimeBound + 100000) {
-      //                LOG(INFO) << "Time bount violated: " <<
-      //                planningIterationTime - previousTimeBound << " bound: "
-      //                << previousTimeBound;
-      //            } else {
-      //                LOG(INFO) << "Fine";
-      //            }
+      const std::size_t iterationDuration =
+          iterationEndTime - iterationStartTime;
 
       // Increase the total planning time after each planning iteration
-      planningTime += planningIterationTime;
+      planningTime += iterationDuration;
+
+      // Planning might take longer/shorter than the allocated time.
+      planningAndExecutionTime += std::max(iterationDuration, timeBound);
+
+      timeBound = 0;
+
+      for (auto& actionBundle : actionBundles) {
+        currentState =
+            validateAction(domain, currentState, actionBundle.action);
+
+        actions.emplace_back(actionBundle.action);
+        timeBound += actionBundle.actionDuration;
+      }
+
+      executionTime += timeBound;
     }
 
     LOG(INFO) << "Planning: Done";
@@ -111,20 +108,32 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
       actionStrings.push_back(stringStream.str());
     }
 
-    return Result(
-        configuration,
-        planner.getExpandedNodeCount(),
-        planner.getGeneratedNodeCount(),
-        planningTime,                                          // Planning time
-        pathLength * configuration.getLong("actionDuration"),  // Execution time
-        domain.getActionDuration() +
-            pathLength * configuration.getLong("actionDuration"),  // GAT
-        domain.getActionDuration(),  // Idle planning time
-        pathLength,                  // Path length
-        actionStrings);
+    return Result(configuration,
+                  planner.getExpandedNodeCount(),
+                  planner.getGeneratedNodeCount(),
+                  planningTime,   // Planning time
+                  executionTime,  // Execution time
+                  planningAndExecutionTime,
+                  domain.getActionDuration(),  // Idle planning time
+                  pathLength,                  // Path length
+                  actionStrings);
   }
 
  private:
+  State validateAction(const Domain& domain,
+                       const State& state,
+                       const Action& action) {
+    auto nextState = domain.transition(state, action);
+
+    if (!nextState.has_value()) {
+      LOG(ERROR) << "Invalid action " << action << " from: " << state;
+      throw MetronomeException("Invalid action. Partial plan is corrupt.");
+    }
+    LOG(INFO) << "> action from: " << state;
+
+    return nextState.value();
+  }
+
   bool dynamicLookahead;
   bool singleStep;
 };
