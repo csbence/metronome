@@ -178,14 +178,14 @@ def distributed_execution(configurations):
     progress_bar = tqdm(total=len(configurations))
     tqdm.monitor_interval = 0
 
-	cwd = os.getcwd()
+    cwd = os.getcwd()
 
     for configuration in configurations:
         nice = "nice -n 20"
         executable = '/'.join([cwd, 'build/release/Metronome'])
         resources = '/'.join([cwd, 'resources/'])
         command = ' '.join([nice, executable, resources])
-        json_configuration = f'{json.dumps(configuration)}\n'
+        json_configuration = f'{json.dumps(configuration)}\n\n'
 
         task = Task(command=command, meta=None, time_limit=300, memory_limit=10)
         task.input = json_configuration.encode()
@@ -266,8 +266,8 @@ def create_local_distlre_executor():
 
 
 def create_remote_distlre_executor():
-    from slack_notification import start_experiment_notification, \
-        end_experiment_notification
+    # from slack_notification import start_experiment_notification, \
+    #     end_experiment_notification
 
     import getpass
     HOSTS = ['ai' + str(i) + '.cs.unh.edu' for i in
