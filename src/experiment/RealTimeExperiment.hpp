@@ -80,6 +80,7 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
       planningTime += iterationDuration;
 
       // Planning might take longer/shorter than the allocated time.
+      std::cout << iterationDuration << ',';
       planningAndExecutionTime += std::max(iterationDuration, timeBound);
 
       timeBound = 0;
@@ -94,6 +95,8 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
 
       executionTime += timeBound;
     }
+    
+    std::cout << std::endl;
 
     LOG(INFO) << "Planning: Done";
 
@@ -116,7 +119,10 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
                   planningAndExecutionTime,
                   domain.getActionDuration(),  // Idle planning time
                   pathLength,                  // Path length
-                  actionStrings);
+                  actionStrings,
+                  planner.getIterationCount(),
+                  planner.getIdleIterationCount(),
+                  planner.getGoalFirstFoundIteration());
   }
 
  private:

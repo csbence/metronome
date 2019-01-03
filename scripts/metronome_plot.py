@@ -111,62 +111,61 @@ def main(paths_to_base, paths, title, file_name, domain_token,
          expansion_delay):
     set_rc()
 
-    results = []
-    for path_name in paths:
-        results += read_data(path_name)
-
-    base_results = []
-    if paths_to_base is not None:
-        for base_path_name in paths_to_base:
-            base_results += read_data(base_path_name)
-
-    data = construct_data_frame(results + base_results)
-
-    print(len(base_results))
-
-    remove_unused_columns(data)
-
-    action_durations = data.actionDuration.unique()
-    print(f'action duration used: {action_durations}')
-
-    print(len(data))
-
-    print(f'original size with baseline: {len(data)}')
-
-    data = data[~(data['errorMessage'].notnull() & (data.errorMessage !=
-                                                    ""))]
-
-    print(len(data[data.algorithmName == 'A_STAR']))
-
-    print(f'size after removing erros: {len(data)}')
-
-    data = extrapolate_within_optimal(data)
-
-    if domain_token is not None:
-        data = data[data['domainPath'].str.contains(domain_token)]
-        print(f'size after domain name filtering: {len(data)}')
-
-    # if expansion_delay is not None:
-    #     data = data[data.expansionDelay == int(expansion_delay)]
-    #     print(f'size after expansion delay filtering: {len(data)}')
-
-    print(
-        f'size after adding "withinOptimal" - this should not change anything: {len(data)}')
-
-    data = data[~(data.algorithmName == 'A_STAR')]
-
-    # data.loc[:,
-    # 'algorithmName'] = data.algorithmName + '_' + data.weight.astype(
-    #     str) + '_' + data.timeBoundedSearchStrategy.astype(str)
-    # data.algorithmName.replace('[nan]+', '', inplace=True, regex=True)
-
-    # df = data.groupby(['algorithmName', 'expansionDelay'], as_index=False).mean()
+    data = prepare_data(paths, paths_to_base)
+    data = filter_data(data)
 
     # print(df)
     # df.plot(x='expansionDelay', y='withinOpt')
     # plt.show()
 
     plot_gat(data, title, file_name)
+
+
+def filter_data(data, domain_token=None):
+    if domain_token is not None:
+        data = data[data['domainPath'].str.contains(domain_token)]
+    print(f'size after domain name filtering: {len(data)}')
+
+    data = data[~(data.algorithmName == 'A_STAR')]
+    data = data[(data.heuristicMultiplier == 1.0)]
+    data.algorithmLabel = data.algorithmLabel + ' w: ' + data.weight.astype(str)
+    # data = data[(data.domainName == 'ORIENTATION_GRID')]
+    # data = data[data.algorithmLabel.str.contains('CLUSTER')]
+    # data = data[data.algorithmLabel.str.contains(' cache: 100 ')]
+    data = data[~data.algorithmLabel.str.contains(' cache: 10 ')]
+    data = data[~data.algorithmLabel.str.contains(' cache: 1000 ')]
+    data = data[~data.algorithmLabel.str.contains(' cache: 10000 ')]
+    data = data[~data.algorithmLabel.str.contains('limit: 10000 ')]
+    data = data[~data.algorithmLabel.str.contains('limit: 10 ')]
+    # data = data[data.weight == 1.0]
+    # data.loc[:,
+    # 'algorithmName'] = data.algorithmName + '_' + data.weight.astype(
+    #     str) + '_' + data.timeBoundedSearchStrategy.astype(str)
+    # data.algorithmName.replace('[nan]+', '', inplace=True, regex=True)
+    # df = data.groupby(['algorithmName', 'expansionDelay'], as_index=False).mean()
+    return data
+
+
+def prepare_data(paths, paths_to_base):
+    results = []
+    for path_name in paths:
+        results += read_data(path_name)
+    base_results = []
+    if paths_to_base is not None:
+        for base_path_name in paths_to_base:
+            base_results += read_data(base_path_name)
+    data = construct_data_frame(results + base_results)
+    remove_unused_columns(data)
+    action_durations = data.actionDuration.unique()
+    print(f'Action duration used: {action_durations} '
+          f'Original size with baseline: {len(data)}')
+
+    data = data[~(data['errorMessage'].notnull() & (data.errorMessage !=
+                                                    ""))]
+    data = extrapolate_within_optimal(data)
+
+    print(f'Final size: {len(data)}')
+    return data
 
 
 def remove_unused_columns(data):
@@ -187,7 +186,6 @@ def remove_unused_columns(data):
 
 def extrapolate_within_optimal(data):
     astar = data[data["algorithmName"] == "A_STAR"]
-    print(f'ASTAR len: {len(astar)}')
 
     astar["optimalPathLength"] = astar["pathLength"]
     astar = astar[["domainPath", "optimalPathLength"]]

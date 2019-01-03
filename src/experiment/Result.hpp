@@ -24,6 +24,9 @@ class Result {
         idlePlanningTime{0},
         pathLength{0},
         actions{std::vector<std::string>()},
+        iterationCount{0},
+        idleIterationCount{0},
+        goalFirstFoundIteration{0},
         identityActions{0},
         timestamp{currentNanoTime()} {};
 
@@ -36,6 +39,9 @@ class Result {
          const long long idlePlanningTime,
          const long long pathLength,
          const std::vector<std::string> actions,
+         const int iterationCount = 0,
+         const int idleIterationCount = 0,
+         const int goalFirstFoundIteration = 0,
          const int identityActions = 0,
          const long long timestamp = currentNanoTime())
       : configuration{configuration},
@@ -49,6 +55,9 @@ class Result {
         idlePlanningTime{idlePlanningTime},
         pathLength{pathLength},
         actions{actions},
+        iterationCount{iterationCount},
+        idleIterationCount{idleIterationCount},
+        goalFirstFoundIteration{goalFirstFoundIteration},
         identityActions{identityActions},
         timestamp{timestamp} {};
 
@@ -90,6 +99,13 @@ class Result {
     //
     //        resultDocument.AddMember("actions", actionsArray, allocator);
     resultDocument.AddMember(
+        "iterationCount", Value{}.SetInt(iterationCount), allocator);
+    resultDocument.AddMember(
+        "idleIterationCount", Value{}.SetInt(idleIterationCount), allocator);
+    resultDocument.AddMember("goalFirstFoundIteration",
+                             Value{}.SetInt(goalFirstFoundIteration),
+                             allocator);
+    resultDocument.AddMember(
         "identityActions", Value{}.SetInt(identityActions), allocator);
     resultDocument.AddMember(
         "timestamp", Value{}.SetInt64(timestamp), allocator);
@@ -116,6 +132,9 @@ class Result {
   const long long idlePlanningTime;
   const long long pathLength;
   const std::vector<std::string> actions;
+  const int iterationCount;
+  const int idleIterationCount;
+  const int goalFirstFoundIteration;
   const int identityActions;
   const long long timestamp;
 };

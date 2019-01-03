@@ -44,6 +44,7 @@ class TimeBoundedAStar final
   std::vector<ActionBundle> selectActions(
       const State &agentState,
       TerminationChecker &terminationChecker) override {
+    this->incrementIterationCount();
     ++iteration;
     if (domain.isGoal(agentState)) {
       // Goal is already reached
@@ -51,17 +52,20 @@ class TimeBoundedAStar final
     }
 
     // ---    Initialize    ---
-    if (nodePool.empty()) createInitialNode(agentState);
-
-    explore(agentState, terminationChecker);
+    if (nodePool.empty()) {
+      createInitialNode(agentState);
+      explore(agentState, terminationChecker);
+    }
 
     std::vector<ActionBundle> rootToTargetPath;
-
+    
     if (goalNode != nullptr) {
       rootToTargetPath = extractPath(goalNode, rootNode);
     } else {
       rootToTargetPath = extractPath(openList.top(), rootNode);
     }
+    
+    explore(agentState, terminationChecker);
 
 #ifdef STREAM_GRAPH
     visualizeProgress(agentState, rootToTargetPath);
@@ -255,6 +259,7 @@ class TimeBoundedAStar final
 
     if (domain.isGoal(sourceNode->state)) {
       LOG(INFO) << "Goal was expanded!";
+      this->goalFound();
       goalNode = sourceNode;
     }
 

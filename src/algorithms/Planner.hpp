@@ -44,11 +44,11 @@ class Planner {
     return os;
   }
 
-  virtual unsigned long long getGeneratedNodeCount() const final {
+  virtual std::size_t getGeneratedNodeCount() const final {
     return generatedNodeCount;
   }
 
-  virtual unsigned long long getExpandedNodeCount() const final {
+  virtual std::size_t getExpandedNodeCount() const final {
     return expandedNodeCount;
   }
 

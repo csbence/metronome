@@ -54,20 +54,31 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       const State &agentState,
       TerminationChecker &terminationChecker) override {
     ++iteration;
+    this->incrementIterationCount();
+    
     if (domain.isGoal(agentState)) {
+      this->incrementIdleIterationCount();
       // Goal is already reached
       return {};
     }
 
     // ---    Initialize    ---
-    if (clusterPool.empty()) createInitialCluster(agentState);
-
-    explore(agentState, terminationChecker);
+    if (nodePool.empty()) {
+      createInitialCluster(agentState);
+      explore(agentState, terminationChecker);
+    }
 
     std::vector<ActionBundle> path;
-    if (cachedPath.size() == cachedIndex || cachedIndex > extractionCacheSize) {
+    if (cachedPath.size() <= cachedIndex || cachedIndex > 
+        extractionCacheSize) {
       cachedPath = extractPath(agentState, extractionCacheSize);
       cachedIndex = 0;
+    }
+    
+    explore(agentState, terminationChecker);
+    
+    if (!terminationChecker.reachedTermination()) {
+      this->incrementIdleIterationCount();
     }
 
 #ifdef STREAM_GRAPH
@@ -448,6 +459,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     if (domain.isGoal(sourceNode->state)) {
       LOG(INFO) << "Goal was expanded!";
+      cachedPath.clear(); // Force path recalculation
+      this->goalFound();
       goalNode = sourceNode;
     }
 
@@ -684,21 +697,6 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     path.reserve(toFirstCorePath.size() + interClusterPath.size() +
                  fromLastCorePath.size());
 
-    /*LOG(INFO) << "SOURCE PATH:";
-    for (auto &actionBundle : toFirstCorePath) {
-      LOG(INFO) << actionBundle;
-    }
-
-    LOG(INFO) << "INTER PATH:";
-    for (auto &actionBundle : interClusterPath) {
-      LOG(INFO) << actionBundle;
-    }
-
-    LOG(INFO) << "TARGET PATH:";
-    for (auto &actionBundle : fromLastCorePath) {
-      LOG(INFO) << actionBundle;
-    }*/
-
     path.insert(std::end(path),
                 make_move_iterator(std::begin(toFirstCorePath)),
                 make_move_iterator(std::end(toFirstCorePath)));
@@ -716,13 +714,6 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     // 2. Find abstract path to goal via region centers
     // 3. Find last segment from region center to target node
     // If the path partially overlaps with the current path stitch
-
-    //    LOG(INFO) << "PATH:";
-    //    for (auto& actionBundle : path) {
-    //      LOG(INFO) << "Expected target: " << actionBundle.expectedTargetState
-    //                << " label: " << actionBundle.label
-    //                << " action: " << actionBundle.action;
-    //    }
 
     return path;
   }
