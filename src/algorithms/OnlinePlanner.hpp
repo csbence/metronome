@@ -15,6 +15,16 @@ class OnlinePlanner : public Planner<Domain> {
       const typename Domain::State& startState,
       TerminationChecker& terminationChecker) = 0;
 
+  virtual void incrementIdleIterationCount() final {
+    ++idleIterationCount;
+  }
+
+  virtual std::size_t getIdleIterationCount() const final {
+    return idleIterationCount;
+  }
+  
+ private:
+  std::size_t idleIterationCount = 0;
 };
 
 }  // namespace metronome
