@@ -276,7 +276,6 @@ def create_local_distlre_executor(local_threads):
     return executor
 
 
-<<<<<<< HEAD
 def create_remote_distlre_executor(local_threads=None):
     #from slack_notification import start_experiment_notification, \
     #    end_experiment_notification
