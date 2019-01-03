@@ -54,6 +54,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       const State &agentState,
       TerminationChecker &terminationChecker) override {
     ++iteration;
+    this->incrementIterationCount();
+    
     if (domain.isGoal(agentState)) {
       this->incrementIdleIterationCount();
       // Goal is already reached
@@ -458,6 +460,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     if (domain.isGoal(sourceNode->state)) {
       LOG(INFO) << "Goal was expanded!";
       cachedPath.clear(); // Force path recalculation
+      this->goalFound();
       goalNode = sourceNode;
     }
 

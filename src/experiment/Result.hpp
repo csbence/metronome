@@ -26,6 +26,7 @@ class Result {
         actions{std::vector<std::string>()},
         iterationCount{0},
         idleIterationCount{0},
+        goalFirstFoundIteration{0},
         identityActions{0},
         timestamp{currentNanoTime()} {};
 
@@ -40,6 +41,7 @@ class Result {
          const std::vector<std::string> actions,
          const int iterationCount = 0,
          const int idleIterationCount = 0,
+         const int goalFirstFoundIteration = 0,
          const int identityActions = 0,
          const long long timestamp = currentNanoTime())
       : configuration{configuration},
@@ -55,6 +57,7 @@ class Result {
         actions{actions},
         iterationCount{iterationCount},
         idleIterationCount{idleIterationCount},
+        goalFirstFoundIteration{goalFirstFoundIteration},
         identityActions{identityActions},
         timestamp{timestamp} {};
 
@@ -99,6 +102,9 @@ class Result {
         "iterationCount", Value{}.SetInt(iterationCount), allocator);
     resultDocument.AddMember(
         "idleIterationCount", Value{}.SetInt(idleIterationCount), allocator);
+    resultDocument.AddMember("goalFirstFoundIteration",
+                             Value{}.SetInt(goalFirstFoundIteration),
+                             allocator);
     resultDocument.AddMember(
         "identityActions", Value{}.SetInt(identityActions), allocator);
     resultDocument.AddMember(
@@ -128,6 +134,7 @@ class Result {
   const std::vector<std::string> actions;
   const int iterationCount;
   const int idleIterationCount;
+  const int goalFirstFoundIteration;
   const int identityActions;
   const long long timestamp;
 };

@@ -49,7 +49,6 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
     std::size_t planningTime = 0;
     std::size_t executionTime = 0;
     std::size_t planningAndExecutionTime = 0;
-    std::size_t iterationCount = 0;
 
     const auto actionDuration = configuration.getLong(ACTION_DURATION);
     auto currentState = domain.getStartState();
@@ -59,8 +58,6 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
     auto timeBound = static_cast<std::size_t>(actionDuration);
 
     while (!domain.isGoal(currentState)) {
-      ++iterationCount;
-      
       if (dynamicLookahead) {
         terminationChecker.resetTo(timeBound);
       } else {
@@ -123,8 +120,9 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
                   domain.getActionDuration(),  // Idle planning time
                   pathLength,                  // Path length
                   actionStrings,
-                  iterationCount,
-                  planner.getIdleIterationCount());
+                  planner.getIterationCount(),
+                  planner.getIdleIterationCount(),
+                  planner.getGoalFirstFoundIteration());
   }
 
  private:

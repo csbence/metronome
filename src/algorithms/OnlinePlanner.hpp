@@ -15,6 +15,14 @@ class OnlinePlanner : public Planner<Domain> {
       const typename Domain::State& startState,
       TerminationChecker& terminationChecker) = 0;
 
+  virtual void incrementIterationCount() final {
+    ++iterationCount;
+  }
+
+  virtual std::size_t getIterationCount() const final {
+    return iterationCount;
+  }
+  
   virtual void incrementIdleIterationCount() final {
     ++idleIterationCount;
   }
@@ -23,8 +31,20 @@ class OnlinePlanner : public Planner<Domain> {
     return idleIterationCount;
   }
   
+  virtual void goalFound() final {
+    if (goalNodeFoundIteration == 0)
+      goalNodeFoundIteration = iterationCount;
+  }
+
+  virtual std::size_t getGoalFirstFoundIteration() const final {
+    return goalNodeFoundIteration;
+  }
+
+  
  private:
+  std::size_t iterationCount = 0;
   std::size_t idleIterationCount = 0;
+  std::size_t goalNodeFoundIteration = 0;
 };
 
 }  // namespace metronome
