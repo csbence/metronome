@@ -82,6 +82,8 @@ def plot_gat(data, plot_title, file_name):
                           values="withinOpt")
     pivot = pivot[~pivot.index.duplicated(keep='first')]
 
+    # Below is palette of distinguishable colors for analyzing large sets of algorithms together
+    # colors = ["#90C3D4", "#C390D4", "#D4A190", "#A1D490", "#AB3299", "#AB8132", "#32AB44","#325DAB","#9BAB32", "#32AB7E","#4232AB","#AB325F","#495E49","#49545E","#5E495E", "#5E5449","#FA7887","#C8FA78","#78FAEB","#AA78FA"]
     palette = sns.color_palette(n_colors=10)
     plot = pivot.plot(color=palette, title=plot_title, legend=True, yerr=errors,
                       ecolor='black', elinewidth=1,
@@ -112,7 +114,7 @@ def main(paths_to_base, paths, title, file_name, domain_token,
     set_rc()
 
     data = prepare_data(paths, paths_to_base)
-    data = filter_data(data)
+    data = filter_data(data, domain_token)
 
     # print(df)
     # df.plot(x='expansionDelay', y='withinOpt')
@@ -193,6 +195,13 @@ def extrapolate_within_optimal(data):
     data = pd.merge(data, astar, how='inner', on=["domainPath"])
     data["withinOpt"] = data["goalAchievementTime"] / (
             data["actionDuration"] * data["optimalPathLength"])
+
+    check_opt_violation = True
+    if check_opt_violation:
+        violations = data[data.withinOpt < 1.0]
+        if len(violations) > 0:
+            print(violations)
+            raise AssertionError('Algorithms claim a better-than-optimal solution')
 
     return data
 
