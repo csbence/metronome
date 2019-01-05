@@ -21,6 +21,7 @@ class Result {
         planningTime{0},
         actionExecutionTime{0},
         goalAchievementTime{0},
+        normalizedGoalAchievementTime{0},
         idlePlanningTime{0},
         pathLength{0},
         actions{std::vector<std::string>()},
@@ -36,6 +37,7 @@ class Result {
          const long long planningTime,
          const long long actionExecutionTime,
          const long long goalAchievementTime,
+         const long long normalizedGoalAchievementTime,
          const long long idlePlanningTime,
          const long long pathLength,
          const std::vector<std::string> actions,
@@ -52,6 +54,7 @@ class Result {
         planningTime{planningTime},
         actionExecutionTime{actionExecutionTime},
         goalAchievementTime{goalAchievementTime},
+        normalizedGoalAchievementTime{normalizedGoalAchievementTime},
         idlePlanningTime{idlePlanningTime},
         pathLength{pathLength},
         actions{actions},
@@ -85,6 +88,9 @@ class Result {
                              allocator);
     resultDocument.AddMember("goalAchievementTime",
                              Value{}.SetInt64(goalAchievementTime),
+                             allocator);
+    resultDocument.AddMember("normalizedGoalAchievementTime",
+                             Value{}.SetInt64(normalizedGoalAchievementTime),
                              allocator);
     resultDocument.AddMember(
         "idlePlanningTime", Value{}.SetInt64(idlePlanningTime), allocator);
@@ -129,6 +135,7 @@ class Result {
   const long long planningTime;
   const long long actionExecutionTime;
   const long long goalAchievementTime;
+  const long long normalizedGoalAchievementTime;
   const long long idlePlanningTime;
   const long long pathLength;
   const std::vector<std::string> actions;

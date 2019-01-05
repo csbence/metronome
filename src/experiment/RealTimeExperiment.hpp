@@ -117,6 +117,7 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
                   planningTime,   // Planning time
                   executionTime,  // Execution time
                   planningAndExecutionTime,
+                  planner.getIterationCount(), // Normalized goal achievement - should be comparable across configs
                   domain.getActionDuration(),  // Idle planning time
                   pathLength,                  // Path length
                   actionStrings,
