@@ -12,7 +12,7 @@
 
 namespace metronome {
 
-template <std::size_t DIMENSION, bool HEAVY = true>
+template <std::size_t DIMENSION, bool HEAVY = false>
 class SlidingTilePuzzle {
  public:
   using Cost = long long int;
