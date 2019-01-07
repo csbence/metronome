@@ -47,6 +47,9 @@ static const std::string CLUSTER_DEPTH_LIMIT{"clusterDepthLimit"};
 static const std::string EXTRACTION_CACHE_SIZE{"extractionCacheSize"};
 static const std::string CLUSTER_WEIGHT("clusterWeight");
 
+// TBA*
+static const std::string PROJECTION{"projection"};
+
 // Weighted Algorithms
 static const std::string WEIGHT{"weight"};
 
