@@ -44,7 +44,7 @@ class TimeBoundedAStar final
   std::vector<ActionBundle> selectActions(
       const State &agentState,
       TerminationChecker &terminationChecker) override {
-    this->incrementIterationCount();
+    OnlinePlanner::beginIteration();
     ++iteration;
     if (domain.isGoal(agentState)) {
       // Goal is already reached

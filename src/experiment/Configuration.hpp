@@ -113,7 +113,7 @@ class Configuration {
 
   void checkKey(const std::string& key) const {
     if (!hasMember(key)) {
-      throw metronome::MetronomeException("Mission configuration: " + key);
+      throw metronome::MetronomeException("Missing configuration: " + key);
     }
   }
 

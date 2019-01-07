@@ -54,7 +54,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       const State &agentState,
       TerminationChecker &terminationChecker) override {
     ++iteration;
-    this->incrementIterationCount();
+    this->beginIteration();
     
     if (domain.isGoal(agentState)) {
       this->incrementIdleIterationCount();
