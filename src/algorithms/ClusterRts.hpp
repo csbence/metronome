@@ -28,6 +28,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   using Action = typename Domain::Action;
   using Cost = typename Domain::Cost;
   using Planner = Planner<Domain>;
+  using OnlinePlanner = OnlinePlanner<Domain, TerminationChecker>;
   using ActionBundle = typename Planner::ActionBundle;
 
   static constexpr std::size_t MAX_CLUSTER_COUNT = 100000;
@@ -42,9 +43,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
         nodeWeight(configuration.hasMember(WEIGHT)
                        ? configuration.getDouble(WEIGHT)
                        : 1.0),
-        openClusters(ClusterComparatorWeightedH(configuration.hasMember(CLUSTER_WEIGHT)
-                          ? configuration.getDouble(CLUSTER_WEIGHT)
-                          : nodeWeight)) {
+        openClusters(ClusterComparatorWeightedH(
+            configuration.hasMember(CLUSTER_WEIGHT)
+                ? configuration.getDouble(CLUSTER_WEIGHT)
+                : nodeWeight)) {
     // Initialize hash table
     nodes.max_load_factor(1);
     nodes.reserve(Memory::NODE_LIMIT);
@@ -54,10 +56,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       const State &agentState,
       TerminationChecker &terminationChecker) override {
     ++iteration;
-    this->beginIteration();
-    
+    OnlinePlanner::beginIteration();
+
     if (domain.isGoal(agentState)) {
-      this->incrementIdleIterationCount();
+      OnlinePlanner::incrementIdleIterationCount();
       // Goal is already reached
       return {};
     }
@@ -68,23 +70,31 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       explore(agentState, terminationChecker);
     }
 
+    const auto extractionStartTime = currentNanoTime();
     std::vector<ActionBundle> path;
-    if (cachedPath.size() <= cachedIndex || cachedIndex > 
-        extractionCacheSize) {
+    if (cachedPath.size() <= cachedIndex || cachedIndex > extractionCacheSize) {
       cachedPath = extractPath(agentState, extractionCacheSize);
       cachedIndex = 0;
     }
-    
+    const auto extractionEndTime = currentNanoTime();
+
+    const auto explorationStartTime = currentNanoTime();
     explore(agentState, terminationChecker);
-    
+    const auto explorationEndTime = currentNanoTime();
+
     if (!terminationChecker.reachedTermination()) {
-      this->incrementIdleIterationCount();
+      OnlinePlanner::incrementIdleIterationCount();
     }
 
 #ifdef STREAM_GRAPH
     visualizeProgress(agentState, cachedPath);
 #endif
     assert(!cachedPath.empty());
+
+    OnlinePlanner::recordAttribute("explorationTime",
+                                   explorationEndTime - explorationStartTime);
+    OnlinePlanner::recordAttribute("extractionTime",
+                                   extractionEndTime - extractionStartTime);
 
     auto nextAction = cachedPath[cachedIndex++];
     return {nextAction};
@@ -252,7 +262,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
    public:
     Cluster(double weight) : openList{{weight}} {}
 
-              Node *coreNode = nullptr;
+    Node *coreNode = nullptr;
     /** Number of nodes claimed by this cluster not including open nodes. */
     std::size_t expandedNodeCount = 0;
     bool depleted = false;
@@ -459,7 +469,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     if (domain.isGoal(sourceNode->state)) {
       LOG(INFO) << "Goal was expanded!";
-      cachedPath.clear(); // Force path recalculation
+      cachedPath.clear();  // Force path recalculation
       this->goalFound();
       goalNode = sourceNode;
     }
@@ -893,10 +903,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   const std::size_t extractionCacheSize;
   const double nodeWeight;
   cserna::DynamicPriorityQueue<Cluster *,
-                              ClusterIndex,
-                              ClusterComparatorWeightedH,
-                              MAX_CLUSTER_COUNT,
-                              MAX_CLUSTER_COUNT>
+                               ClusterIndex,
+                               ClusterComparatorWeightedH,
+                               MAX_CLUSTER_COUNT,
+                               MAX_CLUSTER_COUNT>
       openClusters;
 
   std::unordered_map<State, Node *, typename metronome::Hash<State>> nodes;
