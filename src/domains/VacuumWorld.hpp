@@ -336,8 +336,6 @@ class VacuumWorld {
 
   Cost distance(const State &state) const {
     if (state.getDirtLocations().empty()) return 0;
-    return static_cast<Cost>(state.getDirtLocations().size());
-    // TODO better heuristic
 
     auto minX = std::numeric_limits<unsigned int>::max();
     auto minY = std::numeric_limits<unsigned int>::max();
@@ -351,6 +349,9 @@ class VacuumWorld {
       maxY = std::max(maxY, dirtLocation.getY());
     }
 
+    const auto dirtRectangleSize = maxX - minX + maxY - minY;
+    return dirtRectangleSize + state.getDirtLocations().size();
+    
     //    unsigned int verticalDistance =
     //        std::max(goalLocation.getY(), state.getY()) -
     //        std::min(goalLocation.getY(), state.getY());
@@ -413,7 +414,7 @@ class VacuumWorld {
       if (targetState.removeDirtCell()) {
         successors.emplace_back(targetState, action, actionDuration);
       }
-      
+
       return;
     }
 
