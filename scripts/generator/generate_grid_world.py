@@ -285,18 +285,18 @@ if __name__ == '__main__':
     parser.add_argument('width', help='the width of the Vehicle world', type=int)
     parser.add_argument('total', help='total number of worlds to generate', type=int)
     parser.add_argument('-g', '--goals', help='total number of goals to generate', type=int, default=1)
-    parser.add_argument('-p', '--path', help='path to save the worlds', default='./gridworld')
+    parser.add_argument('-p', '--path', help='directory path to save the worlds. MUST BE RELATIVE PATH to cwd. That is a known issue, but no time to fix', default='./gridworld')
     parser.add_argument('-v', '--verbose', help='increase output verbosity', action='store_true')
     parser.add_argument('-o', '--obstacle-probability', default=0.0, type=float,
                         help='probability of obstacle to begin in any given grid cell')
-    parser.add_argument('-s', '--strategy', choices=['single', 'minima', 'corridors', 'corridors-aligned'],
+    parser.add_argument('-s', '--strategy', choices=['single', 'minima', 'corridors', 'corridors-aligned'], default='single',
                         help='obstacle structure strategy for the generated worlds. Defaults to "single". If "corridors-aligned", all corridors will be facing one direction')
     parser.add_argument('-c','--corridor-width-factor', default=0.05, type=float,
                         help='Factor of the width of a corridor. Only used in the corridors and corridors-aligned strategies')
     parser.add_argument('-e', '--corridor-exits', default=1, type=int,
                         help='If a corridor strategy, defines how many "exits" from the corridor will be generated. Exits appear on either of the length walls')
     parser.add_argument('-f', '--filter', default=None,
-                        help='Specify executable to filter the result domains. Executes AStar on each domain')
+                        help='Specify executable to filter the result domains. Executes A_STAR on each domain')
 
     # End argument definition
 
