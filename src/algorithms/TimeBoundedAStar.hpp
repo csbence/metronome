@@ -29,22 +29,33 @@ class TimeBoundedAStar final
   using Action = typename Domain::Action;
   using Cost = typename Domain::Cost;
   using Planner = Planner<Domain>;
+  using OnlinePlanner = OnlinePlanner<Domain, TerminationChecker>;
   using ActionBundle = typename Planner::ActionBundle;
 
   // Only used for visualizations
   static constexpr std::size_t NODE_ID_OFFSET = 100000;
 
   TimeBoundedAStar(const Domain &domain, const Configuration &configuration)
-      : domain(domain), weight(configuration.getDouble(WEIGHT)) {
+      : domain(domain),
+        weight(configuration.getDouble(WEIGHT)),
+        projection(configuration.getBool(PROJECTION)) {
     // Initialize hash table
     nodes.max_load_factor(1);
     nodes.reserve(Memory::NODE_LIMIT);
   }
 
+  virtual std::vector<std::pair<std::string, std::int64_t>> getAttributes()
+      const final override {
+    auto attributes = OnlinePlanner::getAttributes();
+    attributes.emplace_back("backtrackCount", backtrackCount);
+
+    return attributes;
+  }
+
   std::vector<ActionBundle> selectActions(
       const State &agentState,
       TerminationChecker &terminationChecker) override {
-    this->incrementIterationCount();
+    OnlinePlanner::beginIteration();
     ++iteration;
     if (domain.isGoal(agentState)) {
       // Goal is already reached
@@ -58,27 +69,57 @@ class TimeBoundedAStar final
     }
 
     std::vector<ActionBundle> rootToTargetPath;
-    
-    if (goalNode != nullptr) {
-      rootToTargetPath = extractPath(goalNode, rootNode);
+    std::vector<ActionBundle> selectedActions;
+
+    const auto extractionStartTime = currentNanoTime();
+    auto targetNode = goalNode != nullptr ? goalNode : openList.top();
+    bool projectionValid = checkProjectedPath(targetNode);
+
+    if (!projectionValid) {
+      rootToTargetPath = extractPath(targetNode, rootNode);
+      selectedActions = extractAction(agentState, rootToTargetPath);
     } else {
-      rootToTargetPath = extractPath(openList.top(), rootNode);
+      selectedActions = {reversedProjectedPath.back()};
+      reversedProjectedPath.pop_back();
     }
-    
+
+    const auto extractionEndTime = currentNanoTime();
+
+    const auto explorationStartTime = currentNanoTime();
     explore(agentState, terminationChecker);
+    const auto explorationEndTime = currentNanoTime();
 
 #ifdef STREAM_GRAPH
     visualizeProgress(agentState, rootToTargetPath);
 #endif
 
-    for (std::size_t i = 0; i < rootToTargetPath.size(); ++i) {
+    OnlinePlanner::recordAttribute("explorationTime",
+                                   explorationEndTime - explorationStartTime);
+    OnlinePlanner::recordAttribute("extractionTime",
+                                   extractionEndTime - extractionStartTime);
+
+    return selectedActions;
+  }
+  std::vector<ActionBundle> extractAction(
+      const State &agentState,
+      const std::vector<ActionBundle> &rootToTargetPath) {
+    for (size_t i = 0; i < rootToTargetPath.size(); ++i) {
       if (rootToTargetPath[i].expectedTargetState == agentState) {
         if (rootToTargetPath.size() == i + 1) {
+          // The agent reached the frontier
           ActionBundle actionBundle{domain.getIdentityAction(),
                                     domain.getActionDuration()};
           actionBundle.label = "wait at the frontier";
           actionBundle.expectedTargetState = agentState;
           return {actionBundle};
+        }
+
+        if (projection && rootToTargetPath.size() > i + 2) {
+          // Update the projected path
+          reversedProjectedPath = {rootToTargetPath.begin() + i + 2,
+                                   rootToTargetPath.end()};
+          std::reverse(reversedProjectedPath.begin(),
+                       reversedProjectedPath.end());
         }
 
         auto actionBundle = rootToTargetPath.at(i + 1);
@@ -100,6 +141,7 @@ class TimeBoundedAStar final
 
     // Backtrack
     ActionBundle actionBundle = backtrackFromNode(agentState);
+    ++backtrackCount;
     return {actionBundle};
   }
 
@@ -188,6 +230,7 @@ class TimeBoundedAStar final
     /** Heuristic cost of the node */
     Cost h;
     bool closed = false;
+    std::size_t projectionIteration = 0;
   };
 
   struct NodeComparatorWeightedF {
@@ -253,7 +296,7 @@ class TimeBoundedAStar final
 
   void expandNode(Node *sourceNode) {
     Planner::incrementExpandedNodeCount();
-    
+
     if (sourceNode->closed) return;
     sourceNode->closed = true;
 
@@ -274,6 +317,7 @@ class TimeBoundedAStar final
                                            successor.action,
                                            std::numeric_limits<Cost>::max(),
                                            domain.heuristic(successor.state));
+        successorNode->projectionIteration = sourceNode->projectionIteration;
       }
 
       // Skip if we got back to the parent
@@ -287,10 +331,27 @@ class TimeBoundedAStar final
         successorNode->g = successorGValueFromCurrent;
         successorNode->parent = sourceNode;
         successorNode->action = successor.action;
+        successorNode->projectionIteration = sourceNode->projectionIteration;
 
         openList.insertOrUpdate(successorNode);
       }
     }
+  }
+
+  bool checkProjectedPath(Node *targetNode) {
+    if (projection && targetNode->projectionIteration == projectionIteration &&
+        !reversedProjectedPath.empty()) {
+      // The projected path is still a prefix of the final path
+      return true;
+    } else {
+      // The projected path is no longer a prefix
+      // The last node of the new projection is going to be the targetNode
+      ++projectionIteration;
+      reversedProjectedPath.clear();
+      targetNode->projectionIteration = projectionIteration;
+    }
+
+    return false;
   }
 
   std::vector<ActionBundle> extractPath(const Node *targetNode,
@@ -315,6 +376,7 @@ class TimeBoundedAStar final
 
   const Domain &domain;
   const double weight;
+  const bool projection;
   const Node *rootNode;
 
   cserna::DynamicPriorityQueue<
@@ -328,6 +390,9 @@ class TimeBoundedAStar final
   ObjectPool<Node, Memory::NODE_LIMIT> nodePool;
 
   std::size_t iteration = 0;
+  std::size_t backtrackCount = 0;  // Measurement only
+  std::size_t projectionIteration = 0;
+  std::vector<ActionBundle> reversedProjectedPath;
 
   Node *goalNode = nullptr;
 

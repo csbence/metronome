@@ -57,6 +57,11 @@ class Planner {
   virtual inline void incrementGeneratedNodeCount() final {
     ++generatedNodeCount;
   }
+  
+  virtual std::vector<std::pair<std::string, std::int64_t>> getAttributes() 
+  const {
+    return {};
+  }
 
  protected:
   virtual inline void incrementExpandedNodeCount() final {

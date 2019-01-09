@@ -115,6 +115,12 @@ class Result {
         "identityActions", Value{}.SetInt(identityActions), allocator);
     resultDocument.AddMember(
         "timestamp", Value{}.SetInt64(timestamp), allocator);
+    
+    for (const auto& attribute : attributes) {
+        Value key(attribute.first.c_str(), allocator);
+        Value value(attribute.second);
+        resultDocument.AddMember(key, value, allocator);
+    }
 
     const rapidjson::Document& document = configuration.getJsonDocument();
     rapidjson::Value configurationValue;
@@ -126,7 +132,7 @@ class Result {
     resultDocument.Accept(writer);
     return buffer.GetString();
   }
-
+  
   const Configuration& configuration;
   const std::string errorMessage;
   const bool success;
@@ -144,6 +150,7 @@ class Result {
   const int goalFirstFoundIteration;
   const int identityActions;
   const long long timestamp;
+  std::vector<std::pair<std::string, std::int64_t>> attributes;
 };
 
 }  // namespace metronome

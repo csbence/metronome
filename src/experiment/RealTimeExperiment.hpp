@@ -80,7 +80,7 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
       planningTime += iterationDuration;
 
       // Planning might take longer/shorter than the allocated time.
-      std::cout << iterationDuration << ',';
+//      std::cout << iterationDuration << ',';
       planningAndExecutionTime += std::max(iterationDuration, timeBound);
 
       timeBound = 0;
@@ -111,19 +111,22 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
       actionStrings.push_back(stringStream.str());
     }
 
-    return Result(configuration,
-                  planner.getExpandedNodeCount(),
-                  planner.getGeneratedNodeCount(),
-                  planningTime,   // Planning time
-                  executionTime,  // Execution time
-                  planningAndExecutionTime,
-                  planner.getIterationCount(), // Normalized goal achievement - should be comparable across configs
-                  domain.getActionDuration(),  // Idle planning time
-                  pathLength,                  // Path length
-                  actionStrings,
-                  planner.getIterationCount(),
-                  planner.getIdleIterationCount(),
-                  planner.getGoalFirstFoundIteration());
+    auto result = Result(configuration,
+                         planner.getExpandedNodeCount(),
+                         planner.getGeneratedNodeCount(),
+                         planningTime,   // Planning time
+                      executionTime,  // Execution time
+                      planningAndExecutionTime,
+                         planner.getIterationCount(), // Normalized goal achievement - should be comparable across configs
+                      domain.getActionDuration(),  // Idle planning time
+                      pathLength,                  // Path length
+                      actionStrings,
+                         planner.getIterationCount(),
+                         planner.getIdleIterationCount(),
+                         planner.getGoalFirstFoundIteration());
+    
+    result.attributes = planner.getAttributes();
+    return result;
   }
 
  private:
