@@ -24,6 +24,7 @@ static const std::string HEURISTIC_MULTIPLIER{"heuristicMultiplier"};
 
 static const std::string DOMAIN_GRID_WORLD{"GRID_WORLD"};
 static const std::string DOMAIN_ORIENTATION_GRID{"ORIENTATION_GRID"};
+static const std::string DOMAIN_VACUUM_WORLD{"VACUUM_WORLD"};
 static const std::string DOMAIN_TRAFFIC{"TRAFFIC"};
 static const std::string DOMAIN_TILES{"SLIDING_TILE_PUZZLE"};
 

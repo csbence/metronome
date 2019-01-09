@@ -19,6 +19,9 @@
 #ifdef ENABLE_ORIENTATION_GRID
 #include "domains/OrientationGrid.hpp"
 #endif
+#ifdef ENABLE_VACUUM_WORLD
+#include "domains/VacuumWorld.hpp"
+#endif
 #ifdef ENABLE_SLIDING_TILE_PUZZLE
 #include "domains/SlidingTilePuzzle.hpp"
 #endif
@@ -83,6 +86,12 @@ class ConfigurationExecutor {
 #ifdef ENABLE_ORIENTATION_GRID
     if (domainName == DOMAIN_ORIENTATION_GRID) {
       return executeDomain<OrientationGrid>(configuration, resourcesDir);
+    }
+#endif
+
+#ifdef ENABLE_VACUUM_WORLD
+      if (domainName == DOMAIN_VACUUM_WORLD) {
+      return executeDomain<VacuumWorld>(configuration, resourcesDir);
     }
 #endif
 
