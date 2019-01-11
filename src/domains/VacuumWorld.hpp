@@ -194,7 +194,6 @@ class VacuumWorld {
   VacuumWorld(const Configuration &configuration, std::istream &input)
       : actionDuration(configuration.getLong(ACTION_DURATION)),
         heuristicMultiplier(configuration.getDouble(HEURISTIC_MULTIPLIER)) {
-    obstacles = std::unordered_set<State, typename metronome::Hash<State>>{};
     unsigned int currentHeight = 0;
     unsigned int currentWidth = 0;
     std::string line;
@@ -225,8 +224,8 @@ class VacuumWorld {
         } else if (it == '*') {  // find the goal location
           dirtCells.emplace_back(currentWidth, currentHeight);
         } else if (it == '#') {  // store the objects
-          State object = State(currentWidth, currentHeight);
-          obstacles.insert(object);
+          Location obstacle = Location(currentWidth, currentHeight);
+          obstacles.insert(obstacle);
         } else {
           // its an open cell nothing needs to be done
         }
@@ -290,7 +289,7 @@ class VacuumWorld {
                       sourceState.getY() + action.relativeY(),
                       sourceState.getDirtLocations());
 
-    if (isLegalLocation(targetState)) {
+    if (isLegalLocation(Location(targetState.getX(), targetState.getY()))) {
       return targetState;
     }
 
@@ -302,24 +301,27 @@ class VacuumWorld {
     return state.getDirtLocations().empty();
   }
   /*Validating an obstacle state*/
-  bool isObstacle(const State &location) const {
-    return obstacles.find(location) != obstacles.end();
+  bool isObstacle(const Location &obstacle) const {
+    return obstacles.find(obstacle) != obstacles.end();
   }
   /*Validating the agent can visit the state*/
-  bool isLegalLocation(const State &location) const {
-    return location.getX() < width && location.getY() < height &&
-           !isObstacle(location);
+  bool isLegalLocation(const Location &location) const {
+    const auto withinBounds =
+        location.getX() < width && location.getY() < height;
+
+    return withinBounds && !isObstacle(location);
   }
   /*Standard getters for the (width,height) of the domain*/
   unsigned int getWidth() const { return width; }
   unsigned int getHeight() const { return height; }
 
   /*Adding an obstacle to the domain*/
-  bool addObstacle(const State &toAdd) {
-    if (isLegalLocation(toAdd)) {
-      obstacles.insert(toAdd);
+  bool addObstacle(const Location &obstacle) {
+    if (isLegalLocation(obstacle)) {
+      obstacles.insert(obstacle);
       return true;
     }
+
     return false;
   }
 
@@ -349,18 +351,16 @@ class VacuumWorld {
       maxY = std::max(maxY, dirtLocation.getY());
     }
 
-    const auto dirtRectangleSize = maxX - minX + maxY - minY;
+    minX = std::min(minX, state.getX());
+    minY = std::min(minY, state.getY());
+    maxX = std::max(maxX, state.getX());
+    maxY = std::max(maxY, state.getY());
+
+    const auto spanX = maxX - minX;
+    const auto spanY = maxY - minY;
+
+    const auto dirtRectangleSize = spanX + spanY;
     return dirtRectangleSize + state.getDirtLocations().size();
-    
-    //    unsigned int verticalDistance =
-    //        std::max(goalLocation.getY(), state.getY()) -
-    //        std::min(goalLocation.getY(), state.getY());
-    //    unsigned int horizontalDistance =
-    //        std::max(goalLocation.getX(), state.getX()) -
-    //        std::min(goalLocation.getX(), state.getX());
-    //    unsigned int totalDistance = verticalDistance + horizontalDistance;
-    //    Cost manhattanDistance = static_cast<Cost>(totalDistance);
-    //    return manhattanDistance;
   }
 
   Cost heuristic(const State &state) const {
@@ -387,7 +387,7 @@ class VacuumWorld {
       for (unsigned int j = 0; j < width; ++j) {
         if (startState.getX() == j && startState.getY() == i) {
           display << '@';
-        } else if (isObstacle(State(j, i))) {
+        } else if (isObstacle(Location(j, i))) {
           display << '#';
         } else {
           display << '_';
@@ -444,7 +444,7 @@ class VacuumWorld {
 
     State newState = State(newX, newY, sourceState.getDirtLocations());
 
-    if (isLegalLocation(newState)) {
+    if (isLegalLocation(Location(newState.getX(), newState.getY()))) {
       return newState;
     }
 
@@ -460,7 +460,7 @@ class VacuumWorld {
    */
   unsigned int width;
   unsigned int height;
-  std::unordered_set<State, Hash<State>> obstacles;
+  std::unordered_set<Location, Hash<Location>> obstacles;
   State startState;
   const Cost actionDuration;
   const double heuristicMultiplier;
