@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import os
+import sys
 import argparse
 import random
 import copy
@@ -119,16 +120,26 @@ def generate_goals(goals, width, height):
 def generate_filter_configs(domains, useVacuum):
     config_list = []
 
+    domainName = 'GRID_WORLD'
+    if useVacuum:
+        domainName = 'VACUUM_WORLD'
+
     for domain in domains:
         config = dict()
         config['algorithmName'] = 'A_STAR'
         config['actionDuration'] = 1
-        config['domainName'] ='GRID_WORLD' if not useVacuum else 'VACUUM_WORLD'
+        config['domainName'] = domainName
         config['terminationType'] = 'EXPANSION'
         config['lookaheadType'] = 'DYNAMIC'
         config['commitmentStrategy'] = 'SINGLE'
         config['heuristicMultiplier'] = 1.0
-        config['domainPath'] = domain.replace('./', '\\')
+        # remove leading . char in a relative path
+        config['domainPath'] = domain[1:]
+
+#        if not useVacuum:
+#            config2 = config.copy()
+#            config2['domainName'] = 'VACUUM_WORLD'
+#            config_list.append(config2)
 
         config_list.append(config)
 
@@ -239,7 +250,7 @@ def main(args):
 
         aFile.close()
 
-    if args.filter != None:
+    if args.filter:
         this_cwd = os.getcwd()
 
         if args.verbose:
@@ -251,6 +262,8 @@ def main(args):
         if not os.path.exists(filtered_dir):
             os.makedirs(filtered_dir)
         configs = generate_filter_configs(generated_domains, goals > 1)
+
+        sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
         from Metronome import distributed_execution
 
         if args.verbose:
@@ -291,8 +304,8 @@ if __name__ == '__main__':
                         help='Factor of the width of a corridor. Only used in the corridors and corridors-aligned strategies')
     parser.add_argument('-e', '--corridor-exits', default=1, type=int,
                         help='If a corridor strategy, defines how many "exits" from the corridor will be generated. Exits appear on either of the length walls')
-    parser.add_argument('-f', '--filter', default=None,
-                        help='Specify executable to filter the result domains. Executes A_STAR on each domain.')
+    parser.add_argument('-f', '--filter', default=None, action='store_true',
+                        help='Filter generated domains to only solvable. Assumes a previous build of Metronome. Executes A_STAR on each domain.')
 
     # End argument definition
 
