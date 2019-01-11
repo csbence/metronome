@@ -10,6 +10,10 @@ from shutil import copyfile
 
 __author__ = 'Kevin C. Gall'
 
+# Good configs:
+# python3 generate_grid_world.py 1500 1500 1000 -o 0.0006 -s corridors -c 0.07 -e 2
+#   around 10% solvable
+
 
 class SingleObstacleStrategy:
     def add_obstacle(self, obstacleTracker, start):
@@ -112,14 +116,14 @@ def generate_goals(goals, width, height):
     return goalSet
 
 
-def generate_filter_configs(domains):
+def generate_filter_configs(domains, useVacuum):
     config_list = []
 
     for domain in domains:
         config = dict()
         config['algorithmName'] = 'A_STAR'
         config['actionDuration'] = 1
-        config['domainName'] ='GRID_WORLD'
+        config['domainName'] ='GRID_WORLD' if not useVacuum else 'VACUUM_WORLD'
         config['terminationType'] = 'EXPANSION'
         config['lookaheadType'] = 'DYNAMIC'
         config['commitmentStrategy'] = 'SINGLE'
@@ -242,37 +246,29 @@ def main(args):
             print(f'Metronome path: {args.filter}')
 
         success_index = 0
-        for config in generate_filter_configs(generated_domains):
-            json_config = f'{json.dumps(config)}\n\n'
-            process = Popen([
-                    args.filter,
-                    this_cwd
-                ], stdin=PIPE, stdout=PIPE, universal_newlines=True)
+        
+        filtered_dir = os.path.join(outPath, 'filtered')
+        if not os.path.exists(filtered_dir):
+            os.makedirs(filtered_dir)
+        configs = generate_filter_configs(generated_domains, goals > 1)
+        from Metronome import distributed_execution
 
-            out, err = process.communicate(str(json_config))
+        if args.verbose:
+            print('Begin filtering of generated domains')
+        
+        os.chdir('../..')
+        results = distributed_execution(configs, this_cwd)
+        os.chdir(this_cwd)
 
-            raw_output = out.splitlines()
-            result_offset = raw_output.index('#') + 1
+        for result in results:
+            if (result['success']):
+                print(f'Domain {result["configuration"]["domainPath"]} is solvable')
 
-            if result_offset == 0:
-                print('Config failed, no result')
-                return
-
-            output = json.loads(raw_output[result_offset])
-
-            filtered_dir = os.path.join(outPath, 'filtered')
-            if not os.path.exists(filtered_dir):
-                os.makedirs(filtered_dir)
-
-            if (output['success']):
-                if args.verbose:
-                    print(f'Domain {config["domainPath"]} is solvable')
-
-                copyfile('.' + config['domainPath'], os.path.join(filtered_dir, base_domain_name + str(success_index)))
+                copyfile('.' + result['configuration']['domainPath'], os.path.join(filtered_dir, base_domain_name + str(success_index)))
                 success_index += 1
             else:
-                if args.verbose:
-                    print(f'Domain {config["domainPath"]} was not successfully solved')
+                print(f'Domain {result["configuration"]["domainPath"]} was not successfully solved')
+
 
 
 
@@ -296,7 +292,7 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--corridor-exits', default=1, type=int,
                         help='If a corridor strategy, defines how many "exits" from the corridor will be generated. Exits appear on either of the length walls')
     parser.add_argument('-f', '--filter', default=None,
-                        help='Specify executable to filter the result domains. Executes A_STAR on each domain')
+                        help='Specify executable to filter the result domains. Executes A_STAR on each domain.')
 
     # End argument definition
 
