@@ -176,7 +176,7 @@ def cartesian_product(base, key, values, filters=None):
     return new_base
 
 
-def distributed_execution(configurations):
+def distributed_execution(configurations, explicitResourcesDir = None):
     from slack_notification import start_experiment_notification, \
     end_experiment_notification
 
@@ -189,10 +189,13 @@ def distributed_execution(configurations):
 
     cwd = os.getcwd()
 
+    if explicitResourcesDir == None:
+        explicitResourcesDir = '/'.join([cwd, 'resources/'])
+
     for configuration in configurations:
         nice = "nice -n 20"
         executable = '/'.join([cwd, 'build/release/Metronome'])
-        resources = '/'.join([cwd, 'resources/'])
+        resources = explicitResourcesDir
         json_configuration = f'{json.dumps(configuration)}\n\n'
 
         metadata = str(json_configuration)
