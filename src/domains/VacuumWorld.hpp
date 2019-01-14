@@ -155,11 +155,13 @@ class VacuumWorld {
       return iterator != dirtLocations.end();
     }
 
-    std::size_t hash() const { return x ^ y << 16 ^ y >> 16; }
+    std::size_t hash() const {
+      return x ^ y << 16 ^ y >> 16 ^ dirtLocations.size() << 8;
+    }
 
     bool operator==(const State &state) const {
       return x == state.x && y == state.y &&
-             state.getDirtLocations() == dirtLocations;
+             state.dirtLocations == dirtLocations;
     }
 
     bool operator!=(const State &rhs) const { return !(rhs == *this); }
@@ -192,8 +194,7 @@ class VacuumWorld {
 
   /*Entry point for using this Domain*/
   VacuumWorld(const Configuration &configuration, std::istream &input)
-      : actionDuration(configuration.getLong(ACTION_DURATION)),
-        heuristicMultiplier(configuration.getDouble(HEURISTIC_MULTIPLIER)) {
+      : actionDuration(configuration.getLong(ACTION_DURATION)) {
     unsigned int currentHeight = 0;
     unsigned int currentWidth = 0;
     std::string line;
@@ -418,8 +419,11 @@ class VacuumWorld {
       return;
     }
 
-    if (action.toChar() == 'D' &&
-        startState.hasDirtCell(sourceState.getX(), sourceState.getY())) {
+    if (action.toChar() == 'D') {
+      const auto canPlaceDirt =
+          startState.hasDirtCell(sourceState.getX(), sourceState.getY());
+      if (!canPlaceDirt) return;
+
       State targetState(sourceState);
       if (targetState.addDirtCell()) {
         successors.emplace_back(targetState, action, actionDuration);
@@ -463,7 +467,6 @@ class VacuumWorld {
   std::unordered_set<Location, Hash<Location>> obstacles;
   State startState;
   const Cost actionDuration;
-  const double heuristicMultiplier;
-};  // namespace metronome
+};
 
 }  // namespace metronome
