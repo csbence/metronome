@@ -116,8 +116,8 @@ class VacuumWorld {
     State(unsigned int x, unsigned int y) : x(x), y(y) {}
     State(unsigned int x,
           unsigned int y,
-          const std::unordered_set<Location, Hash<Location>> &dirtLocations)
-        : x(x), y(y), dirtLocations(dirtLocations) {}
+          std::unordered_set<Location, Hash<Location>> dirtLocations)
+        : x(x), y(y), dirtLocations(std::move(dirtLocations)) {}
     /*Standard getters for the State(x,y)*/
     unsigned int getX() const { return x; }
     unsigned int getY() const { return y; }
@@ -127,15 +127,13 @@ class VacuumWorld {
       return dirtLocations;
     }
 
-    bool removeDirtCell() {
-      auto removedCount = dirtLocations.erase(Location(x, y));
+    bool removeDirtCell(const Location &location) {
+      auto removedCount = dirtLocations.erase(location);
 
       return removedCount != 0;
-      //      if (removedCount == 0) {
-      //        throw MetronomeException("Can't remove non existing dirt
-      //        cell.");
-      //      }
     }
+
+    bool removeDirtCell() { return removeDirtCell(Location(x, y)); }
 
     bool addDirtCell(const Location &location) {
       auto iterator = dirtLocations.find(location);
