@@ -65,6 +65,7 @@ set(TEST_FILES
         test/utils/ObjectPoolTest.hpp
         test/domains/GridWorldTest.hpp
 		test/domains/SlidingTilePuzzleTest.hpp
+		test/domains/VacuumWorldTest.hpp
         test/algorithms/AStarTest.hpp
         test/algorithms/LssLrtaStarTest.hpp
         src/utils/TimeMeasurement.hpp
@@ -88,7 +89,7 @@ include_directories(src)
 
 # Select the possible algorithms.
 add_definitions(-DENABLE_A_STAR)
-add_definitions(-DENABLE_LSS_LRTA_STAR)
+#add_definitions(-DENABLE_LSS_LRTA_STAR)
 add_definitions(-DENABLE_CLUSTER_RTS)
 add_definitions(-DENABLE_TIME_BOUNDED_A_STAR)
 

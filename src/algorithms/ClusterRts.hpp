@@ -40,13 +40,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
         clusterNodeLimit(configuration.getLong(CLUSTER_NODE_LIMIT)),
         clusterDepthLimit(configuration.getLong(CLUSTER_DEPTH_LIMIT)),
         extractionCacheSize(configuration.getLong(EXTRACTION_CACHE_SIZE)),
-        nodeWeight(configuration.hasMember(WEIGHT)
-                       ? configuration.getDouble(WEIGHT)
-                       : 1.0),
+        nodeWeight(configuration.getDouble(WEIGHT, 1.0)),
         openClusters(ClusterComparatorWeightedH(
-            configuration.hasMember(CLUSTER_WEIGHT)
-                ? configuration.getDouble(CLUSTER_WEIGHT)
-                : nodeWeight)) {
+            configuration.getDouble(CLUSTER_WEIGHT, nodeWeight))),
+        tbaRouting(configuration.getBool(TBA_ROUTING, false)) {
     // Initialize hash table
     nodes.max_load_factor(1);
     nodes.reserve(Memory::NODE_LIMIT);
@@ -384,7 +381,6 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     while (!terminationChecker.reachedTermination() && !openClusters.empty()) {
       auto cluster = openClusters.top();
 
-      // todo check if the goal state was expanded
       if (goalNode != nullptr) return;
 
       if (cluster->openList.empty()) {
@@ -412,7 +408,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     auto currentNode = sourceCluster->openList.pop();
     // The local node list should only contain open nodes
     sourceCluster->nodes.erase(currentNode->state);
-    
+
     assert(!sourceCluster->openList.contains(currentNode));
     //    assert(currentNode->containingCluster == sourceCluster && "Containing
     //    cluster: " + std::to_string(currentNode->containingCluster));
@@ -449,6 +445,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     }
 
     ++(currentNode->containingCluster->expandedNodeCount);
+
     expandNode(currentNode);
 
     manageCluster(sourceCluster);
@@ -988,6 +985,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   const Cost clusterDepthLimit;
   const std::size_t extractionCacheSize;
   const double nodeWeight;
+  const bool tbaRouting;
+  
   cserna::DynamicPriorityQueue<Cluster *,
                                ClusterIndex,
                                ClusterComparatorWeightedH,
@@ -1008,7 +1007,6 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   std::size_t iteration = 0;
   std::vector<ActionBundle> cachedPath;
   std::size_t cachedIndex = 0;
-  bool tbaRouting = false;
 
   Node *goalNode = nullptr;
   bool emptyCache = false;
