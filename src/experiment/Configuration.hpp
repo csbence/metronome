@@ -50,6 +50,7 @@ static const std::string CLUSTER_WEIGHT("clusterWeight");
 
 // TBA*
 static const std::string PROJECTION{"projection"};
+static const std::string SHORTCUT{"shortcut"};
 
 // Weighted Algorithms
 static const std::string WEIGHT{"weight"};

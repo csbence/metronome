@@ -59,7 +59,7 @@ class GridWorld {
       if (label == '0') return Action('0');
 
       throw MetronomeException("Unknown action to invert: " +
-          std::to_string(label));
+                               std::to_string(label));
     }
 
     bool operator==(const Action &rhs) const { return label == rhs.label; }
@@ -208,7 +208,7 @@ class GridWorld {
   /*Validating a goal state*/
   bool isGoal(const State &location) const {
     return location.getX() == goalLocation.getX() &&
-        location.getY() == goalLocation.getY();
+           location.getY() == goalLocation.getY();
   }
   /*Validating an obstacle state*/
   bool isObstacle(const State &location) const {
@@ -217,7 +217,7 @@ class GridWorld {
   /*Validating the agent can visit the state*/
   bool isLegalLocation(const State &location) const {
     return location.getX() < width && location.getY() < height &&
-        !isObstacle(location);
+           !isObstacle(location);
   }
   /*Standard getters for the (width,height) of the domain*/
   unsigned int getWidth() const { return width; }
@@ -239,23 +239,31 @@ class GridWorld {
 
   bool isStart(const State &state) const {
     return state.getX() == startLocation.getX() &&
-        state.getY() == startLocation.getY();
+           state.getY() == startLocation.getY();
   }
 
-  Cost distance(const State &state) const {
+  Cost distance(const State &state, const State &other) const {
     unsigned int verticalDistance =
-        std::max(goalLocation.getY(), state.getY()) -
-            std::min(goalLocation.getY(), state.getY());
+        std::max(other.getY(), state.getY()) -
+        std::min(other.getY(), state.getY());
     unsigned int horizontalDistance =
-        std::max(goalLocation.getX(), state.getX()) -
-            std::min(goalLocation.getX(), state.getX());
+        std::max(other.getX(), state.getX()) -
+        std::min(other.getX(), state.getX());
     unsigned int totalDistance = verticalDistance + horizontalDistance;
     Cost manhattanDistance = static_cast<Cost>(totalDistance);
     return manhattanDistance;
   }
 
+  Cost distance(const State &state) const {
+    return distance(state, goalLocation);
+  }
+
   Cost heuristic(const State &state) const {
     return distance(state) * actionDuration;
+  }
+
+  Cost heuristic(const State &state, const State &other) const {
+    return distance(state, other) * actionDuration;
   }
 
   bool safetyPredicate(const State &) const { return true; }
@@ -310,9 +318,9 @@ class GridWorld {
                                     int relativeX,
                                     int relativeY) const {
     auto newX = static_cast<unsigned int>(static_cast<int>(sourceState.getX()) +
-        relativeX);
+                                          relativeX);
     auto newY = static_cast<unsigned int>(static_cast<int>(sourceState.getY()) +
-        relativeY);
+                                          relativeY);
 
     State newState = State(newX, newY);
 
