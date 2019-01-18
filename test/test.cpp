@@ -10,6 +10,7 @@
 //#include "utils/PriorityQueueTest.hpp"
 //#include "domains/GridWorldTest.hpp"
 //#include "domains/SlidingTilePuzzleTest.hpp"
+//#include "domains/VacuumWorldTest.hpp"
 //#include "utils/ObjectPoolTest.hpp"
 
 INITIALIZE_EASYLOGGINGPP

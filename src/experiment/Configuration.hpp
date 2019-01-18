@@ -6,6 +6,7 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #include <iostream>
+#include <optional>
 #include <vector>
 
 namespace metronome {
@@ -47,6 +48,7 @@ static const std::string CLUSTER_NODE_LIMIT{"clusterNodeLimit"};
 static const std::string CLUSTER_DEPTH_LIMIT{"clusterDepthLimit"};
 static const std::string EXTRACTION_CACHE_SIZE{"extractionCacheSize"};
 static const std::string CLUSTER_WEIGHT("clusterWeight");
+static const std::string TBA_ROUTING("tbaRouting");
 
 // TBA*
 static const std::string PROJECTION{"projection"};
@@ -77,28 +79,49 @@ class Configuration {
     return document.HasMember(key.c_str());
   }
 
-  std::string getString(const std::string& key) const {
-    checkKey(key);
+  std::string getString(
+      const std::string& key,
+      const std::optional<const std::string>& defaultValue = {}) const {
+    if (hasMember(key)) {
+      return std::string{document[key.c_str()].GetString()};
+    } else if (defaultValue.has_value()) {
+      return defaultValue.value();
+    }
 
-    return std::string{document[key.c_str()].GetString()};
+    throw metronome::MetronomeException("Missing configuration: " + key);
   }
 
-  long long int getLong(const std::string& key) const {
-    checkKey(key);
+  long long int getLong(const std::string& key,
+                        const std::optional<long> defaultValue = {}) const {
+    if (hasMember(key)) {
+      return document[key.c_str()].GetInt64();
+    } else if (defaultValue.has_value()) {
+      return defaultValue.value();
+    }
 
-    return document[key.c_str()].GetInt64();
+    throw metronome::MetronomeException("Missing configuration: " + key);
   }
 
-  double getDouble(const std::string& key) const {
-    checkKey(key);
+  double getDouble(const std::string& key,
+                   const std::optional<double> defaultValue = {}) const {
+    if (hasMember(key)) {
+      return document[key.c_str()].GetDouble();
+    } else if (defaultValue.has_value()) {
+      return defaultValue.value();
+    }
 
-    return document[key.c_str()].GetDouble();
+    throw metronome::MetronomeException("Missing configuration: " + key);
   }
 
-  double getBool(const std::string& key) const {
-    checkKey(key);
+  bool getBool(const std::string& key,
+               const std::optional<bool> defaultValue = {}) const {
+    if (hasMember(key)) {
+      return document[key.c_str()].GetBool();
+    } else if (defaultValue.has_value()) {
+      return defaultValue.value();
+    }
 
-    return document[key.c_str()].GetBool();
+    throw metronome::MetronomeException("Missing configuration: " + key);
   }
 
   std::vector<double> getDoubles(const std::string& key) const {
