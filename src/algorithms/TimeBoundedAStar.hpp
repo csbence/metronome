@@ -38,7 +38,7 @@ class TimeBoundedAStar final
   TimeBoundedAStar(const Domain &domain, const Configuration &configuration)
       : domain(domain),
         weight(configuration.getDouble(WEIGHT)),
-        projection(configuration.getBool(PROJECTION),
+        projection(configuration.getBool(PROJECTION)),
         shortcut(configuration.getBool(SHORTCUT)) {
     // Initialize hash table
     nodes.max_load_factor(1);
@@ -70,7 +70,7 @@ class TimeBoundedAStar final
     }
 
     // info for shortcutting
-    auto currentNode = nodes.get(agentState);
+    auto currentNode = nodes.at(agentState);
     if (shortcut) {
       std::size_t mostRecentIteration =
           std::max(currentNode->pathIterationA, currentNode->pathIterationB);
@@ -316,7 +316,7 @@ class TimeBoundedAStar final
       openList.clear();
       shortcutIterationCount++;
 
-      std::size__t count = 0;
+      std::size_t count = 0;
       auto currentNode = goalNode;
       while ((agentPathIsA && currentNode->pathIterationA != agentPathIteration) ||
           (!agentPathIsA && currentNode->pathIterationB != agentPathIteration)) {
@@ -356,7 +356,7 @@ class TimeBoundedAStar final
   void expandNode(Node *sourceNode, const State &agentState) {
     Planner::incrementExpandedNodeCount();
 
-    const bool shortuctMode = shortcut && goalNode != nullptr;
+    const bool shortcutMode = shortcut && goalNode != nullptr;
 
     if (sourceNode->closed) return;
     sourceNode->closed = true;
@@ -434,7 +434,7 @@ class TimeBoundedAStar final
     return false;
   }
 
-  std::vector<ActionBundle> extractPath(const Node *targetNode,
+  std::vector<ActionBundle> extractPath(Node *targetNode,
                                         const Node *sourceNode,
                                         bool reverseActions = false) const {
     if (targetNode == sourceNode) return {};

@@ -204,6 +204,10 @@ class SlidingTilePuzzle {
     return manhattanSum;
   }
 
+  Cost heuristic(const State& state, const State& otherState) const {
+    throw MetronomeException("State-to-state heuristic not implemented in Sliding Tile");
+  }
+
   Cost heuristic(const State& state) const {
     Cost manhattanSum{0};
 

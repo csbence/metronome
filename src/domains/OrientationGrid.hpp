@@ -368,10 +368,13 @@ class OrientationGrid {
    *  (Types of actions: cardinal movements, diagonal movements, rotations)
    */
   Cost heuristic(const State& state) const {
-    bool goalIsNorth = goalLocation.getY() < state.getY();
-    bool goalIsSouth = goalLocation.getY() > state.getY();
-    bool goalIsWest = goalLocation.getX() < state.getX();
-    bool goalIsEast = goalLocation.getX() > state.getX();
+    return heuristic(state, goalLocation);
+  }
+  Cost heuristic(const State& state, const State& otherState) const {
+    bool goalIsNorth = otherState.getY() < state.getY();
+    bool goalIsSouth = otherState.getY() > state.getY();
+    bool goalIsWest = otherState.getX() < state.getX();
+    bool goalIsEast = otherState.getX() > state.getX();
     // return early if we are at the goal
     if ((goalIsNorth || goalIsSouth || goalIsWest || goalIsEast) == false) {
       return static_cast<Cost>(0);
@@ -379,12 +382,11 @@ class OrientationGrid {
 
     unsigned int rotations = 0; //init expected rotations
 
-    unsigned int verticalDistance =
-        std::max(goalLocation.getY(), state.getY()) -
-        std::min(goalLocation.getY(), state.getY());
+    unsigned int verticalDistance = std::max(otherState.getY(), state.getY()) -
+                                    std::min(otherState.getY(), state.getY());
     unsigned int horizontalDistance =
-        std::max(goalLocation.getX(), state.getX()) -
-        std::min(goalLocation.getX(), state.getX());
+        std::max(otherState.getX(), state.getX()) -
+        std::min(otherState.getX(), state.getX());
 
     unsigned int manhattanDistance = verticalDistance + horizontalDistance;
     unsigned int diagonalMoves = std::min(verticalDistance, horizontalDistance);

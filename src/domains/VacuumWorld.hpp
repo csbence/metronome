@@ -336,6 +336,7 @@ class VacuumWorld {
            state.getY() == startState.getY();
   }
 
+  // Distance from a goal state
   Cost distance(const State &state) const {
     if (state.getDirtLocations().empty()) return 0;
 
@@ -363,8 +364,43 @@ class VacuumWorld {
     return dirtRectangleSize + state.getDirtLocations().size();
   }
 
+  // Distance between states
+  Cost distance(const State &state, const State &otherState) const {
+    auto manhattan = manhattanDistance(state, otherState);
+
+    auto maxSize = std::max(state.getDirtLocations().size(), otherState.getDirtLocations().size());
+    auto minSize = std::min(state.getDirtLocations().size(), otherState.getDirtLocations().size());
+    auto sizeDiff = maxSize - minSize;
+    if (sizeDiff == 0) {
+      return manhattan;
+    }
+
+    // We specifically want the state with more dirt so that we
+    // can use its dirt spots as benchmarks
+    const State &moreDirtState = state.getDirtLocations().size() == maxSize ? state : otherState;
+
+    auto minDistX = std::numeric_limits<unsigned int>::max();
+    auto minDistY = std::numeric_limits<unsigned int>::max();
+
+    for (const auto &dirtLocation : moreDirtState.getDirtLocations()) {
+      auto maxX = std::max(moreDirtState.getX(), dirtLocation.getX());
+      auto maxY = std::max(moreDirtState.getY(), dirtLocation.getY());
+      auto minX = std::min(moreDirtState.getX(), dirtLocation.getX());
+      auto minY = std::min(moreDirtState.getY(), dirtLocation.getY());
+
+      minDistX = std::min(minDistX, maxX - minX);
+      minDistY = std::min(minY, maxY - minY);
+    }
+
+    return std::max(manhattan, minDistX + minDistY) + sizeDiff;
+  }
+
   Cost heuristic(const State &state) const {
     return distance(state) * actionDuration;
+  }
+
+  Cost heuristic(const State &state, const State &otherState) const {
+    return distance(state, otherState) * actionDuration;
   }
 
   bool safetyPredicate(const State &) const { return true; }
@@ -403,6 +439,15 @@ class VacuumWorld {
   Action getIdentityAction() const { return Action('0'); }
 
  private:
+  unsigned int manhattanDistance(const State &state, const State &otherState) const {
+    auto minManX = std::min(state.getX(), otherState.getX());
+    auto minManY = std::min(state.getY(), otherState.getY());
+    auto maxManX = std::max(state.getX(), otherState.getX());
+    auto maxManY = std::max(state.getX(), otherState.getX());
+
+    return (maxManX - minManX) + (maxManY - minManY);
+  }
+
   void addValidSuccessor(std::vector<SuccessorBundle<VacuumWorld>> &successors,
                          const State &sourceState,
                          const int relativeX,

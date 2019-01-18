@@ -433,6 +433,10 @@ class Traffic {
     return false;
   }
 
+  Cost heuristic(const State& state, const State& otherState) const {
+    throw MetronomeException("State-to-state heuristic not implemented in Traffic World");
+  }
+
   Cost heuristic(const State& state) const {
     return distance(state) * actionDuration;
   }
