@@ -98,8 +98,12 @@ class TimeBoundedAStar final
         selectedActions = {reversedProjectedPath.back()};
         reversedProjectedPath.pop_back();
       } else {
-        rootToTargetPath = extractPath(targetNode, rootNode);
-        selectedActions = extractAction(agentState, rootToTargetPath);
+        PRINT_NANO_TIME("Path Traceback") {
+          rootToTargetPath = extractPath(targetNode, rootNode);
+        }
+        PRINT_NANO_TIME("Extract Action") {
+          selectedActions = extractAction(agentState, rootToTargetPath);
+        }
       }
     } else {
       selectedActions = {reversedProjectedPath.back()};
@@ -109,7 +113,9 @@ class TimeBoundedAStar final
     const auto extractionEndTime = currentNanoTime();
 
     const auto explorationStartTime = currentNanoTime();
-    explore(agentState, terminationChecker);
+    PRINT_NANO_TIME("Explore") {
+      explore(agentState, terminationChecker);
+    }
     const auto explorationEndTime = currentNanoTime();
 
 #ifdef STREAM_GRAPH
@@ -454,6 +460,9 @@ class TimeBoundedAStar final
 
       Action currentAction = currentNode->action;
       State expectedTargetState = currentNode->state;
+      // in shortcuts, we search from goal to agent meaning the "parent" node
+      // has the state we actually want to transition to
+      // Depends entirely on all actions being reversable
       if (reverseActions) {
         currentAction = currentAction.inverse();
         expectedTargetState = currentNode->parent->state;
