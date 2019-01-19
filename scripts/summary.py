@@ -29,9 +29,10 @@ def summarize_result(result_path):
     result = construct_data_frame(read_data(result_path))
 
     print(f'Success rate: {result.success.sum()} / {len(result)}')
-    print(f'Algorithms: {result.algorithmName.unique()}')
     print(f'Domains: {result.domainName.unique()}')
-    print(f'Domains: {result.domainPath.unique()}')
+    print(f'Algorithms: {result.algorithmName.unique()}')
+    print(f'Algorithm labels: {result.algorithmLabel.unique()}')
+    # print(f'Instances: {result.domainPath.unique()}')
     print('10 most frequent errors: ')
     print(result.errorMessage.value_counts()[:10])
 

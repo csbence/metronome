@@ -1,7 +1,6 @@
 #pragma once
 
 #include <MetronomeException.hpp>
-#include <boost/algorithm/string.hpp>
 #include <experiment/Configuration.hpp>
 #include <limits>
 #include <optional>
@@ -13,20 +12,42 @@
 
 namespace metronome {
 
+template <std::size_t DIMENSION, bool HEAVY = false>
 class SlidingTilePuzzle {
  public:
-  typedef long long int Cost;
+  using Cost = long long int;
 
   class Action {
    public:
-    Action() : label{'~'} {}
-    Action(char value) : label{value} {}
-    
+    Action() : label{'~'} {};
+    explicit Action(char label) : label{label} {}
+    Action(const Action&) = default;
+    Action(Action&&) = default;
+    Action& operator=(const Action&) = default;
+    ~Action() = default;
 
     static std::vector<Action>& getActions() {
       static std::vector<Action> actions{
-          Action('N'), Action('E'), Action('W'), Action('S')};
+          Action('N'), Action('S'), Action('W'), Action('E')};
       return actions;
+    }
+
+    int relativeX() const {
+      if (label == 'N') return 0;
+      if (label == 'S') return 0;
+      if (label == 'W') return -1;
+      if (label == 'E') return 1;
+      if (label == '0') return 0;
+      return 0;
+    }
+
+    int relativeY() const {
+      if (label == 'N') return -1;
+      if (label == 'S') return 1;
+      if (label == 'W') return 0;
+      if (label == 'E') return 0;
+      if (label == '0') return 0;
+      return 0;
     }
 
     Action inverse() const {
@@ -34,6 +55,10 @@ class SlidingTilePuzzle {
       if (label == 'S') return Action('N');
       if (label == 'W') return Action('E');
       if (label == 'E') return Action('W');
+      if (label == '0') return Action('0');
+
+      throw MetronomeException("Unknown action to invert: " +
+                               std::to_string(label));
     }
 
     bool operator==(const Action& rhs) const { return label == rhs.label; }
@@ -43,7 +68,8 @@ class SlidingTilePuzzle {
     char toChar() const { return label; }
 
     friend std::ostream& operator<<(std::ostream& os, const Action& action) {
-      os << action.label;
+      os << action.label << " (dx: " << action.relativeX()
+         << " dy: " << action.relativeY() << ")";
       return os;
     }
 
@@ -56,46 +82,40 @@ class SlidingTilePuzzle {
    */
   class State {
    public:
+    State() { tiles.resize(DIMENSION * DIMENSION); }
+
     bool operator==(const State& state) const {
-      return state.zeroIndex == zeroIndex && state.tiles == tiles;
+      return state.zeroIndex() == zeroIndex() && state.tiles == tiles;
     }
 
-    bool operator!=(const State& state) const { return state.tiles != tiles; }
+    bool operator!=(const State& state) const { return !(*this == state); }
 
-    std::size_t hash() const { return (size_t)tiles >> 32 ^ tiles; }
+    std::size_t hash() const {
+      std::size_t hash = 0;
 
-    std::string toString() const {
-      std::ostringstream stream;
-
-      const int totalSize = size * size;
-
-      for (int i = 0; i < totalSize; ++i) {
-        stream << (*this)[i] << " ";
+      for (const uint8_t tile : tiles) {
+        hash = hash << 1;
+        hash ^= tile;
       }
 
-      return stream.str();
+      return hash;
     }
 
-    unsigned char operator[](const unsigned char index) const {
-      return static_cast<unsigned char>(tiles >> (index * 4) & 0xF);
-    }
+    uint8_t& operator[](std::size_t index) { return tiles[index]; }
+    const uint8_t& operator[](std::size_t index) const { return tiles[index]; }
 
-    void set(const unsigned char index, const unsigned char value) {
-      tiles = (tiles & ~(15ULL << (index * 4))) |
-              static_cast<unsigned long long int>(value) << (index * 4);
-    }
-
-    unsigned char getZeroIndex() const { return zeroIndex; }
-
-    void setZeroIndex(unsigned char zeroIndex) { this->zeroIndex = zeroIndex; }
-
-    unsigned long long int getTiles() const { return tiles; }
-
-    void setTiles(unsigned long long int tiles) { this->tiles = tiles; }
+    uint8_t& zeroIndex() { return zeroTileIndex; }
+    const uint8_t& zeroIndex() const { return zeroTileIndex; }
 
     friend std::ostream& operator<<(std::ostream& os, const State& state) {
-      os << "zero: " << static_cast<int>(state.zeroIndex)
-         << " tiles: " << state.tiles;
+      os << "zero: " << state.zeroIndex() << " tiles: ";
+
+      for (std::size_t i = 0; i < DIMENSION * DIMENSION; ++i) {
+        if (i % DIMENSION == 0) os << "\n";
+        os << i << (i < 10 ? "  " : " ");
+      }
+
+      os << "\n";
       return os;
     }
 
@@ -104,20 +124,18 @@ class SlidingTilePuzzle {
     unsigned int getY() const { return 0; }
 
    private:
-    unsigned char zeroIndex{0};
-    unsigned long long int tiles{0};
+    uint8_t zeroTileIndex = 0;
+    std::vector<uint8_t> tiles;
   };
 
   SlidingTilePuzzle(const Configuration& configuration, std::istream& input)
       : actionDuration(configuration.getLong(ACTION_DURATION)) {
     using namespace std;
 
-    unsigned char dimension{0};
     string line;
 
     // Read dimensions
     getline(input, line);
-    std::vector<std::string> dimensions;
 
     if (line.empty()) {
       throw MetronomeException(
@@ -125,53 +143,43 @@ class SlidingTilePuzzle {
           "invalid.");
     }
 
-    boost::split(dimensions, line, boost::is_any_of(" "));
+    std::istringstream firstLine(line);
 
-    if (dimensions.size() != 2) {
-      throw MetronomeException("Only two dimensional puzzles are supported.");
-    }
+    std::size_t width;
+    std::size_t height;
+    firstLine >> width;
+    firstLine >> height;
 
-    if (dimensions[0] != dimensions[1]) {
+    if (width != height) {
       throw MetronomeException("Only square puzzles are supported.");
     }
 
-    dimension = static_cast<unsigned char>(stoi(dimensions[0]));
-
-    if (dimension != 4) {
-      throw MetronomeException("Only 4 by 4 puzzles are supported.");
+    if (DIMENSION != width) {
+      throw MetronomeException("Invalid dimension!");
     }
 
     getline(input, line);  // skip one line
 
     // Read start state
-    for (unsigned char i = 0; i < size * size; ++i) {
+    for (unsigned char i = 0; i < DIMENSION * DIMENSION; ++i) {
       getline(input, line);
       const int intValue = stoi(line);
-      unsigned char value = static_cast<unsigned char>(intValue);
-      startState.set(i, value);
+      startState[i] = static_cast<uint8_t>(intValue);
 
-      if (value == 0) {
-        startState.setZeroIndex(i);
+      if (static_cast<uint8_t>(intValue) == 0) {
+        startState.zeroIndex() = i;
       }
     }
   }
 
-  std::optional<State> transition(const State& state,
+  /**
+   * Transition to a new state from the given state applying the given action.
+   *
+   * @return the original state if the transition is not possible
+   */
+  std::optional<State> transition(const State& sourceState,
                                   const Action& action) const {
-    switch (action.toChar()) {
-      case 'N':
-        return getSuccessor(state, 0, -1);
-      case 'E':
-        return getSuccessor(state, 1, 0);
-      case 'W':
-        return getSuccessor(state, -1, 0);
-      case 'S':
-        return getSuccessor(state, 0, 1);
-      case '0':
-        return state;
-      default:
-        return {};
-    }
+    return getSuccessor(sourceState, action.relativeX(), action.relativeY());
   }
 
   bool isGoal(const State& state) const { return distance(state) == 0; }
@@ -179,22 +187,51 @@ class SlidingTilePuzzle {
   Cost distance(const State& state) const {
     int manhattanSum{0};
 
-    for (unsigned char x = 0; x < size; ++x) {
-      for (unsigned char y = 0; y < size; ++y) {
+    for (int x = 0; x < DIMENSION; ++x) {
+      for (int y = 0; y < DIMENSION; ++y) {
         auto value = state[getIndex(x, y)];
         if (value == 0) {
           continue;
         }
 
-        manhattanSum += abs(value / size - y) + abs(value % size - x);
+        const int endX = value % DIMENSION;
+        const int endY = value / DIMENSION;
+
+        manhattanSum += std::abs(endY - y) + std::abs(endX - x);
       }
     }
 
     return manhattanSum;
   }
 
+  Cost heuristic(const State& state, const State& otherState) const {
+    throw MetronomeException("State-to-state heuristic not implemented in Sliding Tile");
+  }
+
   Cost heuristic(const State& state) const {
-    return distance(state) * actionDuration;
+    Cost manhattanSum{0};
+
+    for (int x = 0; x < DIMENSION; ++x) {
+      for (int y = 0; y < DIMENSION; ++y) {
+        auto value = state[getIndex(x, y)];
+        if (value == 0) {
+          continue;
+        }
+
+        const int endX = value % DIMENSION;
+        const int endY = value / DIMENSION;
+
+        const int manhattanDistance = std::abs(endY - y) + std::abs(endX - x);
+
+        if (HEAVY) {
+          manhattanSum += manhattanDistance * value;
+        } else {
+          manhattanSum += manhattanDistance;
+        }
+      }
+    }
+
+    return manhattanSum * actionDuration;
   }
 
   bool safetyPredicate(const State&) const { return true; }
@@ -202,11 +239,12 @@ class SlidingTilePuzzle {
   std::vector<SuccessorBundle<SlidingTilePuzzle>> successors(
       const State& state) const {
     std::vector<SuccessorBundle<SlidingTilePuzzle>> successors;
+    successors.reserve(4);
 
-    addValidSuccessor(successors, state, 0, -1, Action::getActions()[0]);
-    addValidSuccessor(successors, state, 0, 1, Action::getActions()[3]);
-    addValidSuccessor(successors, state, -1, 0, Action::getActions()[2]);
-    addValidSuccessor(successors, state, 1, 0, Action::getActions()[1]);
+    for (auto& action : Action::getActions()) {
+      addValidSuccessor(
+          successors, state, action.relativeX(), action.relativeY(), action);
+    }
 
     return successors;
   }
@@ -214,52 +252,68 @@ class SlidingTilePuzzle {
   const State getStartState() const { return startState; }
 
   Cost getActionDuration() const { return actionDuration; }
-  
-  Action getIdentityAction() const {
-    return Action('0');
-  }
+
+  Action getIdentityAction() const { return Action('0'); }
 
  private:
-  static signed char getIndex(signed char x, signed char y) {
-    return size * y + x;
+  int getIndex(int x, int y) const {
+    return static_cast<int>(DIMENSION * y + x);
   }
 
   void addValidSuccessor(
       std::vector<SuccessorBundle<SlidingTilePuzzle>>& successors,
       const State& sourceState,
-      signed char relativeX,
-      signed char relativeY,
+      int relativeX,
+      int relativeY,
       Action action) const {
     auto successor = getSuccessor(sourceState, relativeX, relativeY);
+    
     if (successor.has_value()) {
-      successors.emplace_back(successor.value(), action, actionDuration);
+      const auto successorState = successor.value();
+      Cost actionCost;
+      
+      if(HEAVY) {
+        actionCost = successorState[sourceState.zeroIndex()] * actionDuration;
+      } else {
+        actionCost = actionDuration;
+      }
+
+      successors.emplace_back(successorState, action, actionDuration);
     }
   }
 
   std::optional<State> getSuccessor(const State& sourceState,
-                                    signed char relativeX,
-                                    signed char relativeY) const {
-    signed char targetZeroIndex =
-        static_cast<signed char>(sourceState.getZeroIndex()) +
-        getIndex(relativeX, relativeY);
+                                    int relativeX,
+                                    int relativeY) const {
+    const auto sourceZeroIndex = sourceState.zeroIndex();
 
-    if (targetZeroIndex >= 0 && targetZeroIndex < size * size) {
-      State targetState{sourceState};
+    int targetZeroIndex = sourceZeroIndex + getIndex(relativeX, relativeY);
 
-      // Move tile
-      targetState.set(targetState.getZeroIndex(),
-                      targetState[static_cast<unsigned char>(targetZeroIndex)]);
-      targetState.set(static_cast<unsigned char>(targetZeroIndex), 0);
-      targetState.setZeroIndex(static_cast<unsigned char>(targetZeroIndex));
+    const auto sourceZeroX = sourceZeroIndex % DIMENSION;
 
-      return targetState;
-    }
+    // Bound checks
+    // Left
+    if (sourceZeroX == 0 && relativeX == -1) return {};
+    // Right
+    if (sourceZeroX == DIMENSION - 1 && relativeX == 1) return {};
+    // Up & Down
+    if (targetZeroIndex < 0 || targetZeroIndex >= DIMENSION * DIMENSION)
+      return {};
 
-    return {};
+    State targetState{sourceState};
+
+    // Move tile
+    assert(targetState[sourceZeroIndex] >= 0 &&
+           targetState[sourceZeroIndex] <= DIMENSION * DIMENSION - 1);
+    assert(targetState[targetZeroIndex] >= 0 &&
+           targetState[targetZeroIndex] <= DIMENSION * DIMENSION - 1);
+    std::swap(targetState[sourceZeroIndex], targetState[targetZeroIndex]);
+    targetState.zeroIndex() = static_cast<uint8_t>(targetZeroIndex);
+
+    return targetState;
   }
 
   const Cost actionDuration;
-  static const unsigned char size{4};
   State startState;
 };
 

@@ -1,11 +1,11 @@
 {
   "timeLimit": 150000000000,
-  "domainPath": "/input/vacuum/slalom_02.vw",
+  "domainPath": "/input/vacuum/random1k.vw",
   "domainInstanceName": "Manual test instance",
-  "actionDuration": 100,
-  "domainName": "GRID_WORLD",
+  "actionDuration": 10,
+  "domainName": "ORIENTATION_GRID",
   "terminationType": "EXPANSION",
-  "algorithmName": "CLUSTER_RTS",
+  "algorithmName": "LSS_LRTA_STAR",
   "lookaheadType": "DYNAMIC",
   "commitmentStrategy": "SINGLE"
 }

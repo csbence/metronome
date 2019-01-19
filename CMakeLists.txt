@@ -8,6 +8,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/modules/")
 if (NOT APPLE AND NOT WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
 elseif(WIN32)
+# Stack must be increased from standard 1MB
 	set(CMAKE_EXE_LINKER_FLAGS "/STACK:0x2000000")
 endif()
 
@@ -36,16 +37,18 @@ set(SOURCE_FILES
         src/domains/GridWorld.hpp
         src/domains/Domain.hpp
         src/domains/SlidingTilePuzzle.hpp
+		src/domains/OrientationGrid.hpp
         src/domains/TestDomain.hpp
         src/domains/Traffic.hpp
         src/domains/SuccessorBundle.hpp
+        src/domains/VacuumWorld.hpp
         src/utils/PriorityQueue.hpp
         src/utils/Hash.hpp
         src/visualization/Visualizer.hpp
         src/utils/Location2D.hpp
         src/experiment/termination/TimeTerminationChecker.hpp
         src/experiment/Experiment.hpp
-        src/experiment/OfflinePlanManager.hpp
+		src/experiment/OfflineExperiment.hpp
         src/experiment/RealTimeExperiment.hpp
         src/experiment/Configuration.hpp
         src/experiment/Result.hpp
@@ -61,20 +64,20 @@ set(SOURCE_FILES
 set(TEST_FILES
         test/test.cpp
         test/utils/PriorityQueueTest.hpp
+        test/utils/ObjectPoolTest.hpp
         test/domains/GridWorldTest.hpp
+		test/domains/SlidingTilePuzzleTest.hpp
+		test/domains/VacuumWorldTest.hpp
         test/algorithms/AStarTest.hpp
         test/algorithms/LssLrtaStarTest.hpp
         src/utils/TimeMeasurement.hpp
-        test/experiment/TimeTerminationCheckerTest.hpp test/domains/TrafficTest.hpp)
+        test/experiment/TimeTerminationCheckerTest.hpp)
 
 add_executable(Metronome ${SOURCE_FILES})
 add_executable(MetronomeTest ${TEST_FILES})
 
-find_package(Boost 1.55.0 COMPONENTS thread system REQUIRED)
 
 include_directories(SYSTEM
-        ${Boost_INCLUDE_DIRS}
-        ${Boost_LIBRARY_DIRS}
         dependencies
 )
 
@@ -95,8 +98,10 @@ add_definitions(-DENABLE_TIME_BOUNDED_A_STAR)
 
 # Select the possible domains
 add_definitions(-DENABLE_GRID_WORLD)
-#add_definitions(-DENABLE_SLIDING_TILE_PUZZLE)
-#add_definitions(-DENABLE_TRAFFIC_WORLD)
+add_definitions(-DENABLE_ORIENTATION_GRID)
+add_definitions(-DENABLE_VACUUM_WORLD)
+add_definitions(-DENABLE_SLIDING_TILE_PUZZLE)
+add_definitions(-DENABLE_TRAFFIC_WORLD)
 
 # Disable logger
 add_definitions(-DELPP_DISABLE_LOGS)
@@ -104,5 +109,6 @@ add_definitions(-DELPP_DISABLE_LOGS)
 if (MINGW OR WIN32)
     target_link_libraries(Metronome ws2_32)
 endif()
-target_link_libraries(Metronome ${Boost_LIBRARIES})
-target_link_libraries(MetronomeTest ${Boost_LIBRARIES})
+
+target_link_libraries(Metronome)
+target_link_libraries(MetronomeTest)

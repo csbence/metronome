@@ -21,14 +21,15 @@
 
 namespace metronome {
 
-template<typename Domain, typename TerminationChecker>
+template <typename Domain, typename TerminationChecker>
 class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
  public:
   using State = typename Domain::State;
   using Action = typename Domain::Action;
   using Cost = typename Domain::Cost;
-  using ActionBundle =
-  typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle;
+  using Planner = Planner<Domain>;
+  using OnlinePlanner = OnlinePlanner<Domain, TerminationChecker>;
+  using ActionBundle = typename Planner::ActionBundle;
 
   static constexpr std::size_t MAX_CLUSTER_COUNT = 100000;
   // Only used for visualizations
@@ -37,7 +38,12 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   ClusterRts(const Domain &domain, const Configuration &configuration)
       : domain(domain),
         clusterNodeLimit(configuration.getLong(CLUSTER_NODE_LIMIT)),
-        clusterDepthLimit(configuration.getLong(CLUSTER_DEPTH_LIMIT)) {
+        clusterDepthLimit(configuration.getLong(CLUSTER_DEPTH_LIMIT)),
+        extractionCacheSize(configuration.getLong(EXTRACTION_CACHE_SIZE)),
+        nodeWeight(configuration.getDouble(WEIGHT, 1.0)),
+        openClusters(ClusterComparatorWeightedH(
+            configuration.getDouble(CLUSTER_WEIGHT, nodeWeight))),
+        tbaRouting(configuration.getBool(TBA_ROUTING, false)) {
     // Initialize hash table
     nodes.max_load_factor(1);
     nodes.reserve(Memory::NODE_LIMIT);
@@ -47,27 +53,61 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       const State &agentState,
       TerminationChecker &terminationChecker) override {
     ++iteration;
+    OnlinePlanner::beginIteration();
+
     if (domain.isGoal(agentState)) {
+      OnlinePlanner::incrementIdleIterationCount();
       // Goal is already reached
       return {};
     }
 
     // ---    Initialize    ---
-    if (clusterPool.empty()) createInitialCluster(agentState);
+    if (nodePool.empty()) {
+      createInitialCluster(agentState);
+      explore(agentState, terminationChecker);
+    }
 
+    const auto extractionStartTime = currentNanoTime();
+    ActionBundle naiveAction;
+    if (tbaRouting) {
+      // Experimental action extraction
+      naiveAction = extractNaiveAction(agentState);
+    } else {
+      // Default CRTS action extraction
+      if (emptyCache) {
+        emptyCache = false;
+        cachedPath.clear();
+      }
+      if (cachedPath.size() <= cachedIndex ||
+          cachedIndex > extractionCacheSize) {
+        cachedPath = extractPath(agentState, extractionCacheSize);
+        cachedIndex = 0;
+      }
+    }
+    const auto extractionEndTime = currentNanoTime();
+
+    const auto explorationStartTime = currentNanoTime();
     explore(agentState, terminationChecker);
+    const auto explorationEndTime = currentNanoTime();
 
-    std::vector<ActionBundle> path;
-    if (cachedPath.size() == cachedIndex || cachedIndex > 20) {
-      cachedPath = extractPath(agentState);
-      cachedIndex = 0;
+    if (!terminationChecker.reachedTermination()) {
+      OnlinePlanner::incrementIdleIterationCount();
     }
 
 #ifdef STREAM_GRAPH
-      visualizeProgress(agentState, cachedPath);
+    visualizeProgress(agentState, cachedPath);
 #endif
-    assert(!cachedPath.empty());
 
+    OnlinePlanner::recordAttribute("explorationTime",
+                                   explorationEndTime - explorationStartTime);
+    OnlinePlanner::recordAttribute("extractionTime",
+                                   extractionEndTime - extractionStartTime);
+
+    if (tbaRouting) {
+      return {naiveAction};
+    }
+
+    if (cachedPath.empty()) throw MetronomeException("Cached path empty!");
     auto nextAction = cachedPath[cachedIndex++];
     return {nextAction};
   }
@@ -102,9 +142,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     Cost f() const { return g + h; }
 
-    unsigned long hash() const { return state.hash(); }
+    std::size_t hash() const { return state.hash(); }
 
     bool operator==(const Node &node) const { return state == node.state; }
+    bool operator!=(const Node &node) const { return !(*this == node); }
 
     std::string toString() const {
       std::ostringstream stream;
@@ -142,14 +183,18 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     Cluster *containingCluster = nullptr;
   };
 
-  struct NodeComparatorF {
+  struct NodeComparatorWeightedF {
+    NodeComparatorWeightedF(double weight) : w{weight} {}
+
     int operator()(const Node *lhs, const Node *rhs) const {
-      if (lhs->f() < rhs->f()) return -1;
-      if (lhs->f() > rhs->f()) return 1;
+      if (lhs->g + lhs->h * w < rhs->g + rhs->h * w) return -1;
+      if (lhs->g + lhs->h * w > rhs->g + rhs->h * w) return 1;
       if (lhs->g > rhs->g) return -1;
       if (lhs->g < rhs->g) return 1;
       return 0;
     }
+
+    const double w;
   };
 
   struct NodeEquals {
@@ -180,7 +225,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
         auto nodeToCorePath = extractNodeToCorePath(bestTargetFrontierNode);
 
         actionsTowardsCluster.reserve(coreToNodePath.size() +
-            nodeToCorePath.size() + 1);
+                                      nodeToCorePath.size() + 1);
 
         actionsTowardsCluster.insert(
             std::end(actionsTowardsCluster),
@@ -228,6 +273,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
   class Cluster {
    public:
+    Cluster(double weight) : openList{{weight}} {}
+
     Node *coreNode = nullptr;
     /** Number of nodes claimed by this cluster not including open nodes. */
     std::size_t expandedNodeCount = 0;
@@ -237,9 +284,9 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     cserna::DynamicPriorityQueue<
         Node *,
         cserna::NonIntrusiveIndexFunction<Node *, Hash<Node>, NodeEquals>,
-        NodeComparatorF,
+        NodeComparatorWeightedF,
         100,
-        100000>
+        1000000>
         openList;
     std::unordered_map<State, Node *, typename metronome::Hash<State>>
         nodes;  // pre-allocate?
@@ -281,17 +328,21 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     }
   };
 
-  struct ClusterComparatorH {
+  struct ClusterComparatorWeightedH {
+    ClusterComparatorWeightedH(double weight) : w{weight} {}
+
     int operator()(const Cluster *lhs, const Cluster *rhs) const {
       assert(!lhs->openList.empty() && !rhs->openList.empty() &&
-          "Depleted cluster on open!");
+             "Depleted cluster on open!");
 
-      if (lhs->openList.top()->h < rhs->openList.top()->h) return -1;
-      if (lhs->openList.top()->h > rhs->openList.top()->h) return 1;
+      if (lhs->openList.top()->h * w < rhs->openList.top()->h * w) return -1;
+      if (lhs->openList.top()->h * w > rhs->openList.top()->h * w) return 1;
       if (lhs->openList.top()->g < rhs->openList.top()->g) return -1;
       if (lhs->openList.top()->g > rhs->openList.top()->g) return 1;
       return 0;
     }
+
+    const double w;
   };
 
   struct ClusterComparatorCoreH {
@@ -313,7 +364,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   void createInitialCluster(const State &initialState) {
     Planner::incrementGeneratedNodeCount();
 
-    auto initialCluster = clusterPool.construct();
+    auto initialCluster = clusterPool.construct(nodeWeight);
     Node *&initialNode = initialCluster->nodes[initialState];
 
     initialNode = nodePool.construct(Node{
@@ -330,10 +381,12 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     while (!terminationChecker.reachedTermination() && !openClusters.empty()) {
       auto cluster = openClusters.top();
 
-      // todo check if the goal state was expanded
       if (goalNode != nullptr) return;
 
-      assert(!cluster->openList.empty() && "Empty cluster on open!");
+      if (cluster->openList.empty()) {
+        throw MetronomeException("Empty cluster on open!");
+      }
+
       expandCluster(cluster);
 
       terminationChecker.notifyExpansion();
@@ -353,6 +406,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     }
 
     auto currentNode = sourceCluster->openList.pop();
+    // The local node list should only contain open nodes
+    sourceCluster->nodes.erase(currentNode->state);
 
     assert(!sourceCluster->openList.contains(currentNode));
     //    assert(currentNode->containingCluster == sourceCluster && "Containing
@@ -360,7 +415,6 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     if (nodes[currentNode->state] != nullptr) {
       // Remove local node
-      sourceCluster->nodes.erase(currentNode->state);
       nodePool.destruct(currentNode);
 
       manageCluster(sourceCluster);
@@ -369,13 +423,13 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     nodes[currentNode->state] = currentNode;
 
-    bool spawnNewCore = sourceCluster->expandedNodeCount >= clusterNodeLimit ||
-        currentNode->g / domain.getActionDuration() >=
-            clusterDepthLimit;
+    bool spawnNewCore =
+        sourceCluster->expandedNodeCount >= clusterNodeLimit ||
+        currentNode->g / domain.getActionDuration() >= clusterDepthLimit;
 
     if (spawnNewCore) {
       // Reassign local node to a new cluster
-      auto spawnedCluster = clusterPool.construct();
+      auto spawnedCluster = clusterPool.construct(nodeWeight);
       spawnedCluster->label = std::to_string(clusterPool.index(spawnedCluster));
       spawnedCluster->coreNode = currentNode;
       //      LOG(INFO) << "Creating cluster: " <<
@@ -391,6 +445,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     }
 
     ++(currentNode->containingCluster->expandedNodeCount);
+
     expandNode(currentNode);
 
     manageCluster(sourceCluster);
@@ -403,7 +458,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     auto clusterLabel =
         "cluster:" +
-            std::to_string(clusterPool.index(currentNode->containingCluster));
+        std::to_string(clusterPool.index(currentNode->containingCluster));
 
     visualizer.addNode(id,
                        currentNode->state.getX(),
@@ -428,6 +483,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
     if (domain.isGoal(sourceNode->state)) {
       LOG(INFO) << "Goal was expanded!";
+      emptyCache = true;
+      this->goalFound();
       goalNode = sourceNode;
     }
 
@@ -460,9 +517,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
           //                    << clusterPool.index(
           //                           globalSuccessorNode->containingCluster);
 
+          Node *successorRef = successorNode;
           containingCluster->openList.remove(successorNode);
           containingCluster->nodes.erase(successorNode->state);
-          nodePool.destruct(successorNode);
+          nodePool.destruct(successorRef);
         }
 
         // else: this node is not on the open list of this cluster, no cleanup
@@ -515,9 +573,12 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
                        Node *targetNode,
                        Action action,
                        Cost cost) {
-    assert(nodes[sourceNode->state] != nullptr &&
-        nodes[targetNode->state] != nullptr &&
-        "can't connect dangling nodes");
+    const auto sourceDangling = nodes[sourceNode->state] == nullptr;
+    const auto targetDangling = nodes[targetNode->state] == nullptr;
+
+    if (sourceDangling || targetDangling) {
+      throw MetronomeException("can't connect dangling nodes");
+    }
 
     bool sourceSuccess =
         connectClustersDirected(sourceNode, targetNode, action, cost);
@@ -569,24 +630,51 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     return existingConnectionFound;
   }
 
-  std::vector<ActionBundle> extractPath(const State &agentState) {
-    LOG(INFO) << "Extracting path from: " << agentState;
+  std::vector<ActionBundle> join(std::vector<ActionBundle> &&segments...) {
+    std::size_t totalSize;
+    for (const auto &segment : segments) {
+      totalSize += segment.size();
+    }
+
+    std::vector<ActionBundle> joinedSegments;
+    joinedSegments.reserve(totalSize);
+
+    for (auto &segment : segments) {
+      joinedSegments.insert(std::end(joinedSegments),
+                            make_move_iterator(std::begin(segment)),
+                            make_move_iterator(std::end(segment)));
+    }
+
+    return joinedSegments;
+  }
+
+  std::vector<ActionBundle> extractPath(const State &agentState,
+                                        const std::size_t length) {
+    // LOG(INFO) << "Extracting path from: " << agentState;
     Node *agentNode = nodes[agentState];
-    assert(agentNode != nullptr);
+    if (agentNode == nullptr) {
+      throw MetronomeException(
+          "Target not available. Insufficient time to expand path?");
+    }
+
     Cluster *agentCluster = agentNode->containingCluster;
 
     Cluster *targetCluster = nullptr;
     Node *targetNode = nullptr;
 
+    // Initialize the target cluster and target node
     if (goalNode != nullptr) {
       targetCluster = goalNode->containingCluster;
       targetNode = goalNode;
-      LOG(INFO) << "\tto the goal: " << goalNode;
+      // LOG(INFO) << "\tto the goal: " << goalNode;
     } else {
-      assert(!openClusters.empty());
+      if (openClusters.empty())
+        throw MetronomeException(
+            "Goal is not "
+            "reachable");
       targetCluster = openClusters.top();
       targetNode = targetCluster->openList.top()->parent;
-      LOG(INFO) << "\tto: " << targetNode;
+      // LOG(INFO) << "\tto: " << targetNode;
     }
 
     if (agentNode == targetNode) {
@@ -595,21 +683,28 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     }
 
     populateAgentToClusterCosts(agentCluster, targetCluster);
+
+    auto fromLastCorePath = extractCoreToNodePath(targetNode);
+
+    if (agentNode->containingCluster == targetNode->containingCluster) {
+      for (auto it = std::begin(fromLastCorePath);
+           it != std::end(fromLastCorePath);
+           ++it) {
+        if (it->expectedTargetState == agentState) {
+          // The source and the target are in the same cluster and the
+          // core-target path contains the source thus the agent can directly
+          // go to the target
+
+          // LOG(INFO) << "Last segment cut " << *it;
+
+          return {it + 1, std::end(fromLastCorePath)};
+        }
+      }
+    }
+
     auto skeletonPath = extractSkeletonPath(agentCluster, targetCluster);
-
-    //    LOG(INFO) << "Agent cluster: " << clusterPool.index(agentCluster)
-    //              << " core: " << agentCluster->coreNode;
-    //    for (auto clusterEdge : skeletonPath) {
-    //      LOG(INFO) << "intermediate cluster: "
-    //                << std::to_string(clusterPool.index(clusterEdge.cluster))
-    //                << " core: " << clusterEdge.cluster->coreNode;
-    //    }
-    //    LOG(INFO) << "Target cluster: " << clusterPool.index(targetCluster)
-    //              << " core: " << targetCluster->coreNode;
-
-    auto sourceClusterPath = extractNodeToCorePath(agentNode);
-    auto interClusterPath = extractInterClusterPath(skeletonPath);
-    auto targetClusterPath = extractCoreToNodePath(targetNode);
+    auto toFirstCorePath = extractNodeToCorePath(agentNode);
+    auto interClusterPath = extractInterClusterPath(skeletonPath, length);
 
     // Look for shortcuts - this is not an optional step
 
@@ -617,83 +712,38 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
          it != std::end(interClusterPath);
          ++it) {
       if (it->expectedTargetState == agentState) {
-        LOG(INFO) << "CUT " << *it;
-        LOG(INFO) << sourceClusterPath;
+        // LOG(INFO) << "CUT " << *it;
+        // LOG(INFO) << toFirstCorePath;
 
-        sourceClusterPath.clear();
+        toFirstCorePath.clear();
         decltype(interClusterPath)(it, std::end(interClusterPath))
-        .swap(interClusterPath);
+            .swap(interClusterPath);
         break;
       }
     }
 
-    if (agentNode->containingCluster == targetNode->containingCluster) {
-      assert(interClusterPath.empty());
-
-      for (auto it = std::begin(targetClusterPath);
-           it != std::end(targetClusterPath);
-           ++it) {
-        if (it->expectedTargetState == agentState) {
-          // The source and the target are in the same cluster and the
-          // core-target path contains the source thus the agent can dirctly
-          // go to the target
-
-          LOG(INFO) << "CUT " << *it;
-          LOG(INFO) << sourceClusterPath;
-
-          sourceClusterPath.clear();
-          // TODO double check that +1
-          decltype(targetClusterPath)(it
-          +1, std::end(targetClusterPath))
-          .swap(targetClusterPath);
-          break;
-        }
-      }
-    }
-
+    // Join segments
     std::vector<ActionBundle> path;
-    path.reserve(sourceClusterPath.size() + interClusterPath.size() +
-        targetClusterPath.size());
-
-    LOG(INFO) << "SOURCE PATH:";
-    for (auto &actionBundle : sourceClusterPath) {
-      LOG(INFO) << actionBundle;
-    }
-
-    LOG(INFO) << "INTER PATH:";
-    for (auto &actionBundle : interClusterPath) {
-      LOG(INFO) << actionBundle;
-    }
-
-    LOG(INFO) << "TARGET PATH:";
-    for (auto &actionBundle : targetClusterPath) {
-      LOG(INFO) << actionBundle;
-    }
+    path.reserve(toFirstCorePath.size() + interClusterPath.size() +
+                 fromLastCorePath.size());
 
     path.insert(std::end(path),
-                make_move_iterator(std::begin(sourceClusterPath)),
-                make_move_iterator(std::end(sourceClusterPath)));
+                make_move_iterator(std::begin(toFirstCorePath)),
+                make_move_iterator(std::end(toFirstCorePath)));
 
     path.insert(std::end(path),
                 make_move_iterator(std::begin(interClusterPath)),
                 make_move_iterator(std::end(interClusterPath)));
 
     path.insert(std::end(path),
-                make_move_iterator(std::begin(targetClusterPath)),
-                make_move_iterator(std::end(targetClusterPath)));
+                make_move_iterator(std::begin(fromLastCorePath)),
+                make_move_iterator(std::end(fromLastCorePath)));
 
     // Find abstract path to goal
     // 1. Find path to containing region center
     // 2. Find abstract path to goal via region centers
     // 3. Find last segment from region center to target node
     // If the path partially overlaps with the current path stitch
-
-    //    LOG(INFO) << "PATH:";
-    //    for (auto& actionBundle : path) {
-    //      LOG(INFO) << "Expected target: " << actionBundle.expectedTargetState
-    //                << " label: " << actionBundle.label
-    //                << " action: " << actionBundle.action;
-    //    }
 
     return path;
   }
@@ -722,18 +772,19 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   }
 
   std::vector<ActionBundle> extractInterClusterPath(
-      std::vector<ClusterEdge> &skeletonPath) const {
+      std::vector<ClusterEdge> &skeletonPath, const std::size_t length) const {
     std::vector<ActionBundle> interClusterActions;
 
-    LOG(INFO) << "InterCluster Path";
+    // LOG(INFO) << "InterCluster Path";
+    std::optional<std::size_t> firstSegmentSize;
 
     for (auto &skeletonPathSegment : skeletonPath) {
-      LOG(INFO) << "  Segment:"
+      /*LOG(INFO) << "  Segment:"
                 << skeletonPathSegment.bestSourceFrontierNode->containingCluster
-                    ->label
+                       ->label
                 << " >>> "
                 << skeletonPathSegment.bestTargetFrontierNode->containingCluster
-                    ->label;
+                       ->label;*/
       auto segmentActions = skeletonPathSegment.inverseActions();
 
       // Debug info
@@ -747,7 +798,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
         const auto targetClusterId = clusterPool.index(targetCluster);
 
         actionBundle.label += std::to_string(targetClusterId) + "->" +
-            std::to_string(sourceClusterId);
+                              std::to_string(sourceClusterId);
       }
 
       // NOTE: we use the assumption that the cost is symmetric and the
@@ -757,12 +808,24 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       //        actionBundle.action = actionBundle.action.inverse();
       //      }
 
+      if (!firstSegmentSize.has_value()) {
+        // Initialize first segment size
+        firstSegmentSize = segmentActions.size();
+      }
+
       interClusterActions.insert(std::end(interClusterActions),
                                  make_move_iterator(std::begin(segmentActions)),
                                  make_move_iterator(std::end(segmentActions)));
+
+      if (interClusterActions.size() - firstSegmentSize.value() > length) {
+        // The first segment can be lost during optimization
+        // The returned path has to be at least length size after optimization
+
+        break;
+      }
     }
 
-    LOG(INFO) << "InterCluster Path END";
+    // LOG(INFO) << "InterCluster Path END";
 
     return interClusterActions;
   }
@@ -790,6 +853,12 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     return nodeToCorePath;
   }
 
+  /**
+   * Extract the skeleton path from the agentCluster to the
+   * targetCluster following the cluster-parent pointers. The cluster-parent
+   * pointers mark the forward path as the cluster level search was initiated
+   * at the targetCluster.
+   */
   std::vector<ClusterEdge> extractSkeletonPath(const Cluster *agentCluster,
                                                Cluster *targetCluster) const {
     auto currentCluster = agentCluster;
@@ -848,12 +917,79 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     }
   }
 
+  /**
+   * Extract TBA* like path. This is not part of the core CRTS algorithm.
+   *
+   * @param targetNode
+   * @param sourceNode
+   * @return
+   */
+  ActionBundle extractNaiveAction(const State &agentState) {
+    Node *agentNode = nodes[agentState];
+    if (agentNode == nullptr) {
+      throw MetronomeException(
+          "Target not available. Insufficient time to expand path?");
+    }
+
+    Cluster *agentCluster = agentNode->containingCluster;
+
+    Cluster *targetCluster = nullptr;
+    Node *targetNode = nullptr;
+
+    // Initialize the target cluster and target node
+    if (goalNode != nullptr) {
+      targetCluster = goalNode->containingCluster;
+      targetNode = goalNode;
+      // LOG(INFO) << "\tto the goal: " << goalNode;
+    } else {
+      assert(!openClusters.empty());
+      targetCluster = openClusters.top();
+      targetNode = targetCluster->openList.top()->parent;
+      // LOG(INFO) << "\tto: " << targetNode;
+    }
+
+    if (agentNode == targetNode) {
+      return {
+          ActionBundle(domain.getIdentityAction(), domain.getActionDuration())};
+    }
+
+    std::vector<ActionBundle> actionBundles;
+    auto currentNode = targetNode;
+
+    while (currentNode->parent != nullptr && currentNode != agentNode) {
+      ActionBundle actionBundle(currentNode->action,
+                                currentNode->g - currentNode->parent->g);
+      actionBundle.expectedTargetState = currentNode->state;
+      actionBundles.push_back(std::move(actionBundle));
+
+      currentNode = currentNode->parent;
+    }
+
+    if (currentNode != agentNode) {
+      const Action action = agentNode->action.inverse();
+      const Cost cost = agentNode->g - agentNode->parent->g;
+      const State expectedState = agentNode->parent->state;
+
+      ActionBundle actionBundle(action, cost);
+      actionBundle.expectedTargetState = expectedState;
+      actionBundle.label = "backtrack";
+      return actionBundle;
+    }
+
+    //    std::reverse(actionBundles.begin(), actionBundles.end());
+    return actionBundles.back();
+  }
+
   const Domain &domain;
   const std::size_t clusterNodeLimit;
   const Cost clusterDepthLimit;
+  const std::size_t extractionCacheSize;
+  const double nodeWeight;
+  const bool tbaRouting;
+  
   cserna::DynamicPriorityQueue<Cluster *,
                                ClusterIndex,
-                               ClusterComparatorH,
+                               ClusterComparatorWeightedH,
                                MAX_CLUSTER_COUNT,
                                MAX_CLUSTER_COUNT>
       openClusters;
@@ -873,6 +1009,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   std::size_t cachedIndex = 0;
 
   Node *goalNode = nullptr;
+  bool emptyCache = false;
 
   Visualizer visualizer;
 };

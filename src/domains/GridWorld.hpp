@@ -22,12 +22,12 @@ class GridWorld {
    public:
     Action() : label{'~'} {};
     explicit Action(char label) : label{label} {}
-    Action(const Action&) = default;
-    Action(Action&&) = default;
-    Action& operator=(const Action&) = default;
+    Action(const Action &) = default;
+    Action(Action &&) = default;
+    Action &operator=(const Action &) = default;
     ~Action() = default;
 
-    static std::vector<Action>& getActions() {
+    static std::vector<Action> &getActions() {
       static std::vector<Action> actions{
           Action('N'), Action('S'), Action('W'), Action('E')};
       return actions;
@@ -62,13 +62,13 @@ class GridWorld {
                                std::to_string(label));
     }
 
-    bool operator==(const Action& rhs) const { return label == rhs.label; }
+    bool operator==(const Action &rhs) const { return label == rhs.label; }
 
-    bool operator!=(const Action& rhs) const { return !(rhs == *this); }
+    bool operator!=(const Action &rhs) const { return !(rhs == *this); }
 
     char toChar() const { return label; }
 
-    friend std::ostream& operator<<(std::ostream& os, const Action& action) {
+    friend std::ostream &operator<<(std::ostream &os, const Action &action) {
       os << action.label << " (dx: " << action.relativeX()
          << " dy: " << action.relativeY() << ")";
       return os;
@@ -87,21 +87,21 @@ class GridWorld {
     unsigned int getY() const { return y; }
     std::size_t hash() const { return x ^ y << 16 ^ y >> 16; }
 
-    bool operator==(const State& state) const {
+    bool operator==(const State &state) const {
       return x == state.x && y == state.y;
     }
 
-    bool operator!=(const State& state) const {
+    bool operator!=(const State &state) const {
       return x != state.x || y != state.y;
     }
 
-    State& operator=(State toCopy) {
+    State &operator=(State toCopy) {
       swap(*this, toCopy);
       return *this;
     }
 
-    friend std::ostream& operator<<(std::ostream& stream,
-                                    const GridWorld::State& state) {
+    friend std::ostream &operator<<(std::ostream &stream,
+                                    const GridWorld::State &state) {
       stream << "x: " << state.getX() << " y: " << state.getY();
       return stream;
     }
@@ -111,7 +111,7 @@ class GridWorld {
     unsigned int x;
     unsigned int y;
     /*Function facilitating operator==*/
-    friend void swap(State& first, State& second) {
+    friend void swap(State &first, State &second) {
       using std::swap;
       swap(first.x, second.x);
       swap(first.y, second.y);
@@ -119,13 +119,14 @@ class GridWorld {
   };
 
   /*Entry point for using this Domain*/
-  GridWorld(const Configuration& configuration, std::istream& input)
-      : actionDuration(configuration.getLong(ACTION_DURATION)) {
+  GridWorld(const Configuration &configuration, std::istream &input)
+      : actionDuration(configuration.getLong(ACTION_DURATION)),
+        heuristicMultiplier(configuration.getDouble(HEURISTIC_MULTIPLIER)) {
     obstacles = std::unordered_set<State, typename metronome::Hash<State>>{};
     unsigned int currentHeight = 0;
     unsigned int currentWidth = 0;
     std::string line;
-    char* end;
+    char *end;
     getline(input, line);  // get the width
 
     std::stringstream convertWidth(line);
@@ -192,8 +193,8 @@ class GridWorld {
    *
    * @return the original state if the transition is not possible
    */
-  std::optional<State> transition(const State& sourceState,
-                                  const Action& action) const {
+  std::optional<State> transition(const State &sourceState,
+                                  const Action &action) const {
     State targetState(sourceState.getX() + action.relativeX(),
                       sourceState.getY() + action.relativeY());
 
@@ -205,16 +206,16 @@ class GridWorld {
   }
 
   /*Validating a goal state*/
-  bool isGoal(const State& location) const {
+  bool isGoal(const State &location) const {
     return location.getX() == goalLocation.getX() &&
            location.getY() == goalLocation.getY();
   }
   /*Validating an obstacle state*/
-  bool isObstacle(const State& location) const {
+  bool isObstacle(const State &location) const {
     return obstacles.find(location) != obstacles.end();
   }
   /*Validating the agent can visit the state*/
-  bool isLegalLocation(const State& location) const {
+  bool isLegalLocation(const State &location) const {
     return location.getX() < width && location.getY() < height &&
            !isObstacle(location);
   }
@@ -222,7 +223,7 @@ class GridWorld {
   unsigned int getWidth() const { return width; }
   unsigned int getHeight() const { return height; }
   /*Adding an obstacle to the domain*/
-  bool addObstacle(const State& toAdd) {
+  bool addObstacle(const State &toAdd) {
     if (isLegalLocation(toAdd)) {
       obstacles.insert(toAdd);
       return true;
@@ -236,34 +237,42 @@ class GridWorld {
 
   State getStartState() const { return startLocation; }
 
-  bool isStart(const State& state) const {
+  bool isStart(const State &state) const {
     return state.getX() == startLocation.getX() &&
            state.getY() == startLocation.getY();
   }
 
-  Cost distance(const State& state) const {
+  Cost distance(const State &state, const State &other) const {
     unsigned int verticalDistance =
-        std::max(goalLocation.getY(), state.getY()) -
-        std::min(goalLocation.getY(), state.getY());
+        std::max(other.getY(), state.getY()) -
+        std::min(other.getY(), state.getY());
     unsigned int horizontalDistance =
-        std::max(goalLocation.getX(), state.getX()) -
-        std::min(goalLocation.getX(), state.getX());
+        std::max(other.getX(), state.getX()) -
+        std::min(other.getX(), state.getX());
     unsigned int totalDistance = verticalDistance + horizontalDistance;
     Cost manhattanDistance = static_cast<Cost>(totalDistance);
     return manhattanDistance;
   }
 
-  Cost heuristic(const State& state) const {
+  Cost distance(const State &state) const {
+    return distance(state, goalLocation);
+  }
+
+  Cost heuristic(const State &state) const {
     return distance(state) * actionDuration;
   }
 
-  bool safetyPredicate(const State&) const { return true; }
+  Cost heuristic(const State &state, const State &other) const {
+    return distance(state, other) * actionDuration;
+  }
 
-  std::vector<SuccessorBundle<GridWorld>> successors(const State& state) const {
+  bool safetyPredicate(const State &) const { return true; }
+
+  std::vector<SuccessorBundle<GridWorld>> successors(const State &state) const {
     std::vector<SuccessorBundle<GridWorld>> successors;
     successors.reserve(4);
 
-    for (auto& action : Action::getActions()) {
+    for (auto &action : Action::getActions()) {
       addValidSuccessor(
           successors, state, action.relativeX(), action.relativeY(), action);
     }
@@ -271,7 +280,7 @@ class GridWorld {
     return successors;
   }
 
-  void visualize(std::ostream& display) const {
+  void visualize(std::ostream &display) const {
     for (unsigned int i = 0; i < height; ++i) {
       for (unsigned int j = 0; j < width; ++j) {
         if (startLocation.getX() == j && startLocation.getY() == i) {
@@ -294,18 +303,18 @@ class GridWorld {
   Action getIdentityAction() const { return Action('0'); }
 
  private:
-  void addValidSuccessor(std::vector<SuccessorBundle<GridWorld>>& successors,
-                         const State& sourceState,
+  void addValidSuccessor(std::vector<SuccessorBundle<GridWorld>> &successors,
+                         const State &sourceState,
                          const int relativeX,
                          const int relativeY,
-                         Action& action) const {
+                         Action &action) const {
     auto successor = getSuccessor(sourceState, relativeX, relativeY);
     if (successor.has_value()) {
       successors.emplace_back(successor.value(), action, actionDuration);
     }
   }
 
-  std::optional<State> getSuccessor(const State& sourceState,
+  std::optional<State> getSuccessor(const State &sourceState,
                                     int relativeX,
                                     int relativeY) const {
     auto newX = static_cast<unsigned int>(static_cast<int>(sourceState.getX()) +
@@ -339,6 +348,7 @@ class GridWorld {
   State startLocation{};
   State goalLocation{};
   const Cost actionDuration;
+  const double heuristicMultiplier;
 };
 
 }  // namespace metronome

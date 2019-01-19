@@ -9,8 +9,10 @@
 //#include "experiment/TimeTerminationCheckerTest.hpp"
 //#include "utils/PriorityQueueTest.hpp"
 //#include "domains/GridWorldTest.hpp"
-#include "domains/TrafficTest.hpp"
 //#include "domains/SlidingTilePuzzleTest.hpp"
+//#include "domains/VacuumWorldTest.hpp"
+//#include "utils/ObjectPoolTest.hpp"
+
 INITIALIZE_EASYLOGGINGPP
 
 TEST_CASE("Main test", "[main]") {}

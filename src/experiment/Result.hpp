@@ -21,9 +21,13 @@ class Result {
         planningTime{0},
         actionExecutionTime{0},
         goalAchievementTime{0},
+        normalizedGoalAchievementTime{0},
         idlePlanningTime{0},
         pathLength{0},
         actions{std::vector<std::string>()},
+        iterationCount{0},
+        idleIterationCount{0},
+        goalFirstFoundIteration{0},
         identityActions{0},
         timestamp{currentNanoTime()} {};
 
@@ -33,9 +37,13 @@ class Result {
          const long long planningTime,
          const long long actionExecutionTime,
          const long long goalAchievementTime,
+         const long long normalizedGoalAchievementTime,
          const long long idlePlanningTime,
          const long long pathLength,
          const std::vector<std::string> actions,
+         const int iterationCount = 0,
+         const int idleIterationCount = 0,
+         const int goalFirstFoundIteration = 0,
          const int identityActions = 0,
          const long long timestamp = currentNanoTime())
       : configuration{configuration},
@@ -46,9 +54,13 @@ class Result {
         planningTime{planningTime},
         actionExecutionTime{actionExecutionTime},
         goalAchievementTime{goalAchievementTime},
+        normalizedGoalAchievementTime{normalizedGoalAchievementTime},
         idlePlanningTime{idlePlanningTime},
         pathLength{pathLength},
         actions{actions},
+        iterationCount{iterationCount},
+        idleIterationCount{idleIterationCount},
+        goalFirstFoundIteration{goalFirstFoundIteration},
         identityActions{identityActions},
         timestamp{timestamp} {};
 
@@ -77,6 +89,9 @@ class Result {
     resultDocument.AddMember("goalAchievementTime",
                              Value{}.SetInt64(goalAchievementTime),
                              allocator);
+    resultDocument.AddMember("normalizedGoalAchievementTime",
+                             Value{}.SetInt64(normalizedGoalAchievementTime),
+                             allocator);
     resultDocument.AddMember(
         "idlePlanningTime", Value{}.SetInt64(idlePlanningTime), allocator);
     resultDocument.AddMember(
@@ -90,9 +105,22 @@ class Result {
     //
     //        resultDocument.AddMember("actions", actionsArray, allocator);
     resultDocument.AddMember(
+        "iterationCount", Value{}.SetInt(iterationCount), allocator);
+    resultDocument.AddMember(
+        "idleIterationCount", Value{}.SetInt(idleIterationCount), allocator);
+    resultDocument.AddMember("goalFirstFoundIteration",
+                             Value{}.SetInt(goalFirstFoundIteration),
+                             allocator);
+    resultDocument.AddMember(
         "identityActions", Value{}.SetInt(identityActions), allocator);
     resultDocument.AddMember(
         "timestamp", Value{}.SetInt64(timestamp), allocator);
+    
+    for (const auto& attribute : attributes) {
+        Value key(attribute.first.c_str(), allocator);
+        Value value(attribute.second);
+        resultDocument.AddMember(key, value, allocator);
+    }
 
     const rapidjson::Document& document = configuration.getJsonDocument();
     rapidjson::Value configurationValue;
@@ -104,7 +132,7 @@ class Result {
     resultDocument.Accept(writer);
     return buffer.GetString();
   }
-
+  
   const Configuration& configuration;
   const std::string errorMessage;
   const bool success;
@@ -113,11 +141,16 @@ class Result {
   const long long planningTime;
   const long long actionExecutionTime;
   const long long goalAchievementTime;
+  const long long normalizedGoalAchievementTime;
   const long long idlePlanningTime;
   const long long pathLength;
   const std::vector<std::string> actions;
+  const int iterationCount;
+  const int idleIterationCount;
+  const int goalFirstFoundIteration;
   const int identityActions;
   const long long timestamp;
+  std::vector<std::pair<std::string, std::int64_t>> attributes;
 };
 
 }  // namespace metronome

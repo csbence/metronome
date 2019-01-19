@@ -5,15 +5,22 @@
 #include <string>
 #include "Configuration.hpp"
 #include "MetronomeException.hpp"
-#include "OfflinePlanManager.hpp"
+#include "OfflineExperiment.hpp"
 #include "RealTimeExperiment.hpp"
 #include "Result.hpp"
 #include "domains/Traffic.hpp"
 #include "experiment/termination/ExpansionTerminationChecker.hpp"
+#include "experiment/termination/TimeTerminationChecker.hpp"
 #include "utils/File.hpp"
 
 #ifdef ENABLE_GRID_WORLD
 #include "domains/GridWorld.hpp"
+#endif
+#ifdef ENABLE_ORIENTATION_GRID
+#include "domains/OrientationGrid.hpp"
+#endif
+#ifdef ENABLE_VACUUM_WORLD
+#include "domains/VacuumWorld.hpp"
 #endif
 #ifdef ENABLE_SLIDING_TILE_PUZZLE
 #include "domains/SlidingTilePuzzle.hpp"
@@ -79,9 +86,22 @@ class ConfigurationExecutor {
     }
 #endif
 
+#ifdef ENABLE_ORIENTATION_GRID
+    if (domainName == DOMAIN_ORIENTATION_GRID) {
+      return executeDomain<OrientationGrid>(configuration, resourcesDir);
+    }
+#endif
+
+#ifdef ENABLE_VACUUM_WORLD
+      if (domainName == DOMAIN_VACUUM_WORLD) {
+      return executeDomain<VacuumWorld>(configuration, resourcesDir);
+    }
+#endif
+
 #ifdef ENABLE_SLIDING_TILE_PUZZLE
     if (domainName == DOMAIN_TILES) {
-      return executeDomain<SlidingTilePuzzle>(configuration, resourcesDir);
+      return executeDomain<SlidingTilePuzzle<4>>(configuration, 
+          resourcesDir);
     }
 #endif
 
@@ -92,7 +112,7 @@ class ConfigurationExecutor {
 #endif
 
     LOG(ERROR) << "Unknown domain name: " << domainName << std::endl;
-    return Result(configuration, "Unknown: domainName: " + domainName);
+    return Result(configuration, "Unknown domainName: " + domainName);
   }
 
   template <typename Domain>
@@ -215,7 +235,7 @@ class ConfigurationExecutor {
                                       const Domain& domain) {
     Planner planner{domain, configuration};
 
-    OfflinePlanManager<Domain, Planner> offlinePlanManager;
+    OfflineExperiment<Domain, Planner> offlinePlanManager;
 
     LOG(INFO) << "Configuration done.";
     return offlinePlanManager.plan(configuration, domain, planner);
