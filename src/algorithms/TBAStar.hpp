@@ -151,6 +151,7 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
         targetPath = nullptr;
 
         //backtrack one except if root, in which case cycle with last node
+        // TODO: just use identity action
         if (thisNode == rootNode) {
           plan.push_back({lastAgentNode->action, lastAgentNode->actionCost});
           targetPath = new PathTrace(lastAgentNode);
