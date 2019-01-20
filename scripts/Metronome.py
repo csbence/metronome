@@ -17,19 +17,25 @@ __author__ = 'Bence Cserna, William Doyle, Kevin C. Gall'
 
 def generate_base_configuration():
     # required configuration parameters
-    algorithms_to_run = ['TIME_BOUNDED_A_STAR']
-    # algorithms_to_run = ['CLUSTER_RTS', 'TIME_BOUNDED_A_STAR']
-    # algorithms_to_run = ['A_STAR']
+    #     algorithms_to_run = ['TIME_BOUNDED_A_STAR']
+    #     algorithms_to_run = ['CLUSTER_RTS', 'TIME_BOUNDED_A_STAR']
+    #     algorithms_to_run = ['CLUSTER_RTS']
+    algorithms_to_run = ['A_STAR']
     expansion_limit = [100000000]
     lookahead_type = ['DYNAMIC']
     time_limit = [300000000000]
-    #action_durations = [1]  # Use this for A*
-    action_durations = [1000000,
-     #                   10000000,
-                        # 12000000, 16000000, 20000000, 25000000,
-                        3200000,
-                        6400000
-                        ]
+    action_durations = [1]  # Use this for A*
+    #     action_durations = [
+    #                         100000,
+    #                         250000,
+    #                         500000,
+    #                         1000000,
+    #                         3200000,
+    #                         6400000,
+    #                         12800000,
+    #                                                 25600000,
+    #                                                 51200000,
+    #                         ]
     # action_durations = [50, 100, 250, 500, 1000]
     termination_types = ['TIME']
     step_limits = [100000000]
@@ -43,7 +49,7 @@ def generate_base_configuration():
     # base_configuration['stepLimit'] = step_limits
     # base_configuration['timeLimit'] = time_limit
     base_configuration['commitmentStrategy'] = ['SINGLE']
-    base_configuration['heuristicMultiplier'] = [1.0, 0.1]
+    base_configuration['heuristicMultiplier'] = [1.0]
     base_configuration['terminationTimeEpsilon'] = [5000000]  # 4ms
 
     compiled_configurations = [{}]
@@ -53,10 +59,12 @@ def generate_base_configuration():
                                                     key, value)
 
     # Algorithm specific configurations
-    # weights = [1.0, 2.0, 4.0, 8.0]
-    weights = [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1000000]
-    # weights = [1.0]
-    
+    weights = [1.0, 2.0, 4.0, 8.0]
+    # weights = [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1000000]
+    tba_weights = [1.0, 2.0, 32.0, 64.0]
+    crts_weights = [1.0]
+    #     crts_weights = tba_weights
+
     compiled_configurations = cartesian_product(compiled_configurations,
                                                 'weight', weights,
                                                 [['algorithmName',
@@ -69,12 +77,17 @@ def generate_base_configuration():
                                                   'TIME_BOUNDED_A_STAR']])
 
     compiled_configurations = cartesian_product(compiled_configurations,
-                                                'weight', weights,
+                                                'weight', tba_weights,
                                                 [['algorithmName',
                                                   'TIME_BOUNDED_A_STAR']])
 
     compiled_configurations = cartesian_product(compiled_configurations,
-                                                'weight', weights,
+                                                'projection', [True, False],
+                                                [['algorithmName',
+                                                  'TIME_BOUNDED_A_STAR']])
+
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'weight', crts_weights,
                                                 [['algorithmName',
                                                   'CLUSTER_RTS']])
 
@@ -82,9 +95,14 @@ def generate_base_configuration():
                                                 'clusterNodeLimit', [10000000],
                                                 [['algorithmName',
                                                   'CLUSTER_RTS']])
-                                                
+
     compiled_configurations = cartesian_product(compiled_configurations,
-                                                'extractionCacheSize', [10, 100, 1000, 10000],
+                                                'extractionCacheSize', [10, 100, 1000],
+                                                [['algorithmName',
+                                                  'CLUSTER_RTS']])
+
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'tbaRouting', [True, False],
                                                 [['algorithmName',
                                                   'CLUSTER_RTS']])
 
@@ -93,7 +111,8 @@ def generate_base_configuration():
                                                                       100,
                                                                       # 500,
                                                                       # 1000,
-                                                                      10000],
+                                                                      #                                                                       10000
+                                                                      ],
                                                 [['algorithmName',
                                                   'CLUSTER_RTS']])
 
@@ -148,7 +167,8 @@ def generate_grid_world():
 
     configurations = cartesian_product(configurations, 'domainName',
                                        [
-                                           'ORIENTATION_GRID',
+                                           'VACUUM_WORLD',
+                                           #                                            'ORIENTATION_GRID',
                                            # 'GRID_WORLD'
                                        ])
     configurations = cartesian_product(configurations, 'domainPath',
@@ -176,9 +196,9 @@ def cartesian_product(base, key, values, filters=None):
     return new_base
 
 
-def distributed_execution(configurations, explicitResourcesDir = None):
-    from slack_notification import start_experiment_notification, \
-    end_experiment_notification
+def distributed_execution(configurations):
+    #from slack_notification import start_experiment_notification, \
+    #    end_experiment_notification
 
     executor = create_remote_distlre_executor()
     # executor = create_local_distlre_executor(1)
@@ -189,17 +209,16 @@ def distributed_execution(configurations, explicitResourcesDir = None):
 
     cwd = os.getcwd()
 
-    if explicitResourcesDir == None:
-        explicitResourcesDir = '/'.join([cwd, 'resources/'])
-
     for configuration in configurations:
-        nice = "nice -n 20"
+        #         nice = "nice -n 20"
         executable = '/'.join([cwd, 'build/release/Metronome'])
-        resources = explicitResourcesDir
+        resources = '/'.join([cwd, 'resources/'])
         json_configuration = f'{json.dumps(configuration)}\n\n'
 
         metadata = str(json_configuration)
-        command = ' '.join([nice, executable, resources, metadata])
+
+        # Nice was removed
+        command = ' '.join([executable, resources, metadata])
 
         task = Task(command=command, meta=None, time_limit=900, memory_limit=10)
         task.input = json_configuration.encode()
@@ -377,7 +396,7 @@ def label_algorithms(configurations):
                                               + ' cache: ' \
                                               + str(configuration[
                                                         'extractionCacheSize']) \
-
+ \
         if configuration['algorithmName'] == 'TIME_BOUNDED_A_STAR':
             configuration['algorithmLabel'] = configuration['algorithmName'] \
                                               + ' weight: ' \
