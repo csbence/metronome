@@ -85,7 +85,6 @@ def generate_base_configuration():
                                                 'projection', [True, False],
                                                 [['algorithmName',
                                                   'TIME_BOUNDED_A_STAR']])
-
     compiled_configurations = cartesian_product(compiled_configurations,
                                                 'weight', crts_weights,
                                                 [['algorithmName',
@@ -100,7 +99,6 @@ def generate_base_configuration():
                                                 'extractionCacheSize', [10, 100, 1000],
                                                 [['algorithmName',
                                                   'CLUSTER_RTS']])
-
     compiled_configurations = cartesian_product(compiled_configurations,
                                                 'tbaRouting', [True, False],
                                                 [['algorithmName',
@@ -111,7 +109,6 @@ def generate_base_configuration():
                                                                       100,
                                                                       # 500,
                                                                       # 1000,
-                                                                      #                                                                       10000
                                                                       ],
                                                 [['algorithmName',
                                                   'CLUSTER_RTS']])
@@ -168,7 +165,7 @@ def generate_grid_world():
     configurations = cartesian_product(configurations, 'domainName',
                                        [
                                            'VACUUM_WORLD',
-                                           #                                            'ORIENTATION_GRID',
+                                           # 'ORIENTATION_GRID',
                                            # 'GRID_WORLD'
                                        ])
     configurations = cartesian_product(configurations, 'domainPath',
@@ -197,8 +194,8 @@ def cartesian_product(base, key, values, filters=None):
 
 
 def distributed_execution(configurations):
-    #from slack_notification import start_experiment_notification, \
-    #    end_experiment_notification
+    from slack_notification import start_experiment_notification, \
+    end_experiment_notification
 
     executor = create_remote_distlre_executor()
     # executor = create_local_distlre_executor(1)
@@ -210,14 +207,11 @@ def distributed_execution(configurations):
     cwd = os.getcwd()
 
     for configuration in configurations:
-        #         nice = "nice -n 20"
         executable = '/'.join([cwd, 'build/release/Metronome'])
         resources = '/'.join([cwd, 'resources/'])
         json_configuration = f'{json.dumps(configuration)}\n\n'
 
         metadata = str(json_configuration)
-
-        # Nice was removed
         command = ' '.join([executable, resources, metadata])
 
         task = Task(command=command, meta=None, time_limit=900, memory_limit=10)
@@ -232,7 +226,7 @@ def distributed_execution(configurations):
 
         futures.append(future)
 
-    #start_experiment_notification(experiment_count=len(configurations))
+    start_experiment_notification(experiment_count=len(configurations))
     print('Experiments started')
     executor.execute_tasks()
 
@@ -240,7 +234,7 @@ def distributed_execution(configurations):
     progress_bar.close()
 
     print('Experiments finished')
-    #end_experiment_notification()
+    end_experiment_notification()
 
     results = construct_results(futures)
 
@@ -299,8 +293,8 @@ def create_local_distlre_executor(local_threads):
 
 
 def create_remote_distlre_executor(local_threads=None):
-    #from slack_notification import start_experiment_notification, \
-    #    end_experiment_notification
+    from slack_notification import start_experiment_notification, \
+       end_experiment_notification
 
     import getpass
     HOSTS = ['ai' + str(i) + '.cs.unh.edu' for i in
@@ -415,7 +409,7 @@ def main():
             'Build failed.')
     print('Build complete!')
 
-    file_name = 'results/grid_results_time_weighted.json'
+    file_name = 'results/baseline_vw.json'
 
     if recycle:
         # Load previous configurations
@@ -426,7 +420,7 @@ def main():
         configurations = generate_grid_world()
         # configurations = generate_tile_puzzle()
         label_algorithms(configurations)
-        # configurations = configurations[:1]  # debug - keep only one config
+#         configurations = configurations[:1]  # debug - keep only one config
 
     print('{} configurations has been generated '.format(len(configurations)))
 
