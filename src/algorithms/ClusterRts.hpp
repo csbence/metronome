@@ -949,16 +949,21 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
     }
 
     if (agentNode == targetNode) {
-      return {
-          ActionBundle(domain.getIdentityAction(), domain.getActionDuration())};
+      return ActionBundle(domain.getIdentityAction(),
+                          domain.getActionDuration());
     }
 
     std::vector<ActionBundle> actionBundles;
     auto currentNode = targetNode;
 
     while (currentNode->parent != nullptr && currentNode != agentNode) {
+      // We use the default action duration as the g difference is misleading
+      // on cluster borders
       ActionBundle actionBundle(currentNode->action,
-                                currentNode->g - currentNode->parent->g);
+                                domain.getActionDuration());
+      //                                currentNode->g -
+      //                                currentNode->parent->g);
+
       actionBundle.expectedTargetState = currentNode->state;
       actionBundles.push_back(std::move(actionBundle));
 
@@ -976,8 +981,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       return actionBundle;
     }
 
-    //    std::reverse(actionBundles.begin(), actionBundles.end());
-    return actionBundles.back();
+    const auto naiveAction = actionBundles.back();
+    return naiveAction;
   }
 
   const Domain &domain;
@@ -986,7 +991,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   const std::size_t extractionCacheSize;
   const double nodeWeight;
   const bool tbaRouting;
-  
+
   cserna::DynamicPriorityQueue<Cluster *,
                                ClusterIndex,
                                ClusterComparatorWeightedH,
