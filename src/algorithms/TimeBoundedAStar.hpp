@@ -37,9 +37,9 @@ class TimeBoundedAStar final
 
   TimeBoundedAStar(const Domain &domain, const Configuration &configuration)
       : domain(domain),
-        weight(configuration.getDouble(WEIGHT)),
-        projection(configuration.getBool(PROJECTION)),
-        shortcut(configuration.getBool(SHORTCUT)) {
+        weight(configuration.getDouble(WEIGHT, 1.0)),
+        projection(configuration.getBool(PROJECTION, false)),
+        shortcut(configuration.getBool(SHORTCUT, false)) {
     // Initialize hash table
     nodes.max_load_factor(1);
     nodes.reserve(Memory::NODE_LIMIT);
@@ -98,12 +98,12 @@ class TimeBoundedAStar final
         selectedActions = {reversedProjectedPath.back()};
         reversedProjectedPath.pop_back();
       } else {
-        PRINT_NANO_TIME("Path Traceback") {
+//        PRINT_NANO_TIME("Path Traceback") {
           rootToTargetPath = extractPath(targetNode, rootNode);
-        }
-        PRINT_NANO_TIME("Extract Action") {
+//        }
+//        PRINT_NANO_TIME("Extract Action") {
           selectedActions = extractAction(agentState, rootToTargetPath);
-        }
+//        }
       }
     } else {
       selectedActions = {reversedProjectedPath.back()};
@@ -113,9 +113,9 @@ class TimeBoundedAStar final
     const auto extractionEndTime = currentNanoTime();
 
     const auto explorationStartTime = currentNanoTime();
-    PRINT_NANO_TIME("Explore") {
+//    PRINT_NANO_TIME("Explore") {
       explore(agentState, terminationChecker);
-    }
+//    }
     const auto explorationEndTime = currentNanoTime();
 
 #ifdef STREAM_GRAPH
