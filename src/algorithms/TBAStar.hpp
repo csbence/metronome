@@ -23,12 +23,7 @@
 namespace metronome {
 
 // configuration options and values
-static const std::string TBA_OPTIMIZATION{"tbaOptimization"};
 static const std::string TBA_STRATEGY{"tbaStrategy"};
-
-static const std::string TBA_OPTIMIZATION_NONE{"NONE"};
-static const std::string TBA_OPTIMIZATION_THRESHOLD{"THRESHOLD"};
-static const std::string TBA_OPTIMIZATION_SHORTCUT{"SHORTCUT"};
 static const std::string TBA_STRATEGY_A_STAR{"A_STAR"};
 static const std::string TBA_STRATEGY_GBFS{"GBFS"};
 
@@ -50,7 +45,7 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
   typedef typename Edge<Domain> Edge;
 
   static constexpr double traceCost = 10;
-  static constexpr double tracebackRatio = 1.0;
+  static constexpr double tracebackRatio = 0.1;
 
   TBAStar(const Domain& domain, const Configuration& config)
       : domain{domain}, config{config} {
@@ -89,40 +84,49 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
     }
 
     // Optimization configuration
-    if (config.hasMember(TBA_OPTIMIZATION)) {
-      std::string optStr = config.getString(TBA_OPTIMIZATION);
+    if (config.hasMember(SHORTCUT)) {
+      this->shortcut = config.getBool(SHORTCUT);
+    }
 
-      if (optStr == TBA_OPTIMIZATION_NONE)
-        optimization = Optimization::NONE;
-      else if (optStr == TBA_OPTIMIZATION_THRESHOLD)
-        optimization = Optimization::THRESHOLD;
-      else if (optStr == TBA_OPTIMIZATION_SHORTCUT)
-        optimization = Optimization::SHORTCUT;
-    } else {
-      optimization = Optimization::NONE;
+    if (config.hasMember(THRESHOLD)) {
+      this->threshold = config.getBool(THRESHOLD);
     }
   }
 
   std::vector<ActionBundle> selectActions(
       const State& startState,
       TerminationChecker& terminationChecker) override {
+    OnlinePlanner::beginIteration();
+
     if (domain.isGoal(startState)) {
       // Goal is already reached
       return std::vector<ActionBundle>();
     }
-    expansions = 0;  // reset
+    
+
 
     Node* thisNode = getNode(startState);
     if (rootNode == nullptr) {
       rootNode = thisNode;
+      rootNode->g = 0;
       openList.insertOrUpdate(*rootNode);
+
+      // only allow 50% of time on first iteration
+      // We will give the next Explore phase the rest
+      // after the first path is traced
+      terminationChecker.setRatio(0.5);
+      explore(terminationChecker);
+      terminationChecker.setRatio(1.0);
+    }
+    else {
+      terminationChecker.setRatio(tracebackRatio);
     }
 
     PathTrace* nextPath = getCurrentPath(startState, terminationChecker);
 
     // If threshold optimization, only switch paths
     // when the g-value of the new path is large enough
-    if (optimization == Optimization::THRESHOLD) {
+    if (threshold) {
       if (targetPath != nullptr && nextPath != targetPath) {
         bool gIsGreater = nextPath->costIsAsBig(targetPath);
         bool agentAtEnd =
@@ -144,52 +148,12 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
       targetPath = nextPath;
     }
 
-    std::vector<ActionBundle> plan {};
-    if (targetPath->isHead(startState)) {
-      if (targetPath->reachedEnd()) {
-        delete targetPath;
-        targetPath = nullptr;
+    std::vector<ActionBundle> plan = extractPlan(thisNode);
 
-        //backtrack one except if root, in which case cycle with last node
-        // TODO: just use identity action
-        if (thisNode == rootNode) {
-          plan.push_back({lastAgentNode->action, lastAgentNode->actionCost});
-          targetPath = new PathTrace(lastAgentNode);
-        } else {
-          targetPath = new PathTrace(thisNode->parent);
-          plan.push_back(backtrack(thisNode));
-        }
-      
-      } else {
-        //move forward one
-        const Edge edge = targetPath->pop_front();
-        plan.push_back({edge.action, edge.actionCost});
-      }
-    } else {
-      if (targetPath->isOnPath(startState)) {
-        const Edge edge = targetPath->slicePath(startState);
-
-        if (edge.successor == nullptr) { //indicates that we've gone off the end of the path
-          delete targetPath;
-          targetPath = new PathTrace(thisNode->parent);
-          plan.push_back(backtrack(thisNode));
-
-        } else {
-          //move forward one
-          plan.push_back({edge.action, edge.actionCost});
-        }
-
-      } else if (thisNode == rootNode) {
-        //flip between root node and successor. Edge case!
-        plan.push_back({lastAgentNode->action, lastAgentNode->actionCost});
-      } else {
-        //we're not on the path. Backtrack
-        plan.push_back(backtrack(thisNode));
-      }
-    }
-
-    lastAgentNode = thisNode; //in case of edge case w/ root node
-
+    // Use remaining time to explore
+    terminationChecker.setRatio(1.0);
+    explore(terminationChecker);
+    
     return plan;
   }
 
@@ -248,13 +212,16 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
      *  Add node to the front of the trace.
      */
     void push_front(Node* headNode) {
-      if (edges.count(headNode->state)) {
+      if (edges.count(headNode->state) && pathHead != nullptr) {
         throw MetronomeException(
             "Path trace asked to add a state that is already in the trace");
       }
 
       pathHead = edgePool.construct(
           headNode, pathHead, headNode->action, headNode->actionCost);
+      if (pathHead->next == nullptr) {
+        pathEnd = pathHead;
+      }
 
       edges.insert({headNode->state, pathHead});
     }
@@ -318,26 +285,20 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
     }
   };
 
-  enum class Optimization { NONE, THRESHOLD, SHORTCUT };
-
   PathTrace* getCurrentPath(const State& startState,
                             TerminationChecker& terminationChecker) {
     // check if we've already found and traced the goal
     bool goalTraced = goalNode != nullptr && targetPath->isEnd(goalNode->state);
 
-    Node* bestNode;
+    Node* bestNode = openList.top();
 
-    Node* top = openList.top();
-    if (top == nullptr) {
+    if (bestNode == nullptr) {
       throw MetronomeException("Goal not reachable - open list empty");
     }
     if (goalTraced) return targetPath;
 
-    if (domain.isGoal(top->state)) {
-      goalNode = top;
-      bestNode = top;
-    } else {
-      bestNode = aStar(terminationChecker);
+    if (domain.isGoal(bestNode->state)) {
+      goalNode = bestNode;
     }
 
     Node* nextNode;
@@ -348,14 +309,11 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
       nextNode = bestNode->parent;
     }
 
-    unsigned long long int tracebacks {0};
-    if (config.getString(TERMINATION_CHECKER_TYPE) == TERMINATION_CHECKER_EXPANSION) {
-      tracebacks =
-          static_cast<unsigned long long int>(config.getLong(ACTION_DURATION) * tracebackRatio);
-    }
+    unsigned long int traces = 1L;
 
     PathTrace* currentTrace = traceInProgress;
-    while (tracebacks > 0) {
+    while (true) {
+      if (traces % 1000 == 0 && terminationChecker.reachedTermination()) break;
       currentTrace->push_front(nextNode);
 
       if (nextNode->state == rootNode->state || nextNode->state == startState) {
@@ -364,16 +322,58 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
       }
 
       nextNode = nextNode->parent;
-      tracebacks--;
+      traces++;
     }
 
     return traceInProgress == nullptr ? currentTrace : targetPath;
   }
 
-  Node* aStar(TerminationChecker& terminationChecker) {
+  std::vector<ActionBundle> extractPlan(Node* currentNode) {
+    std::vector<ActionBundle> plan {};
+
+    if (targetPath->isHead(currentNode->state)) { // agent is at the head of target path
+      if (targetPath->reachedEnd()) {
+        // wait at the edge of the path until a new target path is traced
+        plan.push_back(getIdentityBundle());
+
+      } else {
+        //move forward one
+        const Edge edge = targetPath->pop_front();
+        plan.push_back({ edge.action, edge.actionCost });
+      }
+    } else {
+      if (targetPath->isOnPath(currentNode->state)) {
+        const Edge edge = targetPath->slicePath(currentNode->state);
+
+        if (edge.successor == nullptr) { //indicates that we've gone off the end of the path
+          targetPath->push_front(currentNode); // re-seed with current node so we can park here
+          plan.push_back(getIdentityBundle());
+
+        } else {
+          //move forward one
+          plan.push_back({ edge.action, edge.actionCost });
+        }
+
+      } else if (currentNode == rootNode) {
+        //Identity Action. Edge case!
+        plan.push_back(getIdentityBundle());
+      } else {
+        //we're not on the path. Backtrack
+        plan.push_back(backtrack(currentNode));
+      }
+    }
+
+    return plan;
+  }
+
+  Node* explore(TerminationChecker& terminationChecker) {
     while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
       Node* currentNode = openList.top();
       if (domain.isGoal(currentNode->state)) {
+        if (OnlinePlanner::getGoalFirstFoundIteration() == 0) {
+          OnlinePlanner::goalFound();
+          LOG(INFO) << "Goal found!";
+        }
         return currentNode;
       }
 
@@ -394,7 +394,6 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
 
   void expandNode(Node* sourceNode) {
     Planner::incrementExpandedNodeCount();
-    expansions++;
 
     for (auto successor : domain.successors(sourceNode->state)) {
       Node* successorNode = getNode(successor.state);
@@ -413,16 +412,19 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
     }
   }
 
-  /*  Note: This depends on the relatively dangerous
-   *  domain function getActionDuration(). This will
-   *  not work in domains with non-constant action
-   *  costs. Also depends on the domain being able to
+  /*  Note: This depends on the domain being able to
    *  invert actions
    */
   ActionBundle backtrack(const Node* node) {
     Action backupAction = node->action.inverse();
 
-    return { backupAction, domain.getActionDuration() };
+    return { backupAction, domain.getActionDuration(backupAction) };
+  }
+  /* Note: This depends on an available Identity action
+  */
+  ActionBundle getIdentityBundle() const {
+    Action identity = domain.getIdentityAction();
+    return {identity, domain.getActionDuration(identity)};
   }
 
   Node* getNode(const State& state) {
@@ -449,7 +451,8 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
   static constexpr Comparator hComparator = &hComparator<Node::Domain>;
 
   // Config
-  Optimization optimization;
+  bool threshold;
+  bool shortcut;
   double weight;
 
   const Domain& domain;
@@ -462,6 +465,5 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
   Node* goalNode = nullptr;
   Node* rootNode = nullptr;
   Node* lastAgentNode = nullptr;
-  unsigned long long int expansions = 0;
 };
 }  // namespace metronome

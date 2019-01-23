@@ -91,7 +91,7 @@ include_directories(src)
 
 # Select the possible algorithms.
 add_definitions(-DENABLE_A_STAR)
-#add_definitions(-DENABLE_LSS_LRTA_STAR)
+add_definitions(-DENABLE_LSS_LRTA_STAR)
 add_definitions(-DENABLE_CLUSTER_RTS)
 add_definitions(-DENABLE_TBA_STAR)
 add_definitions(-DENABLE_TIME_BOUNDED_A_STAR)

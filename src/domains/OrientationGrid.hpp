@@ -487,6 +487,7 @@ class OrientationGrid {
   }
 
   Cost getActionDuration() const { return actionDuration; }
+  Cost getActionDuration(const Action& action) const { return costValues[action.getCostType()]; }
 
   Action getIdentityAction() const { return Action::getIdentityAction(); }
 

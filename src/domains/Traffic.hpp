@@ -447,6 +447,7 @@ class Traffic {
   }
 
   Cost getActionDuration() const { return actionDuration; }
+  Cost getActionDuration(const Action& action) const { return actionDuration; }
   
   Action getIdentityAction() const {
     throw std::logic_error(

@@ -12,11 +12,12 @@ class TimeTerminationChecker {
     expansionCount = 0;
   }
 
-  void setRatio(double) {
-    throw MetronomeException("Function not implemented");
+  void setRatio(double ratio) {
+    assert(ratio > 0 && ratio <= 1);
+    this->ratio = ratio;
   }
 
-  bool reachedTermination() const { return getEllapsedTime() >= timeLimit; };
+  bool reachedTermination() const { return getEllapsedTime() >= timeLimit * ratio; };
 
   void notifyExpansion() { ++expansionCount; }
 
@@ -39,6 +40,7 @@ class TimeTerminationChecker {
       startTime;
   std::chrono::nanoseconds timeLimit{0};
   unsigned int expansionCount{0};
+  double ratio{1};
 };
 
 }  // namespace metronome
