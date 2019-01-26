@@ -27,8 +27,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
   using State = typename Domain::State;
   using Action = typename Domain::Action;
   using Cost = typename Domain::Cost;
-  using Planner = Planner<Domain>;
-  using OnlinePlanner = OnlinePlanner<Domain, TerminationChecker>;
+  using Planner = metronome::Planner<Domain>;
+  using OnlinePlanner = metronome::OnlinePlanner<Domain, TerminationChecker>;
   using ActionBundle = typename Planner::ActionBundle;
 
   static constexpr std::size_t MAX_CLUSTER_COUNT = 100000;
