@@ -162,8 +162,8 @@ def prepare_data(paths, paths_to_base):
     print(f'Action duration used: {action_durations} '
           f'Original size with baseline: {len(data)}')
 
-    data = data[~(data['errorMessage'].notnull() & (data.errorMessage !=
-                                                    ""))]
+#     data = data[~(data['errorMessage'].notnull() & (data.errorMessage !=
+#                                                     ""))]
     data = extrapolate_within_optimal(data)
 
     print(f'Final size: {len(data)}')
@@ -171,7 +171,9 @@ def prepare_data(paths, paths_to_base):
 
 
 def remove_unused_columns(data):
-    data.drop(['actions', 'commitmentType', "success", "timeLimit",
+    data.drop(['actions', 'commitmentType',
+#                "success",
+               "timeLimit",
                "terminationType", 'timestamp', 'octileMovement',
                'lookaheadType',
                'firstIterationDuration', 'generatedNodes', 'expandedNodes',
@@ -197,6 +199,8 @@ def extrapolate_within_optimal(data):
             data["actionDuration"] * data["optimalPathLength"])
 
     check_opt_violation = True
+    return data # TODO enable check
+    
     if check_opt_violation:
         violations = data[data.withinOpt < 1.0]
         if len(violations) > 0:

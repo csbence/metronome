@@ -22,7 +22,7 @@ class LssLrtaStar final : public OnlinePlanner<Domain, TerminationChecker> {
   using State = typename Domain::State;
   using Action = typename Domain::Action;
   using Cost = typename Domain::Cost;
-  using Planner = Planner<Domain>;
+  using Planner = metronome::Planner<Domain>;
   using ActionBundle = typename Planner::ActionBundle;
 
   LssLrtaStar(const Domain& domain, const Configuration&) : domain{domain} {

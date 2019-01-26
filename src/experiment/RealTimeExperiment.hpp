@@ -5,6 +5,7 @@
 #include "Experiment.hpp"
 #include "MetronomeException.hpp"
 #include "easylogging++.h"
+#include "termination/TimeTerminationChecker.hpp"
 #include "utils/TimeMeasurement.hpp"
 
 namespace metronome {
@@ -36,6 +37,13 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
     } else {
       throw MetronomeException("Unknown commitment strategy: " + lookaheadType);
     }
+
+    if (configuration.hasMember(TIME_LIMIT)) {
+      TimeTerminationChecker experimentTerminationChecker;
+      experimentTerminationChecker.resetTo(configuration.getLong(TIME_LIMIT));
+
+      experimentTimeLimit = experimentTerminationChecker;
+    }
   }
 
   Result plan(const Configuration& configuration,
@@ -46,9 +54,9 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
 
     std::vector<typename Domain::Action> actions;
 
-    std::size_t planningTime = 0;
-    std::size_t executionTime = 0;
-    std::size_t planningAndExecutionTime = 0;
+    std::int64_t planningTime = 0;
+    std::int64_t executionTime = 0;
+    std::int64_t planningAndExecutionTime = 0;
 
     const auto actionDuration = configuration.getLong(ACTION_DURATION);
     auto currentState = domain.getStartState();
@@ -58,6 +66,11 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
     auto timeBound = static_cast<std::size_t>(actionDuration);
 
     while (!domain.isGoal(currentState)) {
+      if (experimentTimeLimit.has_value() &&
+          experimentTimeLimit.value().reachedTermination()) {
+        throw MetronomeException("Timeout!");
+      }
+
       if (dynamicLookahead) {
         terminationChecker.resetTo(timeBound);
       } else {
@@ -80,7 +93,7 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
       planningTime += iterationDuration;
 
       // Planning might take longer/shorter than the allocated time.
-//      std::cout << iterationDuration << ',';
+      //      std::cout << iterationDuration << ',';
       planningAndExecutionTime += std::max(iterationDuration, timeBound);
 
       timeBound = 0;
@@ -90,13 +103,25 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
             validateAction(domain, currentState, actionBundle.action);
 
         actions.emplace_back(actionBundle.action);
+        assert(actionBundle.actionDuration == domain.getActionDuration());
+
         timeBound += actionBundle.actionDuration;
       }
 
       executionTime += timeBound;
     }
-    
+
     std::cout << std::endl;
+
+    if (planningAndExecutionTime < executionTime) {
+      throw MetronomeException("GAT can't be less than pure execution time");
+    }
+
+    if (planningAndExecutionTime < actionDuration * actions.size()) {
+      throw MetronomeException(
+          "GAT can't be less than pure execution time "
+          "(2)");
+    }
 
     LOG(INFO) << "Planning: Done";
 
@@ -111,20 +136,22 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
       actionStrings.push_back(stringStream.str());
     }
 
-    auto result = Result(configuration,
-                         planner.getExpandedNodeCount(),
-                         planner.getGeneratedNodeCount(),
-                         planningTime,   // Planning time
-                      executionTime,  // Execution time
-                      planningAndExecutionTime,
-                         planner.getIterationCount(), // Normalized goal achievement - should be comparable across configs
-                      domain.getActionDuration(),  // Idle planning time
-                      pathLength,                  // Path length
-                      actionStrings,
-                         planner.getIterationCount(),
-                         planner.getIdleIterationCount(),
-                         planner.getGoalFirstFoundIteration());
-    
+    auto result = Result(
+        configuration,
+        planner.getExpandedNodeCount(),
+        planner.getGeneratedNodeCount(),
+        planningTime,                 // Planning time
+        executionTime,                // Execution time
+        planningAndExecutionTime,     // Goal Achievement Time
+        planner.getIterationCount(),  // Normalized goal achievement - should be
+                                      // comparable across configs
+        domain.getActionDuration(),   // Idle planning time
+        pathLength,                   // Path length
+        actionStrings,
+        planner.getIterationCount(),
+        planner.getIdleIterationCount(),
+        planner.getGoalFirstFoundIteration());
+
     result.attributes = planner.getAttributes();
     return result;
   }
@@ -146,6 +173,8 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
 
   bool dynamicLookahead;
   bool singleStep;
+
+  std::optional<TimeTerminationChecker> experimentTimeLimit;
 };
 
 }  // namespace metronome

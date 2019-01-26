@@ -20,7 +20,7 @@ class AStar final : public OfflinePlanner<Domain> {
   using State = typename Domain::State;
   using Action = typename Domain::Action;
   using Cost = typename Domain::Cost;
-  using Planner = Planner<Domain>;
+  using Planner = metronome::Planner<Domain>;
   
  public:
   AStar(const Domain& domain, const Configuration&)

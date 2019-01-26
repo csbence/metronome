@@ -1,5 +1,10 @@
 build/
+cmake-build-release/
+results/*
 .idea/
+
+scripts/slack_notification.py
+
 
 ### Python template
 # Byte-compiled / optimized / DLL files
