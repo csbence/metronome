@@ -41,8 +41,10 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
   typedef typename Domain::Cost Cost;
   typedef typename OnlinePlanner<Domain, TerminationChecker>::ActionBundle
       ActionBundle;
-  typedef typename SearchNode<Domain> Node;
-  typedef typename Edge<Domain> Edge;
+  using Node = SearchNode<Domain>;
+  using Edge = metronome::Edge<Domain>;
+  using OnlinePlanner = metronome::OnlinePlanner<Domain, TerminationChecker>;
+  using Planner = metronome::Planner<Domain>;
 
   static constexpr double traceCost = 10;
   static constexpr double tracebackRatio = 0.1;
@@ -447,8 +449,8 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
   }
 
   typedef int (*Comparator)(const Node&, const Node&);
-  static constexpr Comparator fComparator = &fComparator<Node::Domain>;
-  static constexpr Comparator hComparator = &hComparator<Node::Domain>;
+  static constexpr Comparator fComparator = &metronome::fComparator<Domain>;
+  static constexpr Comparator hComparator = &metronome::hComparator<Domain>;
 
   // Config
   bool threshold;

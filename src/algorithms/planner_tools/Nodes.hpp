@@ -12,7 +12,6 @@ namespace metronome {
 template <typename Domain>
 class SearchNode {
  public:
-  typedef typename Domain Domain;
   typedef typename Domain::State State;
   typedef typename Domain::Action Action;
   typedef typename Domain::Cost Cost;
@@ -78,7 +77,10 @@ class SearchNode {
 template <typename Domain>
 class RealtimeSearchNode : public SearchNode<Domain> {
  public:
-  RealtimeSearchNode(SearchNode* parent,
+  using State = typename SearchNode<Domain>::State;
+  using Action = typename SearchNode<Domain>::Action;
+  using Cost = typename SearchNode<Domain>::Cost;
+  RealtimeSearchNode(SearchNode<Domain>* parent,
                      const State& state,
                      Action action,
                      Cost actionCost,
@@ -86,13 +88,13 @@ class RealtimeSearchNode : public SearchNode<Domain> {
                      Cost h,
                      bool open,
                      unsigned int iteration = 0)
-      : SearchNode(parent, state, action, actionCost, g, h, open),
+      : SearchNode<Domain>(parent, state, action, actionCost, g, h, open),
         iteration{iteration} {}
   unsigned int iteration;
 
   virtual std::string to_string() const override {
     std::ostringstream stream;
-    stream << SearchNode::to_string() << " Iteration " << iteration;
+    stream << SearchNode<Domain>::to_string() << " Iteration " << iteration;
     return stream.str();
   }
 };

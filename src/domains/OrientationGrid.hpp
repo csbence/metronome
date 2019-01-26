@@ -92,9 +92,9 @@ class OrientationGrid {
         if (strcmp(sourceOrientation, "SW") == 0) return "W";
         if (strcmp(sourceOrientation, "W") == 0) return "NW";
         if (strcmp(sourceOrientation, "E") == 0) return "SE";
-      } else {
-        return sourceOrientation;
       }
+
+      return sourceOrientation;
     }
 
     const char* getLabel() const { return label; }
