@@ -199,7 +199,6 @@ def extrapolate_within_optimal(data):
             data["actionDuration"] * data["optimalPathLength"])
 
     check_opt_violation = True
-    return data # TODO enable check
     
     if check_opt_violation:
         violations = data[data.withinOpt < 1.0]
@@ -246,16 +245,16 @@ if __name__ == "__main__":
     # 
     # args = parser.parse_args()
 
-    paths_to_base = ['../results/baseline.json']
-    paths = ['../results/results.json']
+    paths_to_base = ['../results/3goal_baseline.json']
+    paths = ['../results/tba_results.json']
 
-    domain_name_lookup = {'orz': 'Dragon Age: Origins',
-                          'uniform': 'Uniform 1500x1500',
-                          'minima1500': 'Minima 1500x1500',
-                          'minima3000': 'Minima 300x3000'}
+    domain_name_lookup = {'aligned': 'Aligned Corridors',
+                          'corridors': 'Corridors',
+                          'minima': 'Minima 1500x1500',
+                          'uniform': 'Uniform'}
     expansion_lookup = {1000000: '1M', 100000: '100k', 20000: '20k', 1: '20000'}
     for expansion_delay in [50000]:
-        for domain_token in ['orz', 'uniform', 'minima1500', 'minima3000']:
+        for domain_token in ['aligned', 'corridors', 'minima', 'uniform']:
             expansion_per_second = 1000000000 / expansion_delay
             domain_name = domain_name_lookup[domain_token]
             plot_name = 'domain instance: ' + domain_name + '         EPS: ' + str(

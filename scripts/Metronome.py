@@ -14,8 +14,8 @@ __author__ = 'Bence Cserna, William Doyle, Kevin C. Gall'
 
 def generate_base_configuration():
     # required configuration parameters
-    #     algorithms_to_run = ['TIME_BOUNDED_A_STAR']
-    algorithms_to_run = ['CLUSTER_RTS', 'TIME_BOUNDED_A_STAR']
+    algorithms_to_run = ['TIME_BOUNDED_A_STAR']
+    # algorithms_to_run = ['CLUSTER_RTS', 'TIME_BOUNDED_A_STAR']
     #     algorithms_to_run = ['CLUSTER_RTS']
     #     algorithms_to_run = ['A_STAR']
     expansion_limit = [100000000]
@@ -23,15 +23,15 @@ def generate_base_configuration():
     time_limit = [300 * 1000 * 1000000]
     #     action_durations = [1]  # Use this for A*
     action_durations = [
-        # 100000,
+        150000
         # 250000,
         # 500000,
         # 1000000,
-        3200000,
-        6400000,
-        12800000,
-        25600000,
-        51200000,
+        # 3200000,
+        # 6400000,
+        # 12800000,
+        # 25600000,
+        # 51200000,
     ]
     # action_durations = [50, 100, 250, 500, 1000]
     termination_types = ['TIME']
@@ -69,7 +69,12 @@ def generate_base_configuration():
 
     # No configurable resource ratio for RES at this time
     compiled_configurations = cartesian_product(compiled_configurations,
-                                                'backlogRatio', [0.2],
+                                                'threshold', [True],
+                                                [['algorithmName',
+                                                  'TIME_BOUNDED_A_STAR']])
+
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'shortcut', [False],
                                                 [['algorithmName',
                                                   'TIME_BOUNDED_A_STAR']])
 
@@ -147,7 +152,7 @@ def generate_vacuum_world():
     corridors_3g_paths = []
     minima_3g = 'input/vacuum/3goals/minima_3g/minima1500_1500-'
     minima_3g_paths = []
-    uniform_3g = 'input/vacuum/3goals/minima_3g/minima1500_1500-'
+    uniform_3g = 'input/vacuum/3goals/uniform_3g/uniform1500_1500-'
     uniform_3g_paths = []
 
     for scenario_num in range(0, 10):
@@ -427,10 +432,6 @@ def label_algorithms(configurations):
                                               + ' cache: ' \
                                               + str(configuration[
                                                         'extractionCacheSize'])
-<<<<<<< HEAD
-=======
-
->>>>>>> 9405e2204a9bb4f57c4042166c6469457f16b511
         if configuration['algorithmName'] == 'TIME_BOUNDED_A_STAR':
             configuration['algorithmLabel'] = configuration['algorithmName'] \
                                               + ' weight: ' \
@@ -461,7 +462,7 @@ def main():
         # configurations = generate_grid_world()
         # configurations = generate_tile_puzzle()
         label_algorithms(configurations)
-    #         configurations = configurations[:1]  # debug - keep only one config
+        # configurations = configurations[:1]  # debug - keep only one config
 
     print('{} configurations has been generated '.format(len(configurations)))
 

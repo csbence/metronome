@@ -93,8 +93,8 @@ include_directories(src)
 add_definitions(-DENABLE_A_STAR)
 add_definitions(-DENABLE_LSS_LRTA_STAR)
 add_definitions(-DENABLE_CLUSTER_RTS)
-add_definitions(-DENABLE_TBA_STAR)
-add_definitions(-DENABLE_TIME_BOUNDED_A_STAR)
+add_definitions(-DENABLE_TIME_BOUNDED_A_STAR_BENCE)
+add_definitions(-DENABLE_TIME_BOUNDED_A_STAR_KEVIN)
 
 # Select the possible domains
 add_definitions(-DENABLE_GRID_WORLD)

@@ -38,10 +38,10 @@
 #ifdef ENABLE_CLUSTER_RTS
 #include "algorithms/ClusterRts.hpp"
 #endif
-#ifdef ENABLE_TIME_BOUNDED_A_STAR
+#ifdef ENABLE_TIME_BOUNDED_A_STAR_BENCE
 #include "algorithms/TimeBoundedAStar.hpp"
 #endif
-#ifdef ENABLE_TBA_STAR
+#ifdef ENABLE_TIME_BOUNDED_A_STAR_KEVIN
 #include "algorithms/TBAStar.hpp"
 #endif
 
@@ -181,8 +181,9 @@ class ConfigurationExecutor {
     }
 #endif
 
-#ifdef ENABLE_TIME_BOUNDED_A_STAR
-    if (algorithmName == ALGORITHM_TIME_BOUNDED_A_STAR) {
+#ifdef ENABLE_TIME_BOUNDED_A_STAR_BENCE
+    if (algorithmName == ALGORITHM_TIME_BOUNDED_A_STAR && configuration.getString(VARIANT, "kevin") == "bence") {
+      LOG(INFO) << "TBA* variant: Bence implementation";
       return executeRealTimePlanner<
           Domain,
           TimeBoundedAStar<Domain, TerminationChecker>,
@@ -190,8 +191,9 @@ class ConfigurationExecutor {
     }
 #endif
 
-#ifdef ENABLE_TBA_STAR
-    if (algorithmName == ALGORITHM_TBA_STAR) {
+#ifdef ENABLE_TIME_BOUNDED_A_STAR_KEVIN
+    if (algorithmName == ALGORITHM_TIME_BOUNDED_A_STAR && configuration.getString(VARIANT, "kevin") == "kevin") {
+      LOG(INFO) << "TBA* variant: Kevin implementation";
       return executeRealTimePlanner<Domain,
                                     TBAStar<Domain, TerminationChecker>,
                                     TerminationChecker>(configuration, domain);

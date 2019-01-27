@@ -33,7 +33,6 @@ static const std::string ALGORITHM_A_STAR{"A_STAR"};
 static const std::string ALGORITHM_LSS_LRTA_STAR{"LSS_LRTA_STAR"};
 static const std::string ALGORITHM_CLUSTER_RTS{"CLUSTER_RTS"};
 static const std::string ALGORITHM_TIME_BOUNDED_A_STAR{"TIME_BOUNDED_A_STAR"};
-static const std::string ALGORITHM_TBA_STAR{ "TBA_STAR" };
 
 static const std::string TERMINATION_CHECKER_TIME{"TIME"};
 static const std::string TERMINATION_CHECKER_EXPANSION{"EXPANSION"};
@@ -55,6 +54,7 @@ static const std::string TBA_ROUTING("tbaRouting");
 static const std::string PROJECTION{"projection"};
 static const std::string SHORTCUT{"shortcut"};
 static const std::string THRESHOLD { "threshold" };
+static const std::string VARIANT { "variant" };
 
 // Weighted Algorithms
 static const std::string WEIGHT{"weight"};
