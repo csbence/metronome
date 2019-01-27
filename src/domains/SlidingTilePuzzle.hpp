@@ -204,7 +204,7 @@ class SlidingTilePuzzle {
     return manhattanSum;
   }
 
-  Cost heuristic(const State& state, const State& otherState) const {
+  Cost heuristic(const State&, const State&) const {
     throw MetronomeException("State-to-state heuristic not implemented in Sliding Tile");
   }
 
@@ -252,7 +252,7 @@ class SlidingTilePuzzle {
   const State getStartState() const { return startState; }
 
   Cost getActionDuration() const { return actionDuration; }
-  Cost getActionDuration(const Action& action) const { return actionDuration; }
+  Cost getActionDuration(const Action&) const { return actionDuration; }
 
   Action getIdentityAction() const { return Action('0'); }
 

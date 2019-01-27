@@ -314,8 +314,8 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
     unsigned long int traces = 1L;
 
     PathTrace* currentTrace = traceInProgress;
-    while (true) {
-      if (traces % 1000 == 0 && terminationChecker.reachedTermination()) break;
+    while (!terminationChecker.reachedTermination()) {
+      //if (traces % 100 == 0 && terminationChecker.reachedTermination()) break;
       currentTrace->push_front(nextNode);
 
       if (nextNode->state == rootNode->state || nextNode->state == startState) {
