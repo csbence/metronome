@@ -28,9 +28,11 @@ set(SOURCE_FILES
         src/algorithms/AStar.hpp
         src/algorithms/ClusterRts.hpp
         src/algorithms/LssLrtaStar.hpp
+        src/algorithms/TBAStar.hpp
         src/algorithms/OfflinePlanner.hpp
         src/algorithms/OnlinePlanner.hpp
         src/algorithms/Planner.hpp
+        src/algorithms/planner_tools/Comparators.hpp
 		src/algorithms/TimeBoundedAStar.hpp
         src/domains/GridWorld.hpp
         src/domains/Domain.hpp
@@ -85,13 +87,14 @@ include_directories(src)
 # These options have a large impact on the compilation speed.
 
 # Comment the following line out to disable Gephi (Stream Graph HTTP) visualization
-#add_definitions(-DSTREAM_GRAPH)
+# add_definitions(-DSTREAM_GRAPH)
 
 # Select the possible algorithms.
 add_definitions(-DENABLE_A_STAR)
-#add_definitions(-DENABLE_LSS_LRTA_STAR)
+add_definitions(-DENABLE_LSS_LRTA_STAR)
 add_definitions(-DENABLE_CLUSTER_RTS)
-add_definitions(-DENABLE_TIME_BOUNDED_A_STAR)
+add_definitions(-DENABLE_TIME_BOUNDED_A_STAR_BENCE)
+add_definitions(-DENABLE_TIME_BOUNDED_A_STAR_KEVIN)
 
 # Select the possible domains
 add_definitions(-DENABLE_GRID_WORLD)

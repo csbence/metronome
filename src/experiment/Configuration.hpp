@@ -53,6 +53,8 @@ static const std::string TBA_ROUTING("tbaRouting");
 // TBA*
 static const std::string PROJECTION{"projection"};
 static const std::string SHORTCUT{"shortcut"};
+static const std::string THRESHOLD{"threshold"};
+static const std::string VARIANT{"variant"};
 
 // Weighted Algorithms
 static const std::string WEIGHT{"weight"};

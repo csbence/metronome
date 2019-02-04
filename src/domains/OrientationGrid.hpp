@@ -92,9 +92,9 @@ class OrientationGrid {
         if (strcmp(sourceOrientation, "SW") == 0) return "W";
         if (strcmp(sourceOrientation, "W") == 0) return "NW";
         if (strcmp(sourceOrientation, "E") == 0) return "SE";
-      } else {
-        return sourceOrientation;
       }
+
+      return sourceOrientation;
     }
 
     const char* getLabel() const { return label; }
@@ -487,6 +487,7 @@ class OrientationGrid {
   }
 
   Cost getActionDuration() const { return actionDuration; }
+  Cost getActionDuration(const Action& action) const { return costValues[action.getCostType()]; }
 
   Action getIdentityAction() const { return Action::getIdentityAction(); }
 

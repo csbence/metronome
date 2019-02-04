@@ -433,7 +433,7 @@ class Traffic {
     return false;
   }
 
-  Cost heuristic(const State& state, const State& otherState) const {
+  Cost heuristic(const State&, const State&) const {
     throw MetronomeException("State-to-state heuristic not implemented in Traffic World");
   }
 
@@ -447,6 +447,7 @@ class Traffic {
   }
 
   Cost getActionDuration() const { return actionDuration; }
+  Cost getActionDuration(const Action&) const { return actionDuration; }
   
   Action getIdentityAction() const {
     throw std::logic_error(

@@ -255,12 +255,15 @@ class LssLrtaStar final : public OnlinePlanner<Domain, TerminationChecker> {
 
   Node* createNode(Node* sourceNode, SuccessorBundle<Domain> successor) {
     Planner::incrementGeneratedNodeCount();
-    return nodePool.construct(Node{sourceNode,
+    Node* newNode = nodePool.construct(Node{sourceNode,
                                    successor.state,
                                    successor.action,
                                    std::numeric_limits<Cost>::max(),
                                    domain.heuristic(successor.state),
                                    true});
+
+    nodes[newNode->state] = newNode;
+    return newNode;
   }
 
   void clearOpenList() {

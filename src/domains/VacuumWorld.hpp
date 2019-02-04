@@ -434,6 +434,7 @@ class VacuumWorld {
   }
 
   Cost getActionDuration() const { return actionDuration; }
+  Cost getActionDuration(const Action& action) const { return actionDuration; }
 
   Action getIdentityAction() const { return Action('0'); }
 
