@@ -432,6 +432,7 @@ def label_algorithms(configurations):
                                               + ' cache: ' \
                                               + str(configuration[
                                                         'extractionCacheSize'])
+
         if configuration['algorithmName'] == 'TIME_BOUNDED_A_STAR':
             configuration['algorithmLabel'] = configuration['algorithmName'] \
                                               + ' weight: ' \
