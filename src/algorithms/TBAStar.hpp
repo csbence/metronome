@@ -104,7 +104,6 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
       // Goal is already reached
       return std::vector<ActionBundle>();
     }
-    
 
 
     Node* thisNode = getNode(startState);
@@ -113,11 +112,11 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
       rootNode->g = 0;
       openList.insertOrUpdate(*rootNode);
 
-      // only allow 50% of time on first iteration
+      // only allow 30% of time on first iteration
       // We will give the next Explore phase the rest
       // after the first path is traced
-      terminationChecker.setRatio(0.5);
-      explore(terminationChecker);
+      terminationChecker.setRatio(0.3);
+      explore(terminationChecker, true); // first iteration
       terminationChecker.setRatio(1.0);
     }
     else {
@@ -314,8 +313,8 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
     unsigned long int traces = 1L;
 
     PathTrace* currentTrace = traceInProgress;
-    while (!terminationChecker.reachedTermination()) {
-      //if (traces % 100 == 0 && terminationChecker.reachedTermination()) break;
+    while (!terminationChecker.reachedTermination()
+        || targetPath == nullptr) {
       currentTrace->push_front(nextNode);
 
       if (nextNode->state == rootNode->state || nextNode->state == startState) {
@@ -368,8 +367,9 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
     return plan;
   }
 
-  Node* explore(TerminationChecker& terminationChecker) {
-    while (!terminationChecker.reachedTermination() && openList.isNotEmpty()) {
+  Node* explore(TerminationChecker& terminationChecker, bool first = false) {
+    while ((!terminationChecker.reachedTermination() && openList.isNotEmpty())
+        || (first && Planner::getExpandedNodeCount() == 0)) {
       Node* currentNode = openList.top();
       if (domain.isGoal(currentNode->state)) {
         if (OnlinePlanner::getGoalFirstFoundIteration() == 0) {
