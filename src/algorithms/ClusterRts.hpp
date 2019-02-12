@@ -40,6 +40,8 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
         clusterNodeLimit(configuration.getLong(CLUSTER_NODE_LIMIT)),
         clusterDepthLimit(configuration.getLong(CLUSTER_DEPTH_LIMIT)),
         extractionCacheSize(configuration.getLong(EXTRACTION_CACHE_SIZE)),
+        clusterGrowth(configuration.getBool(CLUSTER_GROWTH, false)),
+        clusterGrowthRate(configuration.getDouble(CLUSTER_GROWTH_RATE, 1.0)),
         nodeWeight(configuration.getDouble(WEIGHT, 1.0)),
         openClusters(ClusterComparatorWeightedH(
             configuration.getDouble(CLUSTER_WEIGHT, nodeWeight))),
@@ -54,6 +56,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       TerminationChecker &terminationChecker) override {
     ++iteration;
     OnlinePlanner::beginIteration();
+
 
     if (domain.isGoal(agentState)) {
       OnlinePlanner::incrementIdleIterationCount();
@@ -77,6 +80,7 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
       if (emptyCache) {
         emptyCache = false;
         cachedPath.clear();
+        extractionCacheSize = 1000000000;
       }
       if (cachedPath.size() <= cachedIndex ||
           cachedIndex > extractionCacheSize) {
@@ -428,6 +432,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
         currentNode->g / domain.getActionDuration() >= clusterDepthLimit;
 
     if (spawnNewCore) {
+      if (clusterGrowth) {
+        clusterDepthLimit *= clusterGrowthRate;
+      }
+      
       // Reassign local node to a new cluster
       auto spawnedCluster = clusterPool.construct(nodeWeight);
       spawnedCluster->label = std::to_string(clusterPool.index(spawnedCluster));
@@ -987,8 +995,10 @@ class ClusterRts final : public OnlinePlanner<Domain, TerminationChecker> {
 
   const Domain &domain;
   const std::size_t clusterNodeLimit;
-  const Cost clusterDepthLimit;
-  const std::size_t extractionCacheSize;
+  Cost clusterDepthLimit;
+  std::size_t extractionCacheSize;
+  const bool clusterGrowth;
+  const double clusterGrowthRate;
   const double nodeWeight;
   const bool tbaRouting;
 

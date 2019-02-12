@@ -46,6 +46,8 @@ static const std::string COMMITMENT_MULTIPLE{"MULTIPLE"};
 // Cluster RTS
 static const std::string CLUSTER_NODE_LIMIT{"clusterNodeLimit"};
 static const std::string CLUSTER_DEPTH_LIMIT{"clusterDepthLimit"};
+static const std::string CLUSTER_GROWTH{"clusterGrowth"};
+static const std::string CLUSTER_GROWTH_RATE{"clusterGrowthRate"};
 static const std::string EXTRACTION_CACHE_SIZE{"extractionCacheSize"};
 static const std::string CLUSTER_WEIGHT("clusterWeight");
 static const std::string TBA_ROUTING("tbaRouting");
