@@ -158,6 +158,10 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
     return plan;
   }
 
+  std::unordered_map<std::string, std::string> getAttributeAggregationStrategies() const override {
+    return {{"backtrack", "sum"}};
+  }
+
  private:
   static constexpr std::size_t EDGE_LIMIT = Memory::NODE_LIMIT / 10;
 
@@ -310,7 +314,7 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
       nextNode = bestNode->parent;
     }
 
-    unsigned long int traces = 1L;
+    unsigned long int traces = 0L;
 
     PathTrace* currentTrace = traceInProgress;
     while (!terminationChecker.reachedTermination()
@@ -325,6 +329,8 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
       nextNode = nextNode->parent;
       traces++;
     }
+
+    OnlinePlanner::recordAttribute("tracebacks", traces);
 
     return traceInProgress == nullptr ? currentTrace : targetPath;
   }
@@ -420,6 +426,7 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
   ActionBundle backtrack(const Node* node) {
     Action backupAction = node->action.inverse();
 
+    OnlinePlanner::recordAttribute("backtrack", 1);
     return { backupAction, domain.getActionDuration(backupAction) };
   }
   /* Note: This depends on an available Identity action
