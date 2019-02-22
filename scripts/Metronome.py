@@ -17,24 +17,22 @@ def generate_base_configuration():
 #     algorithms_to_run = ['TIME_BOUNDED_A_STAR']
 #     algorithms_to_run = ['CLUSTER_RTS']
     algorithms_to_run = ['CLUSTER_RTS', 'TIME_BOUNDED_A_STAR']
-#     algorithms_to_run = ['A_STAR']
+#     algorithms_to_run = ['CLUSTER_RTS']
+    #     algorithms_to_run = ['A_STAR']
     expansion_limit = [100000000]
     lookahead_type = ['DYNAMIC']
-    time_limit = [10 * 60 * 1000 * 1000000]
+    time_limit = [90 * 1000 * 1000000]
+    #     action_durations = [1]  # Use this for A*
     action_durations = [
-        100000,
-        200000,
-        300000,
-        400000,
+        # 100000,
+        # 250000,
         500000,
-#         250000,
-#         500000,
-#         1000000,
-#         3200000,
-#         6400000,
-#         12800000,
-#         25600000,
-#         51200000,
+        1000000,
+        3200000,
+        6400000,
+        12800000,
+        25600000,
+        51200000,
     ]
     action_durations = list(range(100000, 600001, 20000)) 
 #     action_durations = [1]  # Use this for A*
@@ -52,7 +50,7 @@ def generate_base_configuration():
     # base_configuration['stepLimit'] = step_limits
     base_configuration['timeLimit'] = time_limit
     base_configuration['commitmentStrategy'] = ['SINGLE']
-    base_configuration['heuristicMultiplier'] = [1.0]
+    base_configuration['heuristicMultiplier'] = [1.0, 0.1]
     base_configuration['terminationTimeEpsilon'] = [5000000]  # 4ms
 
     compiled_configurations = [{}]
@@ -126,7 +124,7 @@ def generate_base_configuration():
                                                 'tbaRouting', [False],
                                                 [['algorithmName',
                                                   'CLUSTER_RTS']])
-    
+
     compiled_configurations = cartesian_product(compiled_configurations,
                                                 'clusterDepthLimit', [
                                                     10,
@@ -182,7 +180,7 @@ def generate_vacuum_world():
     uniform_3g = 'input/vacuum/3goals/uniform_3g/uniform1500_1500-'
     uniform_3g_paths = []
 
-    for scenario_num in range(0, 10):
+    for scenario_num in range(0, 20):
         n = str(scenario_num)
         aligned_3g_paths.append(aligned_3g + n)
         corridors_3g_paths.append(corridors_3g + n)
@@ -244,6 +242,7 @@ def generate_grid_world():
 
     configurations = cartesian_product(configurations, 'domainName',
                                        [
+#                                            'VACUUM_WORLD',
 #                                            'ORIENTATION_GRID',
                                            'GRID_WORLD'
                                        ])
