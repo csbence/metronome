@@ -14,25 +14,31 @@ __author__ = 'Bence Cserna, William Doyle, Kevin C. Gall'
 
 def generate_base_configuration():
     # required configuration parameters
-    algorithms_to_run = ['TIME_BOUNDED_A_STAR']
-    # algorithms_to_run = ['CLUSTER_RTS', 'TIME_BOUNDED_A_STAR']
-    #     algorithms_to_run = ['CLUSTER_RTS']
-    #     algorithms_to_run = ['A_STAR']
+#     algorithms_to_run = ['TIME_BOUNDED_A_STAR']
+#     algorithms_to_run = ['CLUSTER_RTS']
+    algorithms_to_run = ['CLUSTER_RTS', 'TIME_BOUNDED_A_STAR']
+#     algorithms_to_run = ['A_STAR']
     expansion_limit = [100000000]
     lookahead_type = ['DYNAMIC']
-    time_limit = [300 * 1000 * 1000000]
-    #     action_durations = [1]  # Use this for A*
+    time_limit = [10 * 60 * 1000 * 1000000]
     action_durations = [
-        150000
-        # 250000,
-        # 500000,
-        # 1000000,
-        # 3200000,
-        # 6400000,
-        # 12800000,
-        # 25600000,
-        # 51200000,
+        100000,
+        200000,
+        300000,
+        400000,
+        500000,
+#         250000,
+#         500000,
+#         1000000,
+#         3200000,
+#         6400000,
+#         12800000,
+#         25600000,
+#         51200000,
     ]
+    action_durations = list(range(100000, 600001, 20000)) 
+#     action_durations = [1]  # Use this for A*
+
     # action_durations = [50, 100, 250, 500, 1000]
     termination_types = ['TIME']
     step_limits = [100000000]
@@ -58,7 +64,14 @@ def generate_base_configuration():
     # Algorithm specific configurations
     weights = [1.0, 2.0, 4.0, 8.0]
     # weights = [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1000000]
-    tba_weights = [1.0, 2.0, 32.0, 64.0]
+    tba_weights = [1.0, 
+                   1.5, 2.0, 8.0
+#                    , 1.1, 1.4, 2.0, 8.0, 32.0
+#                    64.0
+                  ]
+#     tba_weights = [1.0, 1.1, 1.4, 2.0, 8.0, 32.0
+#                    64.0
+#                   ]
     crts_weights = [1.0]
     #     crts_weights = tba_weights
 
@@ -83,6 +96,11 @@ def generate_base_configuration():
                                                 [['algorithmName',
                                                   'TIME_BOUNDED_A_STAR']])
 
+#     compiled_configurations = cartesian_product(compiled_configurations,
+#                                                 'tbaStrategy', ['GBFS'],
+#                                                 [['algorithmName',
+#                                                   'TIME_BOUNDED_A_STAR']])
+
     # compiled_configurations = cartesian_product(compiled_configurations,
     #                                             'projection', [True, False],
     #                                             [['algorithmName',
@@ -100,22 +118,31 @@ def generate_base_configuration():
 
     compiled_configurations = cartesian_product(compiled_configurations,
                                                 'extractionCacheSize',
-                                                [10, 100, 1000],
+                                                [ 100 ],
                                                 [['algorithmName',
                                                   'CLUSTER_RTS']])
 
-    # compiled_configurations = cartesian_product(compiled_configurations,
-    #                                             'tbaRouting', [True, False],
-    #                                             [['algorithmName',
-    #                                               'CLUSTER_RTS']])
-
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'tbaRouting', [False],
+                                                [['algorithmName',
+                                                  'CLUSTER_RTS']])
+    
     compiled_configurations = cartesian_product(compiled_configurations,
                                                 'clusterDepthLimit', [
                                                     10,
-                                                    100,
-                                                    # 500,
+                                                    500,
                                                     1000,
+#                                                     2000,
                                                 ],
+                                                [['algorithmName',
+                                                  'CLUSTER_RTS']])
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'clusterGrowth', [True],
+                                                [['algorithmName',
+                                                  'CLUSTER_RTS']])
+                                                    
+    compiled_configurations = cartesian_product(compiled_configurations,
+                                                'clusterGrowthRate', [1.001],
                                                 [['algorithmName',
                                                   'CLUSTER_RTS']])
 
@@ -191,24 +218,34 @@ def generate_grid_world():
     minima3000_paths = []
     uniform1500_base_path = 'input/vacuum/uniform1500/uniform1500_1500-'
     uniform1500_paths = []
-    for scenario_num in range(0, 10):  # large set 25
+    uniform3000_base_path = 'input/vacuum/uniform3k_1500/gridworld'
+    uniform3000_paths = []
+    uniform40_base_path = 'input/vacuum/uniform40/'
+    uniform40_paths = []
+    for scenario_num in range(0, 50):  # large set 25
         n = str(scenario_num)
         dao_paths.append(dao_base_path + n)
-    #         minima1500_paths.append(minima1500_base_path + n + '.vw')
-    #         minima3000_paths.append(minima3000_base_path + n + '.vw')
-    #         uniform1500_paths.append(uniform1500_base_path + n + '.vw')
+        minima1500_paths.append(minima1500_base_path + n + '.vw')
+        minima3000_paths.append(minima3000_base_path + n + '.vw')
+        uniform1500_paths.append(uniform1500_base_path + n + '.vw')
+        uniform3000_paths.append(uniform3000_base_path + n + '.gw')
+        uniform40_paths.append(uniform40_base_path + '1k1k/uniform1000_1000-'+ n)
+        uniform40_paths.append(uniform40_base_path + '1k2k/uniform1000_2000-'+ n)
+        uniform40_paths.append(uniform40_base_path + '1k4k/uniform1000_4000-'+ n)
+        uniform40_paths.append(uniform40_base_path + '1k8k/uniform1000_8000-'+ n)
 
     domain_paths.extend(dao_paths)
-    domain_paths.extend(minima1500_paths)
-    domain_paths.extend(
-        minima3000_paths)  # this was not included in the large set
-    domain_paths.extend(uniform1500_paths)
+#     domain_paths.extend(minima1500_paths)
+#     domain_paths.extend(minima3000_paths)
+#     domain_paths.extend(uniform1500_paths)
+#     domain_paths.extend(uniform3000_paths)
+#     domain_paths.extend(uniform40_paths)
+
 
     configurations = cartesian_product(configurations, 'domainName',
                                        [
-                                           'VACUUM_WORLD',
-                                           # 'ORIENTATION_GRID',
-                                           # 'GRID_WORLD'
+#                                            'ORIENTATION_GRID',
+                                           'GRID_WORLD'
                                        ])
     configurations = cartesian_product(configurations, 'domainPath',
                                        domain_paths)
@@ -239,11 +276,11 @@ def distributed_execution(configurations):
     from slack_notification import start_experiment_notification, \
         end_experiment_notification
 
-    #     executor = create_remote_distlre_executor()
-    executor = create_local_distlre_executor(4)
+    executor = create_remote_distlre_executor()
+#     executor = create_local_distlre_executor(8)
 
     futures = []
-    progress_bar = tqdm(total=len(configurations))
+    progress_bar = tqdm(total=len(configurations), smoothing=0.1)
     tqdm.monitor_interval = 0
 
     cwd = os.getcwd()
@@ -256,11 +293,11 @@ def distributed_execution(configurations):
         metadata = str(json_configuration)
         command = ' '.join([executable, resources, metadata])
 
-        task = Task(command=command, meta=None, time_limit=900, memory_limit=10)
+        task = Task(command=command, meta=None, time_limit=90, memory_limit=10)
         task.input = json_configuration.encode()
 
-        print(task.command)
-        print(task.input)
+#         print(task.command)
+#         print(task.input)
 
         future = executor.submit(task)
         future.add_done_callback(lambda _: progress_bar.update())
@@ -299,10 +336,10 @@ def construct_results(futures):
         # print(f'output: {result.output}')
 
         raw_output = result.output.splitlines()
-        print('Output:')
-        print('\n'.join(raw_output))
-        print('Error:')
-        print(result.error)
+#         print('Output:')
+#         print('\n'.join(raw_output))
+#         print('Error:')
+#         print(result.error)
         if '#' not in raw_output:
             results.append({
                 'configuration': future.configuration,
@@ -447,28 +484,33 @@ def main():
     recycle = False
 
     if not build_metronome():
-        raise Exception(
-            'Build failed.')
+        raise Exception('Build failed.')
     print('Build complete!')
 
-    file_name = 'results/timing_results.json'
+    file_name = 'results/c_grid_results_stp22.json'
+    # c 1 - Will's 3k, 2 - 1-8k, 3 - Will's again, 4 - 1-8 large, 5 - low duration local, 7 - growth
+    # 13 1x - 14, 15, 16 3x - 17 new stuff (crts rates) - 18 GBFS
+    # 19 dao(50) - 19+ dao(50) A* - 20 same with CRTS 1.001
 
     if recycle:
         # Load previous configurations
         old_results = read_results_from_file(file_name)
         configurations = extract_configurations_from_failed_results(old_results)
+        
+        for configuration in configurations:
+            configuration['timeLimit'] = 5 * 90 * 1000 * 1000000
     else:
         # Generate new domain configurations
-        configurations = generate_vacuum_world()
-        # configurations = generate_grid_world()
+#         configurations = generate_vacuum_world()
+        configurations = generate_grid_world()
         # configurations = generate_tile_puzzle()
         label_algorithms(configurations)
         # configurations = configurations[:1]  # debug - keep only one config
 
     print('{} configurations has been generated '.format(len(configurations)))
-
+    
     start_time = time.perf_counter()
-    results = distributed_execution(configurations)
+    results = distributed_execution(configurations * 10)
     end_time = time.perf_counter()
 
     print(f"Experiment time: {end_time - start_time}s")
