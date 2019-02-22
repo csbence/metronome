@@ -51,14 +51,36 @@ class OnlinePlanner : public Planner<Domain> {
     }
 
     auto attributes = Planner<Domain>::getAttributes();
-    // Calculate average
+    auto strategies = getAttributeAggregationStrategies();
+    // Calculate aggregation
     for (auto& attributeSum : attributeSums) {
-      const auto frequency = attributeCount[attributeSum.first];
       const auto sum = attributeSum.second;
-      attributes.emplace_back(attributeSum.first, sum / frequency);
+      std::string strategy = strategies[attributeSum.first];
+
+      std::int64_t agg{0};
+
+      if (strategy == "sum") {
+        agg = sum;
+      } else { // Default strategy is average
+        const auto frequency = attributeCount[attributeSum.first];
+        agg = sum / frequency;
+      }
+
+      attributes.emplace_back(attributeSum.first, agg);
     }
 
     return attributes;
+  }
+
+  /**
+   * Override to provide strategies for aggregations.
+   * Current supported strategies are "average" and "sum"
+   * Default is average, which averages over the number of times the attribute
+   * was reported
+   * @return map of attribute names to strategies
+   */
+  virtual std::unordered_map<std::string, std::string> getAttributeAggregationStrategies() const {
+    return {};
   }
 
   virtual void recordAttribute(const std::string key,
