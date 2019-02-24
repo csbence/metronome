@@ -5,6 +5,7 @@ import sys
 import argparse
 import random
 import numpy as np
+import math
 import copy
 from subprocess import run, PIPE, Popen
 import json
@@ -18,11 +19,14 @@ __author__ = 'Kevin C. Gall'
 
 
 def generate_goals(goals, width, height):
-    goalSet = set()
-    while len(goalSet) < goals:
-        goalSet.add((random.randint(0, width), random.randint(0, height)))
+    goal_set = set()
+    if goals > 1:
+        while len(goal_set) < goals:
+            goal_set.add((random.randint(0, width), random.randint(0, height)))
+    else:
+        goal_set.add((width - 2, height - 2))
 
-    return goalSet
+    return goal_set
 
 
 class SingleObstacleStrategy:
@@ -150,9 +154,12 @@ class EnclosureObstacleStrategy:
         if self.alignDirections:
             self.directions = self.get_directions()
 
+# Creates domain with uniformly distributed obstacles and tunnels
+# through said obstacles which are clear of obstructions.
+# Tunnels hug the walls leaving the center of the domain the most
+# cluttered with no tunnels through
 class TunnelsStrategy:
     def __init__(self, width, height, probability, size_bound, stddev):
-        self.generate_goals = generate_goals
         self.width = width
         self.height = height
         self.probability = probability
@@ -161,7 +168,7 @@ class TunnelsStrategy:
         self.uniform_generator = SingleObstacleStrategy(width, height, probability)
 
         # create a bound on tunnels based on height
-        self.max_tunnels_per_x = int(round(height ** 0.2, 0))
+        self.max_tunnels_per_x = max(int(round(height ** 0.1, 0)), 1)
         self.mean = height / 2
 
     def get_obstacles(self):
@@ -169,10 +176,7 @@ class TunnelsStrategy:
         # we overlay tunnels on top of uniformly distributed obstacles
         # First, determine how many tunnels will start at a given x
         # Then, sample from a normal distribution to get the y values
-        # Then, generate the tunnel - variable length
-        # In order to maintain clear tunnels at the edges, we track every
-        # space that is part of a tunnel. If another tunnel would overlap
-        # with an existing one, that tunnel is simply not added
+        # Then, generate the tunnel
 
         for x in range(0, self.width):
             tunnels = np.random.randint(0, self.max_tunnels_per_x + 1)
@@ -183,24 +187,84 @@ class TunnelsStrategy:
 
             centered_y_vals = np.random.normal(self.mean, self.stddev, tunnels)
             # convert y to edge value
-            # call generate_tunnel using start location
+            edge_y_vals = []
+            for y in centered_y_vals:
+                dist_from_mean = int(self.mean - y) # may round. That's fine
+                # height - 3 because:
+                #   0 Indexed (1)
+                #   each tunnel needs width 3, so give ourselves padding
+                reference = self.height - 3 if dist_from_mean < 0 else 0
+                edge_y_vals.append(reference + dist_from_mean)
 
+            for y in edge_y_vals:
+                walls, path = self.generate_tunnel((x, y))
+                # claim the tunnel locations
+                self.claimed_tunnel_locations.update(walls)
+                self.claimed_tunnel_locations.update(path)
+
+                for loc in walls:
+                    obstacle_locations.add(loc)
+
+                for loc in path:
+                    if loc in obstacle_locations:
+                        obstacle_locations.remove(loc)
 
         return obstacle_locations
 
+    # In order to maintain clear tunnels at the edges, we track every
+    # space that is part of a tunnel. If another tunnel would overlap
+    # with an existing one, that tunnel is simply not added (i.e. an empty set
+    # is returned
     def generate_tunnel(self, start_loc):
         # randomly get tunnel length
-        # check for collisions and build tunnel
-        pass
+        length = np.random.random_integers(1, self.size_bound)
+        tunnel_walls = set()
+        tunnel_path = set()
 
-    def generate_goals(self):
-        return self.width - 2, int(self.height / 2)
+        start_x, top_y = start_loc
+
+        for x in range(start_x, start_x + length):
+            if x == self.width:
+                continue
+
+            top_wall_loc = (x, top_y)
+            path_loc = (x, top_y + 1)
+            bottom_wall_loc = (x, top_y + 2)
+
+            # collision detection
+            if not self.claimed_tunnel_locations.isdisjoint(set([top_wall_loc, path_loc, bottom_wall_loc])):
+                return set(), set()
+
+            tunnel_path.add(path_loc)
+            tunnel_walls.add(top_wall_loc)
+            tunnel_walls.add(bottom_wall_loc)
+
+        # clear the entrance and exit to the tunnel
+        if start_x > 0 and start_x + length < self.width:  # edge cases
+            entrance = (start_x - 1, top_y + 1)
+            exit = (start_x + length, top_y + 1)
+
+            # if entrance and exit aren't clear, don't register tunnel!
+            if not self.claimed_tunnel_locations.isdisjoint(set([entrance, exit])):
+                return set(), set()
+
+            tunnel_path.add(entrance)
+            tunnel_path.add(exit)
+
+
+        return tunnel_walls, tunnel_path
+
+    def generate_goals(self, goal_count = 1):
+        # goal_count ignored for this domain
+        return set([(self.width - 2, int(self.height / 2))])
 
     def get_start(self):
         return 1, int(self.height / 2)
 
     def reset(self):
-        pass
+        # claimed tunnel locations prevent us from overlapping tunnels
+        self.claimed_tunnel_locations = set()
+
 
 
 def generate_filter_configs(domains, useVacuum):
@@ -277,6 +341,13 @@ def main(args):
         if args.verbose:
             print(f'Aligned Corridors obstacle strategy. Size bound {size_bound}')
 
+    elif strategy == 'tunnels':
+        domain_builder = TunnelsStrategy(width, height, obstacle_percentage, size_bound,
+                                         stddev=args.tunnel_deviation)
+
+        if args.verbose:
+            print(f'Tunnels strategy. Tunnel size bound {size_bound}, obstacle likelihood {obstacle_percentage}, deviation {args.tunnel_deviation}')
+
     outPath = args.path
 
     config_type = strategy
@@ -346,7 +417,7 @@ def main(args):
             print('Begin filtering of generated domains')
         
         os.chdir('../..')
-        results = distributed_execution(configs, this_cwd)
+        results = distributed_execution(configs)
         os.chdir(this_cwd)
 
         for result in results:
@@ -382,7 +453,7 @@ if __name__ == '__main__':
                         help='Factor of the width of a corridor. Only used in the corridors and corridors-aligned strategies')
     parser.add_argument('-e', '--corridor-exits', default=1, type=int,
                         help='If a corridor strategy, defines how many "exits" from the corridor will be generated. Exits appear on either of the length walls')
-    parser.add_arguments('-d', '--tunnel-deviation', default=10, type=float,
+    parser.add_argument('-d', '--tunnel-deviation', default=10, type=float,
                          help='If tunnels strategy, the standard deviation to be used in the normal distribution for tunnel generation. Higher numbers make it more likely for tunnels to be closer to center')
     parser.add_argument('-f', '--filter', default=None, action='store_true',
                         help='Filter generated domains to only solvable. Assumes a previous build of Metronome. Executes A_STAR on each domain.')
