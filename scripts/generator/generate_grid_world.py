@@ -4,6 +4,7 @@ import os
 import sys
 import argparse
 import random
+import numpy as np
 import copy
 from subprocess import run, PIPE, Popen
 import json
@@ -16,16 +17,43 @@ __author__ = 'Kevin C. Gall'
 #   around 10% solvable
 
 
+def generate_goals(goals, width, height):
+    goalSet = set()
+    while len(goalSet) < goals:
+        goalSet.add((random.randint(0, width), random.randint(0, height)))
+
+    return goalSet
+
+
 class SingleObstacleStrategy:
-    def add_obstacle(self, obstacleTracker, start):
-        obstacleTracker.add(start[0], start[1])
+    def __init__(self, width, height, probability):
+        self.width = width
+        self.height = height
+        self.probability = probability
+
+    def generate_goals(self, goals):
+        return generate_goals(goals, self.width, self.height)
+
+    def get_obstacles(self):
+        obstacle_locations = set()
+        for y in range(0, self.height):
+            for x in range(0, self.width):
+                if random.random() < self.probability:
+                    obstacle_locations.add((x, y))
+
+        return obstacle_locations
+
+    def get_start(self):
+        return 1, 1
 
     def reset(self):
         pass
 
 
 class EnclosureObstacleStrategy:
-    def __init__(self, sizeBound, widthFactor = 1.0, exits=0, equalLength = False, alignDirections = False):
+    def __init__(self, width, height, probability, sizeBound, widthFactor = 1.0, exits=0, equalLength = False, alignDirections = False):
+        self.width = width
+        self.height = height
         self.sizeBound = sizeBound
         self.widthSizeBound = int(max(sizeBound * widthFactor, 1))
         self.exits = exits
@@ -33,6 +61,8 @@ class EnclosureObstacleStrategy:
         self.alignDirections = alignDirections
         self.directions = self.get_directions() if alignDirections else None
 
+    def generate_goals(self, goals):
+        return generate_goals(goals, self.width, self.height)
 
     def get_directions(self):
         firstVector = dict()
@@ -67,10 +97,10 @@ class EnclosureObstacleStrategy:
             midVector['y'] = nextDirection
             midVector['x'] = 0
 
-        return (firstVector, midVector, lastVector)
+        return firstVector, midVector, lastVector
 
 
-    def add_obstacle(self, obstacleTracker, start):
+    def add_enclosure(self, obstacleTracker, start):
         # Get random size for the enclosure
         firstWallSize = random.randint(1, self.sizeBound)
         midWallSize = random.randint(1, self.widthSizeBound)
@@ -104,17 +134,73 @@ class EnclosureObstacleStrategy:
                     obstacleTracker.add(current)
                 current = (current[0] + wall[0]['x'], current[1] + wall[0]['y'])
 
+    def get_obstacles(self):
+        obstacle_locations = set()
+        for y in range(0, self.height):
+            for x in range(0, self.width):
+                if random.random() < self.probability:
+                    self.add_enclosure(obstacle_locations, (x, y))
+
+        return obstacle_locations
+
+    def get_start(self):
+        return 1, 1
+
     def reset(self):
         if self.alignDirections:
             self.directions = self.get_directions()
 
+class TunnelsStrategy:
+    def __init__(self, width, height, probability, size_bound, stddev):
+        self.generate_goals = generate_goals
+        self.width = width
+        self.height = height
+        self.probability = probability
+        self.stddev = stddev
+        self.size_bound = size_bound
+        self.uniform_generator = SingleObstacleStrategy(width, height, probability)
 
-def generate_goals(goals, width, height):
-    goalSet = set()
-    while len(goalSet) < goals:
-        goalSet.add((random.randint(0, width), random.randint(0, height)))
+        # create a bound on tunnels based on height
+        self.max_tunnels_per_x = int(round(height ** 0.2, 0))
+        self.mean = height / 2
 
-    return goalSet
+    def get_obstacles(self):
+        obstacle_locations = self.uniform_generator.get_obstacles()
+        # we overlay tunnels on top of uniformly distributed obstacles
+        # First, determine how many tunnels will start at a given x
+        # Then, sample from a normal distribution to get the y values
+        # Then, generate the tunnel - variable length
+        # In order to maintain clear tunnels at the edges, we track every
+        # space that is part of a tunnel. If another tunnel would overlap
+        # with an existing one, that tunnel is simply not added
+
+        for x in range(0, self.width):
+            tunnels = np.random.randint(0, self.max_tunnels_per_x + 1)
+
+            if tunnels == 0:
+                continue
+
+
+            centered_y_vals = np.random.normal(self.mean, self.stddev, tunnels)
+            # convert y to edge value
+            # call generate_tunnel using start location
+
+
+        return obstacle_locations
+
+    def generate_tunnel(self, start_loc):
+        # randomly get tunnel length
+        # check for collisions and build tunnel
+        pass
+
+    def generate_goals(self):
+        return self.width - 2, int(self.height / 2)
+
+    def get_start(self):
+        return 1, int(self.height / 2)
+
+    def reset(self):
+        pass
 
 
 def generate_filter_configs(domains, useVacuum):
@@ -151,51 +237,45 @@ def main(args):
     width = args.width
     total = args.total
     goals = args.goals
-    obstaclePercentage = args.obstacle_probability
+    obstacle_percentage = args.obstacle_probability
 
     # Size bound for enclosures calculated using power
-    sizeBound = max(int(height ** 0.7), 1)
+    size_bound = max(int(height ** 0.7), 1)
 
     if args.verbose:
         print(args.height)
         print(args.width)
-        print(f'Percent chance a cell will start an obstacle: {obstaclePercentage}')
+        print(f'Percent chance a cell will start an obstacle: {obstacle_percentage}')
         print(f'{goals} goal(s) will be generated')
 
     strategy = args.strategy
-    obstacleBuilder = None
+    domain_builder = None
     if strategy == 'single':
-        obstacleBuilder = SingleObstacleStrategy()
+        domain_builder = SingleObstacleStrategy(width, height, obstacle_percentage)
         if args.verbose:
             print('Single Cell obstacle strategy')
 
     elif strategy == 'minima':
-        obstacleBuilder = EnclosureObstacleStrategy(sizeBound)
+        domain_builder = EnclosureObstacleStrategy(width, height, obstacle_percentage, size_bound)
         if args.verbose:
-            print(f'Minima obstacle strategy. Size bound {sizeBound}')
+            print(f'Minima obstacle strategy. Size bound {size_bound}')
 
     elif strategy == 'corridors':
-        obstacleBuilder = EnclosureObstacleStrategy(sizeBound,
+        domain_builder = EnclosureObstacleStrategy(width, height, obstacle_percentage, size_bound,
                                                     widthFactor=args.corridor_width_factor,
                                                     exits=args.corridor_exits,
                                                     equalLength=True)
         if args.verbose:
-            print(f'Corridors obstacle strategy. Size bound {sizeBound}')
+            print(f'Corridors obstacle strategy. Size bound {size_bound}')
 
     elif strategy == 'corridors-aligned':
-        obstacleBuilder = EnclosureObstacleStrategy(sizeBound,
+        domain_builder = EnclosureObstacleStrategy(width, height, obstacle_percentage, size_bound,
                                                     widthFactor=args.corridor_width_factor,
                                                     exits=args.corridor_exits,
                                                     equalLength=True,
                                                     alignDirections=True)
         if args.verbose:
-            print(f'Aligned Corridors obstacle strategy. Size bound {sizeBound}')
-
-    endX = width
-    endY = height
-    # hard code starting position. Consider making this configurable
-    startX = 1
-    startY = 1
+            print(f'Aligned Corridors obstacle strategy. Size bound {size_bound}')
 
     outPath = args.path
 
@@ -212,7 +292,7 @@ def main(args):
     generated_domains = []
     base_domain_name = config_type + str(height) + '_' + str(width) + '-'
     for iteration in range(total):
-        obstacleBuilder.reset()
+        domain_builder.reset()
 
         newDomain = base_domain_name + str(iteration)
         completeFile = os.path.join(outPath, newDomain+'.vw')
@@ -223,21 +303,17 @@ def main(args):
         preamble = str(width)+'\n'+str(height)+'\n'
         world = ''
 
-        goal_set = generate_goals(goals, width, height)
-
-        obstacleLocations = set()
-        for y in range(0, height):
-            for x in range(0, width):
-                if random.random() < obstaclePercentage:
-                    obstacleBuilder.add_obstacle(obstacleLocations, (x, y))
+        goal_set = domain_builder.generate_goals(goals)
+        start_x, start_y = domain_builder.get_start()
+        obstacle_locations = domain_builder.get_obstacles()
 
         for y in range(0, height):
             for x in range(0, width):
-                if (x == startX) and (y == startY):
+                if (x == start_x) and (y == start_y):
                     world += '@'
                 elif (x, y) in goal_set:
                     world += '*'
-                elif (x, y) in obstacleLocations:
+                elif (x, y) in obstacle_locations:
                     world += '#'
                 else:
                     world += '_'
@@ -277,7 +353,7 @@ def main(args):
             if (result['success']):
                 print(f'Domain {result["configuration"]["domainPath"]} is solvable')
 
-                copyfile('.' + result['configuration']['domainPath'], os.path.join(filtered_dir, base_domain_name + str(success_index)))
+                copyfile('.' + result['configuration']['domainPath'], os.path.join(filtered_dir, base_domain_name + str(success_index) + '.vw'))
                 success_index += 1
             else:
                 print(f'Domain {result["configuration"]["domainPath"]} was not successfully solved')
@@ -288,7 +364,9 @@ def main(args):
 if __name__ == '__main__':
     # Begin Argument Definition
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Generate grid-world instances. Tunnel domains place the agent and goal'
+                                                 + ' in the center of the grid and distribute the tunnels weighted toward'
+                                                 + ' the edges of the grid.')
 
     parser.add_argument('height', help='the height of the Vehicle world', type=int)
     parser.add_argument('width', help='the width of the Vehicle world', type=int)
@@ -298,12 +376,14 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose', help='increase output verbosity', action='store_true')
     parser.add_argument('-o', '--obstacle-probability', default=0.0, type=float,
                         help='probability of obstacle to begin in any given grid cell')
-    parser.add_argument('-s', '--strategy', choices=['single', 'minima', 'corridors', 'corridors-aligned'], default='single',
+    parser.add_argument('-s', '--strategy', choices=['single', 'minima', 'corridors', 'corridors-aligned', 'tunnels'], default='single',
                         help='obstacle structure strategy for the generated worlds. Defaults to "single". If "corridors-aligned", all corridors will be facing one direction')
     parser.add_argument('-c','--corridor-width-factor', default=0.05, type=float,
                         help='Factor of the width of a corridor. Only used in the corridors and corridors-aligned strategies')
     parser.add_argument('-e', '--corridor-exits', default=1, type=int,
                         help='If a corridor strategy, defines how many "exits" from the corridor will be generated. Exits appear on either of the length walls')
+    parser.add_arguments('-d', '--tunnel-deviation', default=10, type=float,
+                         help='If tunnels strategy, the standard deviation to be used in the normal distribution for tunnel generation. Higher numbers make it more likely for tunnels to be closer to center')
     parser.add_argument('-f', '--filter', default=None, action='store_true',
                         help='Filter generated domains to only solvable. Assumes a previous build of Metronome. Executes A_STAR on each domain.')
 
