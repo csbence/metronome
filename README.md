@@ -1,4 +1,4 @@
-# metronome
+# Metronome
 
 Real time search library implemented in C++
 
@@ -13,8 +13,7 @@ Real time search library implemented in C++
 
 ## Experiment execution and plotting
 
-* Python 3.5 + NumPy
-* PyMongo
+* Python 3.6 (packages: numpy, pandas, distlre, jupyterlab)
 
 # features
 
@@ -29,11 +28,15 @@ Algorithm set that makes use of real time search paradigms
 as the second argument or as standard input.
 
 Example configuration:
-
-"timeLimit" : NumberLong(150000000000),
-"domainPath" : "input/vacuum/h_400.vw",
-"domainInstanceName" : "input/vacuum/h_400.vw",
-"actionDuration" : NumberLong(6000000),
-"domainName" : "GRID_WORLD",
-"terminationType" : "time",
-"algorithmName" : "A_STAR"
+{
+  "timeLimit": 300000000000,
+  "domainInstanceName": "Manual test instance",
+  "actionDuration": 100000000000,
+  "domainName": "GRID_WORLD",
+  "domainPath": "input/vacuum/uniform40/1k1k/uniform1000_1000-0",
+  "terminationType": "TIME",
+  "algorithmName": "TIME_BOUNDED_A_STAR",
+  "lookaheadType": "DYNAMIC",
+  "commitmentStrategy": "SINGLE",
+  "weight": 1.0
+} 
