@@ -1,6 +1,8 @@
 # Metronome
 
-Real time search library implemented in C++
+Metronome is a Real-time heuristic search framework implemented in C++. The goal of this framework is to minimize the effort required to develope and test new heuristic search algorithms and domains.
+
+It also provides a convinent way to generate, execute, and evaluate experiments.
 
 # Requirements
 
@@ -8,7 +10,6 @@ Real time search library implemented in C++
 
 * C++ 17 (Tested with Clang and GCC)
 * Cmake
-* Boost
 * Gephi with Graph Streaming (optional for visualizaion)
 
 ## Experiment execution and plotting
