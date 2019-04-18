@@ -62,6 +62,7 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
     auto currentState = domain.getStartState();
 
     TerminationChecker terminationChecker;
+    std::size_t iterationCount = 0;
 
     auto timeBound = static_cast<std::size_t>(actionDuration);
 
@@ -78,6 +79,7 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
       }
 
       const auto iterationStartTime = currentNanoTime();
+      ++iterationCount;
       auto actionBundles =
           planner.selectActions(currentState, terminationChecker);
       const auto iterationEndTime = currentNanoTime();
@@ -113,15 +115,15 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
 
     std::cout << std::endl;
 
-    if (planningAndExecutionTime < executionTime) {
-      throw MetronomeException("GAT can't be less than pure execution time");
-    }
+//    if (planningAndExecutionTime < executionTime) {
+//      throw MetronomeException("GAT can't be less than pure execution time");
+//    }
 
-    if (planningAndExecutionTime < actionDuration * actions.size()) {
-      throw MetronomeException(
-          "GAT can't be less than pure execution time "
-          "(2)");
-    }
+//    if (planningAndExecutionTime < actionDuration * actions.size()) {
+//      throw MetronomeException(
+//          "GAT can't be less than pure execution time "
+//          "(2)");
+//    }
 
     LOG(INFO) << "Planning: Done";
 
@@ -148,7 +150,7 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
         domain.getActionDuration(),   // Idle planning time
         pathLength,                   // Path length
         actionStrings,
-        planner.getIterationCount(),
+        iterationCount,
         planner.getIdleIterationCount(),
         planner.getGoalFirstFoundIteration());
 
