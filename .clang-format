@@ -9,3 +9,5 @@ IncludeCategories:
     Priority:        2
   - Regex:           '.*'
     Priority:        3
+DerivePointerAlignment: 'false'
+PointerAlignment: 'Left'
