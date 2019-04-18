@@ -16,15 +16,14 @@
 
 namespace metronome {
 class OrientationGrid {
-  enum CostType {
-    CARDINAL, DIAGONAL, ROTATION, DEFAULT
-  };
+  enum CostType { CARDINAL, DIAGONAL, ROTATION, DEFAULT };
 
  public:
   typedef long long int Cost;
 
   static constexpr Cost CARDINAL_MOVEMENT_COST = 1;
-  static constexpr double DIAGONAL_MOVEMENT_FACTOR = 1.0; //consider using sqrt 2 * CARDINAL_MOVEMENT_COST
+  static constexpr double DIAGONAL_MOVEMENT_FACTOR =
+      1.0;  // consider using sqrt 2 * CARDINAL_MOVEMENT_COST
   static constexpr Cost ROTATION_COST = 1;
 
   class Action {
@@ -39,17 +38,17 @@ class OrientationGrid {
     ~Action() = default;
 
     static std::vector<Action>& getActions() {
-      static std::vector<Action> actions{Action("N", CARDINAL), //0
-                                         Action("NE", DIAGONAL), //1
-                                         Action("NW", DIAGONAL), //2
-                                         Action("S", CARDINAL), //3
-                                         Action("SE", DIAGONAL), //4
-                                         Action("SW", DIAGONAL), //5
-                                         Action("W", CARDINAL), //6
-                                         Action("E", CARDINAL), //7
-                                         //Rotation actions: Left or Right
-                                         Action("L", ROTATION), //8
-                                         Action("R", ROTATION)}; //9
+      static std::vector<Action> actions{Action("N", CARDINAL),   // 0
+                                         Action("NE", DIAGONAL),  // 1
+                                         Action("NW", DIAGONAL),  // 2
+                                         Action("S", CARDINAL),   // 3
+                                         Action("SE", DIAGONAL),  // 4
+                                         Action("SW", DIAGONAL),  // 5
+                                         Action("W", CARDINAL),   // 6
+                                         Action("E", CARDINAL),   // 7
+                                         // Rotation actions: Left or Right
+                                         Action("L", ROTATION),   // 8
+                                         Action("R", ROTATION)};  // 9
       return actions;
     }
 
@@ -117,7 +116,9 @@ class OrientationGrid {
                                std::string(label));
     }
 
-    bool operator==(const Action& rhs) const { return strcmp(label, rhs.label); }
+    bool operator==(const Action& rhs) const {
+      return strcmp(label, rhs.label);
+    }
 
     bool operator!=(const Action& rhs) const { return !(rhs == *this); }
 
@@ -137,9 +138,10 @@ class OrientationGrid {
   class State {
    public:
     State() : x(0), y(0), theta{"N"} {}
-    State(unsigned int x, unsigned int y, const char* theta)
-        : x{x}, y{y} { strcpy(this->theta, theta); }
-    //For storing state locations where orientation doesn't make sense
+    State(unsigned int x, unsigned int y, const char* theta) : x{x}, y{y} {
+      strcpy(this->theta, theta);
+    }
+    // For storing state locations where orientation doesn't make sense
     State(unsigned int x, unsigned int y) : x{x}, y{y}, theta{"0"} {}
     /*Standard getters for the State(x,y,theta)*/
     unsigned int getX() const { return x; }
@@ -157,9 +159,7 @@ class OrientationGrid {
       return x == state.x && y == state.y && strcmp(theta, state.theta) == 0;
     }
 
-    bool operator!=(const State& state) const {
-      return !(*this == state);
-    }
+    bool operator!=(const State& state) const { return !(*this == state); }
 
     State& operator=(State toCopy) {
       swap(*this, toCopy);
@@ -177,7 +177,7 @@ class OrientationGrid {
     /*State(x,y) representation*/
     unsigned int x;
     unsigned int y;
-    char theta[3]; //c-style string for conservation of memory
+    char theta[3];  // c-style string for conservation of memory
     /*Function facilitating operator=*/
     friend void swap(State& first, State& second) {
       using std::swap;
@@ -187,7 +187,7 @@ class OrientationGrid {
     }
   };
 
-  //hash for obstacles (location only, no orientation)
+  // hash for obstacles (location only, no orientation)
   struct LocationHash {
     size_t operator()(const State& state) const {
       size_t seed = 37;
@@ -198,7 +198,7 @@ class OrientationGrid {
     }
   };
 
-  //equals for obstacles (location only, no orientation)
+  // equals for obstacles (location only, no orientation)
   struct LocationEquals {
     bool operator()(const State& lhs, const State& rhs) const {
       return lhs.getX() == rhs.getX() && lhs.getY() == rhs.getY();
@@ -207,10 +207,9 @@ class OrientationGrid {
 
   /*Entry point for using this Domain*/
   OrientationGrid(const Configuration& configuration, std::istream& input)
-      : actionDuration(configuration.getLong(ACTION_DURATION)), 
-      heuristicMultiplier(configuration.getDouble(HEURISTIC_MULTIPLIER)) {
-    
-    //init cost values
+      : actionDuration(configuration.getLong(ACTION_DURATION)),
+        heuristicMultiplier(configuration.getDouble(HEURISTIC_MULTIPLIER)) {
+    // init cost values
     double durationAsDouble = static_cast<double>(actionDuration);
     double diagonalCostAsDouble = DIAGONAL_MOVEMENT_FACTOR * durationAsDouble;
     Cost diagonalCost = static_cast<Cost>(diagonalCostAsDouble);
@@ -220,7 +219,7 @@ class OrientationGrid {
     costValues[ROTATION] = ROTATION_COST * actionDuration;
     costValues[DEFAULT] = actionDuration;
 
-    //parse domain
+    // parse domain
     unsigned int currentHeight = 0;
     unsigned int currentWidth = 0;
     std::string line;
@@ -235,7 +234,8 @@ class OrientationGrid {
     convertWidth >> width;
     getline(input, line);  // get the height
     if (std::strtol(line.c_str(), &end, 10) == 0) {
-      throw MetronomeException("OrientationWorld second line must be a number.");
+      throw MetronomeException(
+          "OrientationWorld second line must be a number.");
     }
 
     std::stringstream convertHeight(line);
@@ -279,7 +279,8 @@ class OrientationGrid {
 
     if (!tempStartState.has_value() || !tempGoalState.has_value()) {
       throw MetronomeException(
-          "OrientationWorld unknown start or goal location. Start or goal location is "
+          "OrientationWorld unknown start or goal location. Start or goal "
+          "location is "
           "not defined.");
     }
 
@@ -314,15 +315,18 @@ class OrientationGrid {
     return location.getX() == goalLocation.getX() &&
            location.getY() == goalLocation.getY();
   }
+  
   /*Validating an obstacle state*/
   bool isObstacle(const State& location) const {
     return obstacles.find(location) != obstacles.end();
   }
+  
   /*Validating the agent can visit the state*/
-  bool isLegalLocation(const State& location) const {
-    return location.getX() < width && location.getY() < height &&
-           !isObstacle(location);
+  bool isLegalLocation(const State& state) const {
+    return state.getX() < width && state.getX() >= 0 && state.getY() < height &&
+        state.getY() >= 0 && !isObstacle(state);
   }
+  
   /* Validating orientation.
    * We can only move forward and backward or rotate
    * Allow identity action as special case
@@ -380,7 +384,7 @@ class OrientationGrid {
       return static_cast<Cost>(0);
     }
 
-    unsigned int rotations = 0; //init expected rotations
+    unsigned int rotations = 0;  // init expected rotations
 
     unsigned int verticalDistance = std::max(otherState.getY(), state.getY()) -
                                     std::min(otherState.getY(), state.getY());
@@ -390,13 +394,14 @@ class OrientationGrid {
 
     unsigned int manhattanDistance = verticalDistance + horizontalDistance;
     unsigned int diagonalMoves = std::min(verticalDistance, horizontalDistance);
-    unsigned int cardinalMoves = manhattanDistance - (2*diagonalMoves); //no underflow possible
+    unsigned int cardinalMoves =
+        manhattanDistance - (2 * diagonalMoves);  // no underflow possible
 
-    //if we move diagonally then have to rotate to face the goal,
-    //that means at least one rotation
+    // if we move diagonally then have to rotate to face the goal,
+    // that means at least one rotation
     if (diagonalMoves > 0 && cardinalMoves > 0) rotations++;
 
-    //determine target rotations
+    // determine target rotations
     char direction[3];
     char inverseDirection[3];
     unsigned int index = 0;
@@ -405,8 +410,7 @@ class OrientationGrid {
       direction[index] = 'N';
       inverseDirection[index] = 'S';
       index++;
-    }
-    else if (goalIsSouth) {
+    } else if (goalIsSouth) {
       direction[index] = 'S';
       inverseDirection[index] = 'N';
       index++;
@@ -416,27 +420,27 @@ class OrientationGrid {
       direction[index] = 'W';
       inverseDirection[index] = 'E';
       index++;
-    }
-    else if (goalIsEast){
+    } else if (goalIsEast) {
       direction[index] = 'E';
       inverseDirection[index] = 'W';
       index++;
     }
 
-    direction[index] = '\0'; //terminate string
+    direction[index] = '\0';  // terminate string
     inverseDirection[index] = '\0';
 
     Action& rotateLeft = Action::getLeftRotationAction();
     Action& rotateRight = Action::getRightRotationAction();
 
-    //initialize left (counterclockwise) and right (clockwise) rotations from current state
+    // initialize left (counterclockwise) and right (clockwise) rotations from
+    // current state
     char leftOrientation[3];
     char rightOrientation[3];
 
     strcpy(leftOrientation, state.getTheta());
     strcpy(rightOrientation, state.getTheta());
 
-    //find minimum rotations to reach required initial orientation
+    // find minimum rotations to reach required initial orientation
     auto x = state.getX();
     auto y = state.getY();
     while (strcmp(leftOrientation, direction) != 0 &&
@@ -457,9 +461,10 @@ class OrientationGrid {
 
   bool safetyPredicate(const State&) const { return true; }
 
-  std::vector<SuccessorBundle<OrientationGrid>> successors(const State& state) const {
+  std::vector<SuccessorBundle<OrientationGrid>> successors(
+      const State& state) const {
     std::vector<SuccessorBundle<OrientationGrid>> successors;
-    successors.reserve(4); // Forward, backward, rotate left, rotate right
+    successors.reserve(4);  // Forward, backward, rotate left, rotate right
 
     for (auto& action : Action::getActions()) {
       addValidSuccessor(successors, state, action);
@@ -487,23 +492,27 @@ class OrientationGrid {
   }
 
   Cost getActionDuration() const { return actionDuration; }
-  Cost getActionDuration(const Action& action) const { return costValues[action.getCostType()]; }
+  Cost getActionDuration(const Action& action) const {
+    return costValues[action.getCostType()];
+  }
 
   Action getIdentityAction() const { return Action::getIdentityAction(); }
 
  private:
   void addValidSuccessor(
       std::vector<SuccessorBundle<OrientationGrid>>& successors,
-                         const State& sourceState,
-                         Action& action) const {
+      const State& sourceState,
+      Action& action) const {
     if (!isLegalTransition(sourceState, action)) return;
     auto successor = getSuccessor(sourceState, action);
     if (successor.has_value()) {
-      successors.emplace_back(successor.value(), action, costValues[action.getCostType()]);
+      successors.emplace_back(
+          successor.value(), action, costValues[action.getCostType()]);
     }
   }
 
-  std::optional<State> getSuccessor(const State& sourceState, Action& action) const {
+  std::optional<State> getSuccessor(const State& sourceState,
+                                    Action& action) const {
     auto newX = static_cast<unsigned int>(static_cast<int>(sourceState.getX()) +
                                           action.relativeX());
     auto newY = static_cast<unsigned int>(static_cast<int>(sourceState.getY()) +
@@ -530,8 +539,7 @@ class OrientationGrid {
    */
   unsigned int width;
   unsigned int height;
-  std::unordered_set<State, LocationHash, LocationEquals>
-      obstacles{};
+  std::unordered_set<State, LocationHash, LocationEquals> obstacles{};
   State startLocation{};
   State goalLocation{};
   const Cost actionDuration;
