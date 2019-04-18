@@ -14,14 +14,15 @@ __author__ = 'Bence Cserna, William Doyle, Kevin C. Gall'
 
 def generate_base_configuration():
     # required configuration parameters
-#     algorithms_to_run = ['TIME_BOUNDED_A_STAR']
+#   algorithms_to_run = ['TIME_BOUNDED_A_STAR']
+#   algorithms_to_run = ['CLUSTER_RTS']
+    algorithms_to_run = ['CLUSTER_RTS', 'TIME_BOUNDED_A_STAR', 'LSS_LRTA_STAR']
 #     algorithms_to_run = ['CLUSTER_RTS']
-    algorithms_to_run = ['CLUSTER_RTS', 'TIME_BOUNDED_A_STAR']
-#     algorithms_to_run = ['CLUSTER_RTS']
-    #     algorithms_to_run = ['A_STAR']
+#     algorithms_to_run = ['LSS_LRTA_STAR']
+#     algorithms_to_run = ['A_STAR']
     expansion_limit = [100000000]
     lookahead_type = ['DYNAMIC']
-    time_limit = [90 * 1000 * 1000000]
+    time_limit = [5 * 60 * 1000 * 1000000]
     #     action_durations = [1]  # Use this for A*
     action_durations = [
         # 100000,
@@ -34,7 +35,9 @@ def generate_base_configuration():
         25600000,
         51200000,
     ]
-    action_durations = list(range(100000, 600001, 20000)) 
+#     action_durations = list(range(100000, 600001, 20000)) 
+    action_durations = list(range(100000, 600001, 200000)) 
+    # action_durations = [100000, 500000, ]  # Use this for A*
 #     action_durations = [1]  # Use this for A*
 
     # action_durations = [50, 100, 250, 500, 1000]
@@ -50,7 +53,8 @@ def generate_base_configuration():
     # base_configuration['stepLimit'] = step_limits
     base_configuration['timeLimit'] = time_limit
     base_configuration['commitmentStrategy'] = ['SINGLE']
-    base_configuration['heuristicMultiplier'] = [1.0, 0.1]
+    base_configuration['commitmentStrategy'] = ['MULTIPLE']
+    base_configuration['heuristicMultiplier'] = [1.0]
     base_configuration['terminationTimeEpsilon'] = [5000000]  # 4ms
 
     compiled_configurations = [{}]
@@ -62,8 +66,10 @@ def generate_base_configuration():
     # Algorithm specific configurations
     weights = [1.0, 2.0, 4.0, 8.0]
     # weights = [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1000000]
-    tba_weights = [1.0, 
-                   1.5, 2.0, 8.0
+    tba_weights = [
+         1.0,
+#                    1.5, 2.0 #, 16.0, 32.0, 64.0
+#       2.5
 #                    , 1.1, 1.4, 2.0, 8.0, 32.0
 #                    64.0
                   ]
@@ -116,7 +122,7 @@ def generate_base_configuration():
 
     compiled_configurations = cartesian_product(compiled_configurations,
                                                 'extractionCacheSize',
-                                                [ 100 ],
+                                                [100],
                                                 [['algorithmName',
                                                   'CLUSTER_RTS']])
 
@@ -127,9 +133,10 @@ def generate_base_configuration():
 
     compiled_configurations = cartesian_product(compiled_configurations,
                                                 'clusterDepthLimit', [
-                                                    10,
+#                                                     50, 100, 500,
                                                     500,
-                                                    1000,
+#                                                     1000,
+#                                                     100000,
 #                                                     2000,
                                                 ],
                                                 [['algorithmName',
@@ -151,6 +158,7 @@ def generate_tile_puzzle():
     configurations = generate_base_configuration()
 
     puzzles = []
+#     for puzzle in range(1, 101):
     for puzzle in range(1, 101):
         puzzles.append(str(puzzle))
 
@@ -220,7 +228,9 @@ def generate_grid_world():
     uniform3000_paths = []
     uniform40_base_path = 'input/vacuum/uniform40/'
     uniform40_paths = []
-    for scenario_num in range(0, 50):  # large set 25
+    tunnels38_base_path = 'input/vacuum/tunnels38/'
+    tunnels38_paths = []
+    for scenario_num in range(0, 10):  # large set 25
         n = str(scenario_num)
         dao_paths.append(dao_base_path + n)
         minima1500_paths.append(minima1500_base_path + n + '.vw')
@@ -231,14 +241,24 @@ def generate_grid_world():
         uniform40_paths.append(uniform40_base_path + '1k2k/uniform1000_2000-'+ n)
         uniform40_paths.append(uniform40_base_path + '1k4k/uniform1000_4000-'+ n)
         uniform40_paths.append(uniform40_base_path + '1k8k/uniform1000_8000-'+ n)
+        
+        tunnels38_paths.append(tunnels38_base_path + '1k1k/tunnels1000_1000-'+ n + '.vw')
+        tunnels38_paths.append(tunnels38_base_path + '1k2k/tunnels1000_2000-'+ n + '.vw')
+        tunnels38_paths.append(tunnels38_base_path + '1k5k/tunnels1000_5000-'+ n + '.vw')
+        tunnels38_paths.append(tunnels38_base_path + '1k10k/tunnels1000_10000-'+ n + '.vw')
+        tunnels38_paths.append(tunnels38_base_path + '1k12k/tunnels1000_12000-'+ n + '.vw')
+        
+    for scenario_num in range(0, 40):  # large set 25
+        n = str(scenario_num)
+#         tunnels38_paths.append(tunnels38_base_path + '1k15k/tunnels1000_15000-'+ n + '.vw')
 
-    domain_paths.extend(dao_paths)
+#     domain_paths.extend(dao_paths)
 #     domain_paths.extend(minima1500_paths)
-#     domain_paths.extend(minima3000_paths)
+#    domain_paths.extend(minima3000_paths)
 #     domain_paths.extend(uniform1500_paths)
-#     domain_paths.extend(uniform3000_paths)
+    domain_paths.extend(uniform3000_paths)
 #     domain_paths.extend(uniform40_paths)
-
+#    domain_paths.extend(tunnels38_paths)
 
     configurations = cartesian_product(configurations, 'domainName',
                                        [
@@ -376,7 +396,7 @@ def create_remote_distlre_executor(local_threads=None):
 
     import getpass
     HOSTS = ['ai' + str(i) + '.cs.unh.edu' for i in
-             [1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15]]
+             [1, 2, 3, 4, 5, 6, 8, 9, 11, 12, 13, 14, 15]]
     print('\nExecuting configurations on the following ai servers: ')
     print(HOSTS)
 
@@ -474,22 +494,43 @@ def label_algorithms(configurations):
                                               + ' weight: ' \
                                               + str(configuration[
                                                         'weight'])
+            
+            
+def label_domains(configurations):
+    for configuration in configurations:
+        if 'tunnels' in configuration['domainPath']:
+            if '15000' in configuration['domainPath']:
+                configuration['domainLabel'] = 15000
+            elif '12000' in configuration['domainPath']:
+                configuration['domainLabel'] = 12000
+            elif '2000' in configuration['domainPath']:
+                configuration['domainLabel'] = 2000
+            elif '5000' in configuration['domainPath']:
+                configuration['domainLabel'] = 5000
+            elif '10000' in configuration['domainPath']:
+                configuration['domainLabel'] = 10000
+            else:
+                configuration['domainLabel'] = 1000
 
 
 def main():
     print(os.getcwd())
     os.chdir('..')
 
+#     recycle = True
     recycle = False
 
     if not build_metronome():
         raise Exception('Build failed.')
     print('Build complete!')
 
-    file_name = 'results/c_grid_results_stp22.json'
+    file_name = 'results/lss_grid_3k_M.json'
     # c 1 - Will's 3k, 2 - 1-8k, 3 - Will's again, 4 - 1-8 large, 5 - low duration local, 7 - growth
     # 13 1x - 14, 15, 16 3x - 17 new stuff (crts rates) - 18 GBFS
-    # 19 dao(50) - 19+ dao(50) A* - 20 same with CRTS 1.001
+    # 19 dao(50) - 19+ dao(50) A* - 20 same with CRTS 1.001 - 23 - TBA(1,2) backtrack 24 - TBA(1.5)
+    
+    # d 1: dao 2: stp10(tba(1.5,2)) 3: stp10(tba(1.5,2,8), crts(lot)) 5:stp100(complete) 6:stp100(gbfs)
+    # f 5 wo gbfs, 6 gbfs 7 all baseline 8 longer (essentials)
 
     if recycle:
         # Load previous configurations
@@ -501,15 +542,16 @@ def main():
     else:
         # Generate new domain configurations
 #         configurations = generate_vacuum_world()
-        configurations = generate_grid_world()
-        # configurations = generate_tile_puzzle()
+        configurations = generate_grid_world() # * 3
+#         configurations = generate_tile_puzzle()
         label_algorithms(configurations)
+        label_domains(configurations)
         # configurations = configurations[:1]  # debug - keep only one config
 
     print('{} configurations has been generated '.format(len(configurations)))
     
     start_time = time.perf_counter()
-    results = distributed_execution(configurations * 10)
+    results = distributed_execution(configurations)
     end_time = time.perf_counter()
 
     print(f"Experiment time: {end_time - start_time}s")
