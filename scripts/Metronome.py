@@ -21,7 +21,7 @@ def generate_base_configuration():
 #     algorithms_to_run = ['LSS_LRTA_STAR']
 #     algorithms_to_run = ['A_STAR']
     expansion_limit = [100000000]
-    lookahead_type = ['DYNAMIC']
+    lookahead_type = ['STATIC']
     time_limit = [5 * 60 * 1000 * 1000000]
     #     action_durations = [1]  # Use this for A*
     action_durations = [
@@ -36,8 +36,8 @@ def generate_base_configuration():
         51200000,
     ]
 #     action_durations = list(range(100000, 600001, 20000)) 
-    action_durations = list(range(100000, 600001, 200000)) 
-    # action_durations = [100000, 500000, ]  # Use this for A*
+#     action_durations = list(range(100000, 600001, 200000)) 
+    action_durations = [200000, 400000, 600000]
 #     action_durations = [1]  # Use this for A*
 
     # action_durations = [50, 100, 250, 500, 1000]
@@ -67,7 +67,7 @@ def generate_base_configuration():
     weights = [1.0, 2.0, 4.0, 8.0]
     # weights = [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0, 1000000]
     tba_weights = [
-         1.0,
+         1.5,
 #                    1.5, 2.0 #, 16.0, 32.0, 64.0
 #       2.5
 #                    , 1.1, 1.4, 2.0, 8.0, 32.0
@@ -295,8 +295,8 @@ def distributed_execution(configurations):
     from slack_notification import start_experiment_notification, \
         end_experiment_notification
 
-    executor = create_remote_distlre_executor()
-#     executor = create_local_distlre_executor(8)
+    # executor = create_remote_distlre_executor()
+    executor = create_local_distlre_executor(4)
 
     futures = []
     progress_bar = tqdm(total=len(configurations), smoothing=0.1)
@@ -524,7 +524,7 @@ def main():
         raise Exception('Build failed.')
     print('Build complete!')
 
-    file_name = 'results/lss_grid_3k_M.json'
+    file_name = 'results/lss_grid_3k_M_STATIC.json'
     # c 1 - Will's 3k, 2 - 1-8k, 3 - Will's again, 4 - 1-8 large, 5 - low duration local, 7 - growth
     # 13 1x - 14, 15, 16 3x - 17 new stuff (crts rates) - 18 GBFS
     # 19 dao(50) - 19+ dao(50) A* - 20 same with CRTS 1.001 - 23 - TBA(1,2) backtrack 24 - TBA(1.5)
@@ -542,7 +542,7 @@ def main():
     else:
         # Generate new domain configurations
 #         configurations = generate_vacuum_world()
-        configurations = generate_grid_world() # * 3
+        configurations = generate_grid_world() * 3
 #         configurations = generate_tile_puzzle()
         label_algorithms(configurations)
         label_domains(configurations)

@@ -32,6 +32,9 @@
 #ifdef ENABLE_A_STAR
 #include "algorithms/AStar.hpp"
 #endif
+#ifdef ENABLE_SUBOPTIMAL_A_STAR
+#include "algorithms/SuboptimalAStar.hpp"
+#endif
 #ifdef ENABLE_LSS_LRTA_STAR
 #include "algorithms/LssLrtaStar.hpp"
 #endif
@@ -161,6 +164,14 @@ class ConfigurationExecutor {
 #ifdef ENABLE_A_STAR
     if (algorithmName == ALGORITHM_A_STAR) {
       return executeOfflinePlanner<Domain, AStar<Domain>>(configuration,
+                                                          domain);
+    }
+#endif
+
+#ifdef ENABLE_SUBOPTIMAL_A_STAR
+    if (algorithmName == ALGORITHM_SUBOPTIMAL_A_STAR) {
+      return executeOfflinePlanner<Domain, SuboptimalAStar<Domain>>
+      (configuration,
                                                           domain);
     }
 #endif

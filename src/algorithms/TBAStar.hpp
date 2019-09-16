@@ -100,6 +100,8 @@ class TBAStar final : public OnlinePlanner<Domain, TerminationChecker> {
       TerminationChecker& terminationChecker) override {
     OnlinePlanner::beginIteration();
 
+    OnlinePlanner::recordAttribute("backtrack", 0);
+
     if (domain.isGoal(startState)) {
       // Goal is already reached
       return std::vector<ActionBundle>();

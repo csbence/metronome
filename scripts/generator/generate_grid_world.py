@@ -283,6 +283,7 @@ def generate_filter_configs(domains, useVacuum):
         config['lookaheadType'] = 'DYNAMIC'
         config['commitmentStrategy'] = 'SINGLE'
         config['heuristicMultiplier'] = 1.0
+        config['weight'] = 2.0
         # remove leading . char in a relative path
         config['domainPath'] = domain[1:]
 
@@ -371,7 +372,7 @@ def main(args):
 
         aFile = open(completeFile, 'w')
 
-        preamble = str(width)+'\n'+str(height)+'\n'
+        preamble = str(width) + '\n' + str(height) + '\n'
         world = ''
 
         goal_set = domain_builder.generate_goals(goals)
@@ -404,7 +405,7 @@ def main(args):
             print(f'Metronome path: {args.filter}')
 
         success_index = 0
-        
+
         filtered_dir = os.path.join(outPath, 'filtered')
         if not os.path.exists(filtered_dir):
             os.makedirs(filtered_dir)
@@ -415,7 +416,7 @@ def main(args):
 
         if args.verbose:
             print('Begin filtering of generated domains')
-        
+
         os.chdir('../..')
         results = distributed_execution(configs)
         os.chdir(this_cwd)
@@ -428,8 +429,6 @@ def main(args):
                 success_index += 1
             else:
                 print(f'Domain {result["configuration"]["domainPath"]} was not successfully solved')
-
-
 
 
 if __name__ == '__main__':
@@ -461,4 +460,3 @@ if __name__ == '__main__':
     # End argument definition
 
     main(args=parser.parse_args())
-

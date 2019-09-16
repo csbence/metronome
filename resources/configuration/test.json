@@ -1,11 +1,20 @@
 {
   "timeLimit": 300000000000,
   "domainInstanceName": "Manual test instance",
-  "actionDuration": 1000,
+  "actionDuration": 300000,
   "domainName": "GRID_WORLD",
-  "domainPath": "input/vacuum/orz100d/orz100d.map_scen_0",
-  "terminationType": "EXPANSION",
-  "algorithmName": "CLUSTER_RTS",
+  "domainPath": "input/vacuum/uniform3k_1500/gridworld0.gw",
+  "terminationType": "TIME",
+  "algorithmName": "LSS_LRTA_STAR",
   "lookaheadType": "DYNAMIC",
-  "commitmentStrategy": "SINGLE"
-}
+  "commitmentStrategy": "SINGLE",
+  "heuristicMultiplier": 1.0,
+  "clusterNodeLimit": 1000000,
+  "clusterDepthLimit": 500,
+  "clusterGrowth": true,
+  "clusterGrowthRate": 1.01,
+  "extractionCacheSize": 100,
+  "weight": 1.0,
+  "projection": false,
+  "tbaRouting": false
+} 

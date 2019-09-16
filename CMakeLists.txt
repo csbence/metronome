@@ -34,6 +34,7 @@ set(SOURCE_FILES
         src/algorithms/Planner.hpp
         src/algorithms/planner_tools/Comparators.hpp
 		src/algorithms/TimeBoundedAStar.hpp
+		src/algorithms/SafeRTS.hpp
         src/domains/GridWorld.hpp
         src/domains/Domain.hpp
         src/domains/SlidingTilePuzzle.hpp
@@ -42,6 +43,8 @@ set(SOURCE_FILES
         src/domains/Traffic.hpp
         src/domains/SuccessorBundle.hpp
         src/domains/VacuumWorld.hpp
+		src/domains/RaceTrack.hpp
+		src/domains/RaceTrackLimit.hpp
         src/utils/PriorityQueue.hpp
         src/utils/Hash.hpp
         src/visualization/Visualizer.hpp
@@ -91,6 +94,7 @@ include_directories(src)
 
 # Select the possible algorithms.
 add_definitions(-DENABLE_A_STAR)
+#add_definitions(-DENABLE_SUBOPTIMAL_A_STAR)
 add_definitions(-DENABLE_LSS_LRTA_STAR)
 add_definitions(-DENABLE_CLUSTER_RTS)
 add_definitions(-DENABLE_TIME_BOUNDED_A_STAR_BENCE)
