@@ -48,15 +48,17 @@ class OfflineExperiment : Experiment<Domain, Planner> {
     }
 
     // Normalize GAT
-    auto normalizedGat = calculatedPlanningTime / configuration.getLong("actionDuration") + pathLength;
+      long long int actionDuration = configuration.getLong(ACTION_DURATION, 1);
+
+      auto normalizedGat = calculatedPlanningTime / actionDuration + pathLength;
 
     return Result(configuration,
                   planner.getExpandedNodeCount(),
                   planner.getGeneratedNodeCount(),
                   planningTime,
-                  pathLength * configuration.getLong("actionDuration"),
+                  pathLength * actionDuration,
                   calculatedPlanningTime +
-                      pathLength * configuration.getLong("actionDuration"),
+                  pathLength * actionDuration,
                   normalizedGat,
                   calculatedPlanningTime,
                   pathLength,

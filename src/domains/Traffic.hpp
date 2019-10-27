@@ -196,18 +196,13 @@ class Traffic {
   };
 
   Traffic(const Configuration& configuration, std::istream& input)
-      : actionDuration(configuration.getLong(ACTION_DURATION)) {
+      : actionDuration(configuration.getLong(ACTION_DURATION, 1)) {
     if (randomSeedFlag) {
       std::srand(randomSeed);
     } else {
       std::srand(std::time(0));
     }
 
-    if (!configuration.hasMember(ACTION_DURATION)) {
-      throw MetronomeException("No value provided.");
-    }
-
-    // actionDuration = configuration.getLong(ACTION_DURATION);
     unsigned int currentHeight = 0;
     unsigned int currentWidth = 0;
     unsigned int currentIndex = 0;

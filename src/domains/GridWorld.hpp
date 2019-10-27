@@ -120,8 +120,8 @@ class GridWorld {
 
   /*Entry point for using this Domain*/
   GridWorld(const Configuration& configuration, std::istream& input)
-      : actionDuration(configuration.getLong(ACTION_DURATION)),
-        heuristicMultiplier(configuration.getDouble(HEURISTIC_MULTIPLIER)) {
+      : actionDuration(configuration.getLong(ACTION_DURATION, 1)),
+        heuristicMultiplier(configuration.getDouble(HEURISTIC_MULTIPLIER, 1)) {
     unsigned int currentHeight = 0;
     unsigned int currentWidth = 0;
     std::string line;

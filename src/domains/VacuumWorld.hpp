@@ -192,7 +192,7 @@ class VacuumWorld {
 
   /*Entry point for using this Domain*/
   VacuumWorld(const Configuration& configuration, std::istream& input)
-      : actionDuration(configuration.getLong(ACTION_DURATION)) {
+      : actionDuration(configuration.getLong(ACTION_DURATION, 1)) {
     unsigned int currentHeight = 0;
     unsigned int currentWidth = 0;
     std::string line;

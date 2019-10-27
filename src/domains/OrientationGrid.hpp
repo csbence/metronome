@@ -207,8 +207,8 @@ class OrientationGrid {
 
   /*Entry point for using this Domain*/
   OrientationGrid(const Configuration& configuration, std::istream& input)
-      : actionDuration(configuration.getLong(ACTION_DURATION)),
-        heuristicMultiplier(configuration.getDouble(HEURISTIC_MULTIPLIER)) {
+      : actionDuration(configuration.getLong(ACTION_DURATION, 1)),
+        heuristicMultiplier(configuration.getDouble(HEURISTIC_MULTIPLIER, 1)) {
     // init cost values
     double durationAsDouble = static_cast<double>(actionDuration);
     double diagonalCostAsDouble = DIAGONAL_MOVEMENT_FACTOR * durationAsDouble;

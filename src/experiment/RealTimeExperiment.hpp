@@ -58,7 +58,7 @@ class RealTimeExperiment : Experiment<Domain, Planner> {
     std::int64_t executionTime = 0;
     std::int64_t planningAndExecutionTime = 0;
 
-    const auto actionDuration = configuration.getLong(ACTION_DURATION);
+    const auto actionDuration = configuration.getLong(ACTION_DURATION, 1);
     auto currentState = domain.getStartState();
 
     TerminationChecker terminationChecker;
