@@ -1,11 +1,7 @@
 {
   "timeLimit": 300000000000,
-  "domainInstanceName": "Manual test instance",
-  "actionDuration": 1000,
   "domainName": "GRID_WORLD",
   "domainPath": "input/vacuum/orz100d/orz100d.map_scen_0",
   "terminationType": "EXPANSION",
-  "algorithmName": "CLUSTER_RTS",
-  "lookaheadType": "DYNAMIC",
-  "commitmentStrategy": "SINGLE"
+  "algorithmName": "A_STAR"
 }
