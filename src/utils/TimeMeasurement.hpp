@@ -24,7 +24,13 @@ long long int currentNanoTime() {
 
 void logTime(const std::string message = "") {
   static long long int startTime = currentNanoTime();
-  LOG(INFO) << (currentNanoTime() - startTime) / 1000000 << message;
+  LOG(INFO) << (currentNanoTime() - startTime) / 1000000 << " - " << message;
+}
+
+void logTimeDifference(const std::string message = "") {
+  static long long int startTime = currentNanoTime();
+  LOG(INFO) << (currentNanoTime() - startTime) / 1000000 << " - " << message;
+  startTime = currentNanoTime();
 }
 
 // Macro wraps block to measure its execution time. Alternative to using lambda
