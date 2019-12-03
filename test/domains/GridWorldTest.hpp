@@ -75,8 +75,10 @@ TEST_CASE("GridWorld getters", "[GridWorld]") {
     }
 }
     TEST_CASE("GridWorld visualization", "[GridWorld]") {
+#ifdef STREAM_GRAPH
         metronome::GridWorld gridWorld = testGrid;
         metronome::Visualizer<metronome::GridWorld> visualizer(gridWorld);
         visualizer.visualize(std::cout);
+#endif
     }
 }

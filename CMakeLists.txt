@@ -65,7 +65,8 @@ set(TEST_FILES
         test/test.cpp
         test/utils/PriorityQueueTest.hpp
         test/utils/ObjectPoolTest.hpp
-        test/domains/GridWorldTest.hpp
+		test/domains/GridWorldTest.hpp
+		test/domains/DynamicGridWorldTest.hpp
 		test/domains/SlidingTilePuzzleTest.hpp
 		test/domains/VacuumWorldTest.hpp
         test/algorithms/AStarTest.hpp

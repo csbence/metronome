@@ -16,6 +16,9 @@
 #ifdef ENABLE_GRID_WORLD
 #include "domains/GridWorld.hpp"
 #endif
+#ifdef ENABLE_DYNAMIC_GRID_WORLD
+#include "domains/DynamicGridWorld.hpp"
+#endif
 #ifdef ENABLE_ORIENTATION_GRID
 #include "domains/OrientationGrid.hpp"
 #endif
@@ -83,6 +86,12 @@ class ConfigurationExecutor {
 #ifdef ENABLE_GRID_WORLD
     if (domainName == DOMAIN_GRID_WORLD) {
       return executeDomain<GridWorld>(configuration, resourcesDir);
+    }
+#endif
+
+#ifdef ENABLE_GRID_WORLD
+    if (domainName == DOMAIN_DYNAMIC_GRID_WORLD) {
+      return executeDomain<DynamicGridWorld<1>>(configuration, resourcesDir);
     }
 #endif
 

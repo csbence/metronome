@@ -24,6 +24,7 @@ static const std::string COMMITMENT_STRATEGY{"commitmentStrategy"};
 static const std::string HEURISTIC_MULTIPLIER{"heuristicMultiplier"};
 
 static const std::string DOMAIN_GRID_WORLD{"GRID_WORLD"};
+static const std::string DOMAIN_DYNAMIC_GRID_WORLD{"DYNAMIC_GRID_WORLD"};
 static const std::string DOMAIN_ORIENTATION_GRID{"ORIENTATION_GRID"};
 static const std::string DOMAIN_VACUUM_WORLD{"VACUUM_WORLD"};
 static const std::string DOMAIN_TRAFFIC{"TRAFFIC"};

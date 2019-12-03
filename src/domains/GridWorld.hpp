@@ -7,6 +7,7 @@
 #include <limits>
 #include <optional>
 #include <ostream>
+#include <sstream>
 #include <unordered_set>
 #include <utils/Hash.hpp>
 #include <vector>
@@ -303,6 +304,9 @@ class GridWorld {
   Cost getActionDuration(const Action& action) const { return actionDuration; }
 
   Action getIdentityAction() const { return Action('0'); }
+
+  unsigned int getWidth() { return width; }
+  unsigned int getHeight() { return height; }
 
  private:
   void addValidSuccessor(std::vector<SuccessorBundle<GridWorld>>& successors,
