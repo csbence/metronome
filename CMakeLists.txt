@@ -59,7 +59,8 @@ set(SOURCE_FILES
         src/utils/Statistic.hpp
         src/utils/ObjectPool.hpp
         src/MemoryConfiguration.hpp
-        )
+#		src/utils/BucketPriorityQueue.hpp
+		src/domains/DynamicGridWorld.hpp)
 
 set(TEST_FILES
         test/test.cpp
@@ -92,20 +93,21 @@ include_directories(src)
 
 # Select the possible algorithms.
 add_definitions(-DENABLE_A_STAR)
-add_definitions(-DENABLE_LSS_LRTA_STAR)
-add_definitions(-DENABLE_CLUSTER_RTS)
-add_definitions(-DENABLE_TIME_BOUNDED_A_STAR_BENCE)
-add_definitions(-DENABLE_TIME_BOUNDED_A_STAR_KEVIN)
+#add_definitions(-DENABLE_LSS_LRTA_STAR)
+#add_definitions(-DENABLE_CLUSTER_RTS)
+#add_definitions(-DENABLE_TIME_BOUNDED_A_STAR_BENCE)
+#add_definitions(-DENABLE_TIME_BOUNDED_A_STAR_KEVIN)
 
 # Select the possible domains
-add_definitions(-DENABLE_GRID_WORLD)
-add_definitions(-DENABLE_ORIENTATION_GRID)
-add_definitions(-DENABLE_VACUUM_WORLD)
-add_definitions(-DENABLE_SLIDING_TILE_PUZZLE)
-add_definitions(-DENABLE_TRAFFIC_WORLD)
+#add_definitions(-DENABLE_GRID_WORLD)
+add_definitions(-DENABLE_DYNAMIC_GRID_WORLD)
+#add_definitions(-DENABLE_ORIENTATION_GRID)
+#add_definitions(-DENABLE_VACUUM_WORLD)
+#add_definitions(-DENABLE_SLIDING_TILE_PUZZLE)
+#add_definitions(-DENABLE_TRAFFIC_WORLD)
 
 # Disable logger
-add_definitions(-DELPP_DISABLE_LOGS)
+#add_definitions(-DELPP_DISABLE_LOGS)
 
 if (MINGW OR WIN32)
     target_link_libraries(Metronome ws2_32)

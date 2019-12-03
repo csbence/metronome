@@ -11,6 +11,7 @@
 //#include "domains/GridWorldTest.hpp"
 //#include "domains/SlidingTilePuzzleTest.hpp"
 //#include "domains/VacuumWorldTest.hpp"
+#include "domains/DynamicGridWorldTest.hpp"
 //#include "utils/ObjectPoolTest.hpp"
 
 INITIALIZE_EASYLOGGINGPP
