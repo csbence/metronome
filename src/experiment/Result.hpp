@@ -8,6 +8,7 @@
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
+#include "rapidjson/prettywriter.h"
 
 namespace metronome {
 class Result {
@@ -128,7 +129,8 @@ class Result {
     resultDocument.AddMember("configuration", configurationValue, allocator);
 
     StringBuffer buffer;
-    Writer<StringBuffer> writer(buffer);
+//    Writer<StringBuffer> writer(buffer);
+    PrettyWriter<StringBuffer> writer(buffer);
     resultDocument.Accept(writer);
     return buffer.GetString();
   }
