@@ -84,6 +84,13 @@ class DynamicGridWorld {
         std::move(initialObstacleDistributions));
   }
 
+  State getStartState() const {
+    return State(gridWorld.getStartState(),
+                 CollisionVector::Zero(obstacleCount),
+                 0.0,
+                 0);
+  }
+
   bool isGoal(const State& state) const {
     return gridWorld.isGoal(state.internalState);
   }
@@ -146,7 +153,8 @@ class DynamicGridWorld {
       // The cost of the action is the collision probability increase
       double cost = collisionProbability - sourceState.collisionProbability;
       if (cost < 0) {
-        throw MetronomeException("DGW: The probability of failure can't decrease.");
+        throw MetronomeException(
+            "DGW: The probability of failure can't decrease.");
       }
 
       // The successor bundle we create contains the state, the action, and the
