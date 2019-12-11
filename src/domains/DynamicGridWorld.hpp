@@ -1,6 +1,7 @@
 #pragma once
 
 #import <cstdlib>
+#include <ostream>
 
 #import "../../dependencies/Eigen/Dense"
 #import "GridWorld.hpp"
@@ -10,7 +11,7 @@ namespace metronome {
 class DynamicGridWorld {
  public:
   using Action = typename GridWorld::Action;
-  using CollisionVector = typename Eigen::MatrixXf;
+  using CollisionVector = typename Eigen::VectorXf;
   using DomainVector = typename Eigen::MatrixXf;
   using DomainMatrix = typename Eigen::MatrixXf;
   using Cost = double;
@@ -36,6 +37,14 @@ class DynamicGridWorld {
     std::size_t hash() {
       // This could be improved
       return internalState.hash();
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const State& state) {
+      os << "internalState: " << state.internalState
+         << " collisionVector: " << state.collisionVector
+         << " collisionProbability: " << state.collisionProbability
+         << " time: " << state.time;
+      return os;
     }
 
     GridWorld::State internalState;
@@ -85,13 +94,13 @@ class DynamicGridWorld {
   }
 
   std::vector<SuccessorBundle<DynamicGridWorld>> successors(
-      const State& state) const {
-    auto internalSuccessors = gridWorld.successors(state.internalState);
+      const State& sourceState) const {
+    auto internalSuccessors = gridWorld.successors(sourceState.internalState);
 
     std::vector<SuccessorBundle<DynamicGridWorld>> successors;
     successors.reserve(internalSuccessors.size());
 
-    const auto successorTime = state.time + 1;
+    const auto successorTime = sourceState.time + 1;
 
     // Propagete the obstacles for one more step
     if (timestampedObstacleDistribution.size() < successorTime) {
@@ -114,7 +123,7 @@ class DynamicGridWorld {
         // This could be vectorized but it would be super sparse
         // TODO Let's try it after the baseline
         float independentCollisionProbability =
-            timestampedObstacleDistribution[obstacleIndex](locationIndex);
+            obstacleDistributions[obstacleIndex](locationIndex);
 
         independentCollisionVector[obstacleIndex] =
             independentCollisionProbability;
@@ -122,18 +131,28 @@ class DynamicGridWorld {
 
       // Calculate the cumulative collision probability: 1 - (1 - P1)(1 - P2)
       const auto oneVector = CollisionVector::Ones(obstacleCount);
-      auto collisionVector = oneVector - (oneVector - state.collisionVector) * (oneVector - independentCollisionVector);
+      auto collisionVector =
+          oneVector - (oneVector - sourceState.collisionVector) *
+                          (oneVector - independentCollisionVector);
 
       // TODO Use obstacle probabilities instead of sum.
       const double collisionProbability = collisionVector.sum();
 
-      State successorState(internalSuccessor.state, std::move(collisionVector), collisionProbability, successorTime);
+      State successorState(internalSuccessor.state,
+                           std::move(collisionVector),
+                           collisionProbability,
+                           successorTime);
 
       // The cost of the action is the collision probability increase
-      double cost = collisionProbability - state.collisionProbability;
+      double cost = collisionProbability - sourceState.collisionProbability;
+      if (cost < 0) {
+        throw MetronomeException("DGW: The probability of failure can't decrease.");
+      }
 
-      // The successor bundle we create contains the state, the action, and the cost
-      successors.emplace_back(std::move(successorState), internalSuccessor.action, cost);
+      // The successor bundle we create contains the state, the action, and the
+      // cost
+      successors.emplace_back(
+          std::move(successorState), internalSuccessor.action, cost);
     }
 
     return successors;
