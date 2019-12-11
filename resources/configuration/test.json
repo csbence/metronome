@@ -1,7 +1,8 @@
 {
   "timeLimit": 300000000000,
-  "domainName": "GRID_WORLD",
-  "domainPath": "input/vacuum/orz100d/orz100d.map_scen_0",
+  "domainName": "DYNAMIC_GRID_WORLD",
+  "domainPath": "input/dynamicgrid/squares25.dyngrid",
   "terminationType": "EXPANSION",
-  "algorithmName": "A_STAR"
+  "algorithmName": "A_STAR",
+  "obstacleCount": 5
 }
