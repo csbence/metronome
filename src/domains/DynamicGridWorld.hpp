@@ -66,7 +66,7 @@ class DynamicGridWorld {
 
     for (std::size_t i = 0; i < obstacleCount; ++i) {
       DomainMatrix transitionMatrix =
-          DomainMatrix::Random(domainSize, domainSize);
+          DomainMatrix::Random(domainSize, domainSize).cwiseAbs();
 
       for (int rowIndex = 0; rowIndex < transitionMatrix.rows(); ++rowIndex) {
         transitionMatrix.row(i).normalize();
@@ -74,7 +74,7 @@ class DynamicGridWorld {
 
       obstacleTransitionMatrices.push_back(std::move(transitionMatrix));
 
-      DomainVector initialDistribution = DomainVector::Random(1, domainSize);
+      DomainVector initialDistribution = DomainVector::Random(1, domainSize).cwiseAbs();
       initialDistribution.normalize();
 
       initialObstacleDistributions.push_back(std::move(initialDistribution));
@@ -110,7 +110,7 @@ class DynamicGridWorld {
     const auto successorTime = sourceState.time + 1;
 
     // Propagete the obstacles for one more step
-    if (timestampedObstacleDistribution.size() < successorTime) {
+    if (timestampedObstacleDistribution.size() <= successorTime) {
       expandObstacleDistributionHorizon();
     }
 
@@ -139,8 +139,8 @@ class DynamicGridWorld {
       // Calculate the cumulative collision probability: 1 - (1 - P1)(1 - P2)
       const auto oneVector = CollisionVector::Ones(obstacleCount);
       auto collisionVector =
-          oneVector - (oneVector - sourceState.collisionVector) *
-                          (oneVector - independentCollisionVector);
+          oneVector.array() - (oneVector - sourceState.collisionVector).array() *
+                          (oneVector - independentCollisionVector).array();
 
       // TODO Use obstacle probabilities instead of sum.
       const double collisionProbability = collisionVector.sum();
@@ -154,7 +154,7 @@ class DynamicGridWorld {
       double cost = collisionProbability - sourceState.collisionProbability;
       if (cost < 0) {
         throw MetronomeException(
-            "DGW: The probability of failure can't decrease.");
+            "DGW: The probability of failure " + std::to_string(cost) + " must not decrease.");
       }
 
       // The successor bundle we create contains the state, the action, and the
@@ -177,6 +177,8 @@ class DynamicGridWorld {
       nextObstacleDistribution.push_back(currentObstacleDistribution[i] *
                                          obstacleTransitionMatrices[i]);
     }
+
+    timestampedObstacleDistribution.emplace_back(nextObstacleDistribution);
   }
 
  private:
