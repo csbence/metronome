@@ -41,9 +41,13 @@ TEST_CASE("print example dynamicGridWorld expansion from start state",
   el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format,
                                      "%level: %msg");
 
-  Configuration configuration{configurationJson};
+  const std::string smallConfigJson =
+      "{\"actionDuration\" : 6000000,"
+      "\"obstacleCount\" : 2}";
 
-  std::istringstream stringStream{test::slalom};
+  Configuration configuration{smallConfigJson};
+
+  std::istringstream stringStream{test::small};
   std::istream inputStream{stringStream.rdbuf()};
 
   logTimeDifference("start");

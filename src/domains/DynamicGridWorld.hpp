@@ -69,7 +69,7 @@ class DynamicGridWorld {
           DomainMatrix::Random(domainSize, domainSize).cwiseAbs();
 
       for (int rowIndex = 0; rowIndex < transitionMatrix.rows(); ++rowIndex) {
-        transitionMatrix.row(i) /= transitionMatrix.row(i).sum();
+        transitionMatrix.row(rowIndex) /= transitionMatrix.row(rowIndex).sum();
       }
 
       obstacleTransitionMatrices.push_back(std::move(transitionMatrix));
@@ -115,13 +115,21 @@ class DynamicGridWorld {
       expandObstacleDistributionHorizon();
     }
 
+    if (timestampedObstacleDistribution.size() <= successorTime) {
+      throw MetronomeException(
+          "Logical error if obstacle distribution array is not large enough "
+          "(size is " +
+          std::to_string(timestampedObstacleDistribution.size()) +
+          ", at T=" + std::to_string(successorTime) + ")");
+    }
+
     const auto& obstacleDistributions =
         timestampedObstacleDistribution[successorTime];
 
     for (auto& internalSuccessor : internalSuccessors) {
       // Map the state to the vector representation
-      auto x = internalSuccessor.state.getX();
-      auto y = internalSuccessor.state.getY();
+      const auto x = internalSuccessor.state.getX();
+      const auto y = internalSuccessor.state.getY();
       const std::size_t locationIndex = y * gridWorld.getWidth() + x;
 
       CollisionVector independentCollisionVector(obstacleCount);
@@ -137,15 +145,16 @@ class DynamicGridWorld {
             independentCollisionProbability;
       }
 
-      // Calculate the cumulative collision probability: 1 - (1 - P1)(1 - P2)
+      // prob_collision = (1 - collided) * collied_now) + collided
+      // = p2 - p1p2 + p1
       const auto oneVector = CollisionVector::Ones(obstacleCount);
-      auto collisionVector =
-          oneVector.array() -
-          (oneVector - sourceState.collisionVector).array() *
-              (oneVector - independentCollisionVector).array();
+      auto collisionVector = sourceState.collisionVector.array() +
+                             independentCollisionVector.array() -
+                             sourceState.collisionVector.array() *
+                                 independentCollisionVector.array();
 
-      // TODO Use obstacle probabilities instead of sum.
-      const double collisionProbability = collisionVector.sum();
+      auto const collisionProbability =
+          1 - (oneVector.array() - collisionVector.array()).prod();
 
       State successorState(internalSuccessor.state,
                            std::move(collisionVector),
