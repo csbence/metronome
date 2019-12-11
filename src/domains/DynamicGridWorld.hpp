@@ -1,14 +1,12 @@
 #pragma once
 
-#import "GridWorld.hpp"
+#import <cstdlib>
 
 #import "../../dependencies/Eigen/Dense"
-
-#import <cstdlib>
+#import "GridWorld.hpp"
 
 namespace metronome {
 
-template <std::size_t OBSTACLE_COUNT, std::size_t DOMAIN_SIZE>
 class DynamicGridWorld {
  public:
   using Action = typename GridWorld::Action;
@@ -18,7 +16,28 @@ class DynamicGridWorld {
   using Cost = double;
 
   class State {
-   private:
+   public:
+    State(const GridWorld::State internalState,
+          const CollisionVector collisionVector,
+          double collisionProbability,
+          size_t time)
+        : internalState(internalState),
+          collisionVector(std::move(collisionVector)),
+          collisionProbability(collisionProbability),
+          time(time) {}
+
+    bool operator==(const State& rhs) const {
+      return time == rhs.time && internalState == rhs.internalState &&
+             collisionVector == rhs.collisionVector &&
+             collisionProbability == rhs.collisionProbability;
+    }
+    bool operator!=(const State& rhs) const { return !(rhs == *this); }
+
+    std::size_t hash() {
+      // This could be improved
+      return internalState.hash();
+    }
+
     GridWorld::State internalState;
 
     // Vector that describes the cumulative collision probability with each
@@ -29,13 +48,16 @@ class DynamicGridWorld {
   };
 
   DynamicGridWorld(const Configuration& configuration, std::istream& input)
-      : gridWorld(configuration, input) {
+      : gridWorld(configuration, input),
+        obstacleCount(configuration.getLong("obstacleCount")),
+        domainSize(gridWorld.getHeight() * gridWorld.getWidth()) {
     // Initialize initial distribution
     std::vector<DomainVector> initialObstacleDistributions;
-    initialObstacleDistributions.reserve(OBSTACLE_COUNT);
+    initialObstacleDistributions.reserve(obstacleCount);
 
-    for (std::size_t i = 0; i < OBSTACLE_COUNT; ++i) {
-      DomainMatrix transitionMatrix = DomainMatrix::Random(DOMAIN_SIZE, DOMAIN_SIZE);
+    for (std::size_t i = 0; i < obstacleCount; ++i) {
+      DomainMatrix transitionMatrix =
+          DomainMatrix::Random(domainSize, domainSize);
 
       for (int rowIndex = 0; rowIndex < transitionMatrix.rows(); ++rowIndex) {
         transitionMatrix.row(i).normalize();
@@ -43,7 +65,7 @@ class DynamicGridWorld {
 
       obstacleTransitionMatrices.push_back(std::move(transitionMatrix));
 
-      DomainVector initialDistribution = DomainVector::Random(1, DOMAIN_SIZE);
+      DomainVector initialDistribution = DomainVector::Random(1, domainSize);
       initialDistribution.normalize();
 
       initialObstacleDistributions.push_back(std::move(initialDistribution));
@@ -51,7 +73,6 @@ class DynamicGridWorld {
 
     timestampedObstacleDistribution.push_back(
         std::move(initialObstacleDistributions));
-
   }
 
   bool isGoal(const State& state) const {
@@ -70,8 +91,49 @@ class DynamicGridWorld {
     std::vector<SuccessorBundle<DynamicGridWorld>> successors;
     successors.reserve(internalSuccessors.size());
 
+    const auto successorTime = state.time + 1;
+
+    // Propagete the obstacles for one more step
+    if (timestampedObstacleDistribution.size() < successorTime) {
+      expandObstacleDistributionHorizon();
+    }
+
+    const auto& obstacleDistributions =
+        timestampedObstacleDistribution[successorTime];
+
     for (auto& internalSuccessor : internalSuccessors) {
-      // TODO create dynamic grid successor
+      // Map the state to the vector representation
+      auto x = internalSuccessor.state.getX();
+      auto y = internalSuccessor.state.getY();
+      const std::size_t locationIndex = y * gridWorld.getWidth() + x;
+
+      CollisionVector independentCollisionVector(obstacleCount);
+
+      for (std::size_t obstacleIndex = 0; obstacleIndex < obstacleCount;
+           ++obstacleIndex) {
+        // This could be vectorized but it would be super sparse
+        // TODO Let's try it after the baseline
+        float independentCollisionProbability =
+            timestampedObstacleDistribution[obstacleIndex](locationIndex);
+
+        independentCollisionVector[obstacleIndex] =
+            independentCollisionProbability;
+      }
+
+      // Calculate the cumulative collision probability: 1 - (1 - P1)(1 - P2)
+      const auto oneVector = CollisionVector::Ones(obstacleCount);
+      auto collisionVector = oneVector - (oneVector - state.collisionVector) * (oneVector - independentCollisionVector);
+
+      // TODO Use obstacle probabilities instead of sum.
+      const double collisionProbability = collisionVector.sum();
+
+      State successorState(internalSuccessor.state, std::move(collisionVector), collisionProbability, successorTime);
+
+      // The cost of the action is the collision probability increase
+      double cost = collisionProbability - state.collisionProbability;
+
+      // The successor bundle we create contains the state, the action, and the cost
+      successors.emplace_back(std::move(successorState), internalSuccessor.action, cost);
     }
 
     return successors;
@@ -79,12 +141,12 @@ class DynamicGridWorld {
 
   void expandObstacleDistributionHorizon() const {
     std::vector<DomainVector> nextObstacleDistribution;
-    nextObstacleDistribution.reserve(OBSTACLE_COUNT);
+    nextObstacleDistribution.reserve(obstacleCount);
 
     const auto& currentObstacleDistribution =
         timestampedObstacleDistribution.back();
 
-    for (std::size_t i = 0; i < OBSTACLE_COUNT; ++i) {
+    for (std::size_t i = 0; i < obstacleCount; ++i) {
       nextObstacleDistribution.push_back(currentObstacleDistribution[i] *
                                          obstacleTransitionMatrices[i]);
     }
@@ -101,5 +163,7 @@ class DynamicGridWorld {
 
   // GridWorld instance used as an agent model;
   const GridWorld gridWorld;
+  const std::size_t obstacleCount;
+  const std::size_t domainSize;
 };
 }  // namespace metronome
