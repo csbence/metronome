@@ -64,5 +64,24 @@ TEST_CASE("A* validation", "[DynamicGridWorld]") {
   REQUIRE(true);
 }
 
+TEST_CASE("print example dynamicGridWorld expansion from start state", "[DynamicGridWorld]") {
+  el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format,
+                                     "%level: %msg");
+
+  Configuration configuration{configurationJson};
+
+  std::istringstream stringStream{test::slalom};
+  std::istream inputStream{stringStream.rdbuf()};
+
+  logTimeDifference("start");
+  DynamicGridWorld const domain(configuration, inputStream);
+  auto const start_state = domain.getStartState();
+  std::cout << start_state;
+
+  auto const successors = domain.successors(start_state);
+  std::cout << successors[0];
+
+}
+
 }  // namespace
 }  // namespace metronome
