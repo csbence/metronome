@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ostream>
+
 namespace metronome {
 
 template <typename Domain>
@@ -15,6 +17,13 @@ class SuccessorBundle {
   const State state;
   const Action action;
   const Cost actionCost;
+
+    friend std::ostream& operator<<(std::ostream& os, const SuccessorBundle& bundle) {
+      os << "SuccessorBundle: state: " << bundle.state
+         << ", action: " << bundle.action
+         << ", cost: " << bundle.actionCost;
+      return os;
+    }
 };
 
 }  // namespace metronome
