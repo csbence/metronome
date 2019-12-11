@@ -13,6 +13,10 @@ const std::string configurationJson =
     "{\"actionDuration\" : 6000000,"
     "\"obstacleCount\" : 10}";
 
+const std::string smallConfigJson =
+    "{\"actionDuration\" : 6000000,"
+    "\"obstacleCount\" : 2}";
+
 TEST_CASE("GridWorld creation", "[DynamicGridWorld]") {
   el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format,
                                      "%level: %msg");
@@ -41,10 +45,6 @@ TEST_CASE("print example dynamicGridWorld expansion from start state",
   el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format,
                                      "%level: %msg");
 
-  const std::string smallConfigJson =
-      "{\"actionDuration\" : 6000000,"
-      "\"obstacleCount\" : 2}";
-
   Configuration configuration{smallConfigJson};
 
   std::istringstream stringStream{test::small};
@@ -59,7 +59,30 @@ TEST_CASE("print example dynamicGridWorld expansion from start state",
   std::cout << successors[0];
 }
 
-TEST_CASE("A* validation", "[DynamicGridWorld]") {
+TEST_CASE("A-star small validation", "[DynamicGridWorld]") {
+  el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format,
+                                     "%level: %msg");
+
+  Configuration configuration{smallConfigJson};
+
+  std::istringstream stringStream{test::blocks};
+  std::istream inputStream{stringStream.rdbuf()};
+
+  std::cout << "test";
+
+  DynamicGridWorld dynamicGridWorld(configuration, inputStream);
+
+  AStar<DynamicGridWorld> aStar(dynamicGridWorld, configuration);
+  auto startState = dynamicGridWorld.getStartState();
+
+  const std::vector<GridWorld::Action> plan = aStar.plan(startState);
+
+  std::cout << "end with " << plan.size() << " actions" << std::endl;
+
+  REQUIRE(true);
+}
+
+TEST_CASE("A-star validation", "[DynamicGridWorld]") {
   el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format,
                                      "%level: %msg");
 
@@ -81,6 +104,5 @@ TEST_CASE("A* validation", "[DynamicGridWorld]") {
 
   REQUIRE(true);
 }
-
 }  // namespace
 }  // namespace metronome
