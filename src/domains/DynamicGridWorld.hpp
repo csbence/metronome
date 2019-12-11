@@ -34,7 +34,7 @@ class DynamicGridWorld {
     }
     bool operator!=(const State& rhs) const { return !(rhs == *this); }
 
-    std::size_t hash() {
+    std::size_t hash() const {
       // This could be improved
       return internalState.hash();
     }
