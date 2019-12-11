@@ -69,14 +69,14 @@ class DynamicGridWorld {
           DomainMatrix::Random(domainSize, domainSize).cwiseAbs();
 
       for (int rowIndex = 0; rowIndex < transitionMatrix.rows(); ++rowIndex) {
-        transitionMatrix.row(i).normalize();
+        transitionMatrix.row(i) /= transitionMatrix.row(i).sum();
       }
 
       obstacleTransitionMatrices.push_back(std::move(transitionMatrix));
 
       DomainVector initialDistribution =
           DomainVector::Random(1, domainSize).cwiseAbs();
-      initialDistribution.normalize();
+      initialDistribution /= initialDistribution.sum();
 
       initialObstacleDistributions.push_back(std::move(initialDistribution));
     }
