@@ -74,7 +74,8 @@ class DynamicGridWorld {
 
       obstacleTransitionMatrices.push_back(std::move(transitionMatrix));
 
-      DomainVector initialDistribution = DomainVector::Random(1, domainSize).cwiseAbs();
+      DomainVector initialDistribution =
+          DomainVector::Random(1, domainSize).cwiseAbs();
       initialDistribution.normalize();
 
       initialObstacleDistributions.push_back(std::move(initialDistribution));
@@ -139,8 +140,9 @@ class DynamicGridWorld {
       // Calculate the cumulative collision probability: 1 - (1 - P1)(1 - P2)
       const auto oneVector = CollisionVector::Ones(obstacleCount);
       auto collisionVector =
-          oneVector.array() - (oneVector - sourceState.collisionVector).array() *
-                          (oneVector - independentCollisionVector).array();
+          oneVector.array() -
+          (oneVector - sourceState.collisionVector).array() *
+              (oneVector - independentCollisionVector).array();
 
       // TODO Use obstacle probabilities instead of sum.
       const double collisionProbability = collisionVector.sum();
@@ -153,8 +155,8 @@ class DynamicGridWorld {
       // The cost of the action is the collision probability increase
       double cost = collisionProbability - sourceState.collisionProbability;
       if (cost < 0) {
-        throw MetronomeException(
-            "DGW: The probability of failure " + std::to_string(cost) + " must not decrease.");
+        throw MetronomeException("DGW: The probability of failure " +
+                                 std::to_string(cost) + " must not decrease.");
       }
 
       // The successor bundle we create contains the state, the action, and the

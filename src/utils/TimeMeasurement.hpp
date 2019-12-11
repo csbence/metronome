@@ -1,8 +1,8 @@
 #pragma once
 
 #include <chrono>
-#include <functional>
 #include <cstdio>
+#include <functional>
 
 namespace metronome {
 
@@ -38,15 +38,18 @@ void logTimeDifference(const std::string message = "") {
 // with measureNanoTime for non-function code
 struct PrintCtrl {
   bool flag = false;
-  std::chrono::high_resolution_clock::time_point begin = std::chrono::high_resolution_clock::now();
+  std::chrono::high_resolution_clock::time_point begin =
+      std::chrono::high_resolution_clock::now();
 };
 
-#if CMAKE_BUILD_TYPE == Debug 
-#define PRINT_NANO_TIME(msg) \
-  for (PrintCtrl MACRO_PRINT_CTRL{}; \
-      MACRO_PRINT_CTRL.flag == false; \
-      MACRO_PRINT_CTRL.flag = true, \
-        printf("%s: %lld ns\n", msg, std::chrono::high_resolution_clock::now() - MACRO_PRINT_CTRL.begin ))
+#if CMAKE_BUILD_TYPE == Debug
+#define PRINT_NANO_TIME(msg)                                         \
+  for (PrintCtrl MACRO_PRINT_CTRL{}; MACRO_PRINT_CTRL.flag == false; \
+       MACRO_PRINT_CTRL.flag = true,                                 \
+       printf("%s: %lld ns\n",                                       \
+              msg,                                                   \
+              std::chrono::high_resolution_clock::now() -            \
+                  MACRO_PRINT_CTRL.begin))
 #else
 #define PRINT_NANO_TIME(msg)
 #endif
