@@ -3,6 +3,7 @@
 #include <chrono>
 #include <functional>
 #include <cstdio>
+
 namespace metronome {
 
 long long int measureNanoTime(std::function<void()> action) {

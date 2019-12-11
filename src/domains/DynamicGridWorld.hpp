@@ -1,10 +1,10 @@
 #pragma once
 
-#import <cstdlib>
+#include <cstdlib>
 #include <ostream>
 
-#import "../../dependencies/Eigen/Dense"
-#import "GridWorld.hpp"
+#include "../../dependencies/Eigen/Dense"
+#include "GridWorld.hpp"
 
 namespace metronome {
 
@@ -177,6 +177,19 @@ class DynamicGridWorld {
       nextObstacleDistribution.push_back(currentObstacleDistribution[i] *
                                          obstacleTransitionMatrices[i]);
     }
+  }
+
+  std::optional<State> transition(const State& sourceState,
+                                  const Action& action) const {
+    const auto internalTransitionState =
+        gridWorld.transition(sourceState.internalState, action);
+
+    if (not internalTransitionState) {
+      return {};
+    }
+
+    // TODO
+    return {sourceState};
   }
 
  private:

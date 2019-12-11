@@ -89,9 +89,9 @@ class ConfigurationExecutor {
     }
 #endif
 
-#ifdef ENABLE_GRID_WORLD
+#ifdef ENABLE_DYNAMIC_GRID_WORLD
     if (domainName == DOMAIN_DYNAMIC_GRID_WORLD) {
-      return executeDomain<DynamicGridWorld<1>>(configuration, resourcesDir);
+      return executeDomain<DynamicGridWorld>(configuration, resourcesDir);
     }
 #endif
 

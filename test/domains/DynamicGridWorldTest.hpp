@@ -1,13 +1,11 @@
 
-#include "domains/DynamicGridWorld.hpp"
+#include <iostream>
 
 #include "algorithms/AStar.hpp"
-#include "utils/TimeMeasurement.hpp"
-
-#include "instances/GridInstance.hpp"
-
-#include <iostream>
 #include "catch.hpp"
+#include "domains/DynamicGridWorld.hpp"
+#include "instances/GridInstance.hpp"
+#include "utils/TimeMeasurement.hpp"
 
 namespace metronome {
 namespace {
@@ -50,16 +48,16 @@ TEST_CASE("A* validation", "[DynamicGridWorld]") {
   std::istringstream stringStream{test::blocks};
   std::istream inputStream{stringStream.rdbuf()};
 
-  logTimeDifference("start");
+  std::cout << "test";
+
   DynamicGridWorld dynamicGridWorld(configuration, inputStream);
-  logTimeDifference("init");
 
   AStar<DynamicGridWorld> aStar(dynamicGridWorld, configuration);
   auto startState = dynamicGridWorld.getStartState();
 
   const std::vector<GridWorld::Action> plan = aStar.plan(startState);
 
-  std::cout << "test" << std::endl;
+  std::cout << "end" << std::endl;
 
   REQUIRE(true);
 }
